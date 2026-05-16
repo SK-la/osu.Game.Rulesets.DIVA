@@ -1,4 +1,4 @@
-﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
+// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
 using System.Collections.Generic;
@@ -182,7 +182,8 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             if (Judged)
                 return false;
 
-            var action = e.Action switch
+            // 方向键 -> 符号键的映射
+            var directionToSymbol = e.Action switch
             {
                 DivaAction.Right => DivaAction.Circle,
                 DivaAction.Down => DivaAction.Cross,
@@ -190,7 +191,21 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
                 DivaAction.Left => DivaAction.Square,
                 _ => e.Action,
             };
-            ValidPress = action == ValidAction;
+
+            // 符号键 -> 方向键的映射
+            var symbolToDirection = e.Action switch
+            {
+                DivaAction.Circle => DivaAction.Right,
+                DivaAction.Cross => DivaAction.Down,
+                DivaAction.Triangle => DivaAction.Up,
+                DivaAction.Square => DivaAction.Left,
+                _ => e.Action,
+            };
+
+            // 检查是否匹配：直接匹配、方向转符号、符号转方向
+            ValidPress = e.Action == ValidAction ||
+                         directionToSymbol == ValidAction ||
+                         symbolToDirection == ValidAction;
             Pressed = true;
 
             return true;
