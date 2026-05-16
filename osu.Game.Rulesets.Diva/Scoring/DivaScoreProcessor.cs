@@ -1,4 +1,4 @@
-﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
+// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
 using osu.Game.Rulesets.Diva.Judgements;
@@ -11,11 +11,11 @@ namespace osu.Game.Rulesets.Diva.Scoring
 {
     public partial class DivaScoreProcessor : ScoreProcessor
     {
-		public DivaScoreProcessor(Ruleset ruleset) : base(ruleset)
-		{
-		}
-        
-        protected override JudgementResult CreateResult(HitObject hitObject, Judgement judgement) =>
-            new DivaJudgementResult((DivaHitObject)hitObject, judgement);
+        public DivaScoreProcessor(Ruleset ruleset)
+            : base(ruleset)
+        {
+        }
+
+        protected override JudgementResult CreateResult(HitObject hitObject, Judgement judgement) => new DivaJudgementResult((DivaHitObject)hitObject, judgement);
     }
 }

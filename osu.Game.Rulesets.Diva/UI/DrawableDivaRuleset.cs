@@ -7,17 +7,17 @@ using osu.Framework.Input;
 using osu.Game.Beatmaps;
 using osu.Game.Input.Handlers;
 using osu.Game.Replays;
-using osu.Game.Rulesets.Mods;
-using osu.Game.Rulesets.Objects.Drawables;
 using osu.Game.Rulesets.Diva.Objects;
 using osu.Game.Rulesets.Diva.Objects.Drawables;
 using osu.Game.Rulesets.Diva.Replays;
+using osu.Game.Rulesets.Mods;
+using osu.Game.Rulesets.Objects.Drawables;
 using osu.Game.Rulesets.UI;
 
 namespace osu.Game.Rulesets.Diva.UI
 {
     [Cached]
-	public partial class DrawableDivaRuleset : DrawableRuleset<DivaHitObject>
+    public partial class DrawableDivaRuleset : DrawableRuleset<DivaHitObject>
     {
         public DrawableDivaRuleset(DivaRuleset ruleset, IBeatmap beatmap, IReadOnlyList<Mod> mods = null)
             : base(ruleset, beatmap, mods)
@@ -37,6 +37,7 @@ namespace osu.Game.Rulesets.Diva.UI
             {
                 case DoublePressButton:
                     return new DrawableDivaDoubleHitObject(h);
+
                 default:
                     return new DrawableDivaHitObject(h);
             }
