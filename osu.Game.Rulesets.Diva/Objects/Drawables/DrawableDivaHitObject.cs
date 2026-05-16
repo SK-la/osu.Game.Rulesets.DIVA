@@ -25,9 +25,10 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 {
     public partial class DrawableDivaHitObject : DrawableHitObject<DivaHitObject>, IKeyBindingHandler<DivaAction>
     {
-        public const float BASE_SIZE = 56;
+        public const float BASE_SIZE = 43;
 
-        private const double time_preempt = 850;
+        // 音符预读时间（毫秒），数值越大音符飞得越慢
+        private const double time_preempt = 1250;
         private const double time_fadein = 300;
         private const double time_action = 150;
 
@@ -117,23 +118,28 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
                 return;
             }
 
-            if (!HitObject.HitWindows.CanBeHit(timeOffset) && Time.Current > HitObject.StartTime)
-            {
-                ApplyResult(ApplyMiss);
-                return;
-            }
-
             var result = HitObject.HitWindows.ResultFor(timeOffset);
 
-            if (result == HitResult.None) return;
-
-            if (Pressed && timeOffset > (-time_action))
+            // 如果有有效的判定结果且玩家已按下按键
+            if (result != HitResult.None && Pressed && timeOffset > (-time_action))
             {
                 if (ValidPress)
                     ApplyResult((r, s) => r.Type = result);
                 else
                     ApplyResult(ApplyMiss);
                 Pressed = false;
+                return;
+            }
+
+            // 如果已经超出可判定时间窗口且当前时间已超过 note 开始时间，判定为 Miss
+            // 但要确保不是在玩家刚刚按下按键的瞬间
+            if (!HitObject.HitWindows.CanBeHit(timeOffset) && Time.Current > HitObject.StartTime)
+            {
+                // 只有在没有按下按键的情况下才判定为 Miss
+                if (!Pressed)
+                {
+                    ApplyResult(ApplyMiss);
+                }
             }
         }
 
