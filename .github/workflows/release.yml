@@ -5,15 +5,17 @@
 
 name: dotnet-release
 
-于:
+on:
     push:
-        标签:
+        tags:
             - 'v*'
 
 jobs:
     dotnet-build:
         name: Generate release assets
         runs-on: ubuntu-latest
+        permissions:
+            contents: write
         steps:
           - name: Checkout code
             uses: actions/checkout@v3
@@ -26,7 +28,7 @@ jobs:
           - name: Upload as asset
             uses: softprops/action-gh-release@v1
             with:
-                文件: osu.Game.Rulesets.Diva/bin/Release/*/osu.Game.Rulesets.Diva.dll
+                files: osu.Game.Rulesets.Diva/bin/Release/*/osu.Game.Rulesets.Diva.dll
             env:
                 GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
