@@ -17,28 +17,28 @@ namespace osu.Game.Rulesets.Diva
 
     public enum DivaAction
     {
-        [Description("Square")]
+        [Description("□")]
         Square,
 
-        [Description("Triangle")]
+        [Description("△")]
         Triangle,
 
-        [Description("Cross")]
-        Cross,
-
-        [Description("Circle")]
+        [Description("◯")]
         Circle,
 
-        [Description("Left")]
+        [Description("×")]
+        Cross,
+
+        [Description("←")]
         Left,
 
-        [Description("Up")]
+        [Description("↑")]
         Up,
 
-        [Description("Down")]
-        Down,
+        [Description("→")]
+        Right,
 
-        [Description("Right")]
-        Right
+        [Description("↓")]
+        Down,
     }
 }
