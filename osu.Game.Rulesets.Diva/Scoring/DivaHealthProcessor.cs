@@ -40,8 +40,9 @@ namespace osu.Game.Rulesets.Diva.Scoring
                             return -0.08;
                     }
 
-                case HitResult.Good:
-                    return 0.005;
+                // sad
+                case HitResult.Ok:
+                    return -0.0625; // 1/16
 
                 case HitResult.Great:
                     return 0.01;

@@ -9,6 +9,7 @@ using osu.Framework.Graphics.Rendering;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.Textures;
 using osu.Framework.Input.Bindings;
+using osu.Framework.Localisation;
 using osu.Game.Beatmaps;
 using osu.Game.Beatmaps.Legacy;
 using osu.Game.Configuration;
@@ -30,13 +31,17 @@ namespace osu.Game.Rulesets.Diva
 {
     public partial class DivaRuleset : Ruleset
     {
+        public static readonly string SHORT_NAME = "diva";
+
         public override string Description => "osu!DIVA";
 
         public override DrawableRuleset CreateDrawableRulesetWith(IBeatmap beatmap, IReadOnlyList<Mod> mods = null) => new DrawableDivaRuleset(this, beatmap, mods);
 
-        public override IBeatmapConverter CreateBeatmapConverter(IBeatmap beatmap) => new DivaBeatmapConverter(beatmap, this);
+        public override ScoreProcessor CreateScoreProcessor() => new DivaScoreProcessor();
 
         public override HealthProcessor CreateHealthProcessor(double drainStartTime) => new DivaHealthProcessor(drainStartTime);
+
+        public override IBeatmapConverter CreateBeatmapConverter(IBeatmap beatmap) => new DivaBeatmapConverter(beatmap, this);
 
         public override DifficultyCalculator CreateDifficultyCalculator(IWorkingBeatmap beatmap) => new DivaDifficultyCalculator(RulesetInfo, beatmap);
 
@@ -134,7 +139,7 @@ namespace osu.Game.Rulesets.Diva
             }
         }
 
-        public override string ShortName => "diva";
+        public override string ShortName => SHORT_NAME;
 
         public override IEnumerable<KeyBinding> GetDefaultKeyBindings(int variant = 0) => new[]
         {
@@ -148,6 +153,34 @@ namespace osu.Game.Rulesets.Diva
             new KeyBinding(InputKey.Right, DivaAction.Right),
             new KeyBinding(InputKey.Down, DivaAction.Down)
         };
+
+        public override IEnumerable<HitResult> GetValidHitResults()
+        {
+            return new[]
+            {
+                HitResult.Perfect,
+                HitResult.Great,
+                HitResult.Good,
+                HitResult.Ok,
+                HitResult.Meh,
+                HitResult.Miss
+            };
+        }
+
+        public override LocalisableString GetDisplayNameForHitResult(HitResult result)
+        {
+            // 获取对应 HitMode 的显示名称
+            return result switch
+            {
+                HitResult.Perfect => "COOL",
+                HitResult.Great => "FINE",
+                HitResult.Good => "SAFE",
+                HitResult.Ok => "SAD",
+                HitResult.Meh => "WRONG",
+                HitResult.Miss => "WORST",
+                _ => base.GetDisplayNameForHitResult(result)
+            };
+        }
 
         public override Drawable CreateIcon() => new DivaRulesetIcon(this);
 
