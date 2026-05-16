@@ -1,4 +1,4 @@
-﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
+// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
@@ -60,8 +60,8 @@ namespace osu.Game.Rulesets.Diva.UI
 
         public bool OnPressed(KeyBindingPressEvent<DivaAction> e)
         {
-            this.hitSample.Play();
-            return true;
+            hitSample.Play();
+            return false; // 不拦截事件，让音符对象也能接收
         }
 
         public void OnReleased(KeyBindingReleaseEvent<DivaAction> e)
