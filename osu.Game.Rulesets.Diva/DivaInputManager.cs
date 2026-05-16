@@ -26,7 +26,7 @@ namespace osu.Game.Rulesets.Diva
         [Description("◯")]
         Circle,
 
-        [Description("×")]
+        [Description("✖")]
         Cross,
 
         [Description("←")]
