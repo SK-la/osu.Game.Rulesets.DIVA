@@ -9,7 +9,7 @@ using osu.Game.Rulesets.Difficulty.Preprocessing;
 using osu.Game.Rulesets.Difficulty.Skills;
 using osu.Game.Rulesets.Mods;
 
-namespace osu.Game.Rulesets.Diva
+namespace osu.Game.Rulesets.Diva.Difficulty
 {
     public class DivaDifficultyCalculator : DifficultyCalculator
     {
@@ -36,6 +36,6 @@ namespace osu.Game.Rulesets.Diva
 
         protected override IEnumerable<DifficultyHitObject> CreateDifficultyHitObjects(IBeatmap beatmap, double clockRate) => Enumerable.Empty<DifficultyHitObject>();
 
-        protected override Skill[] CreateSkills(IBeatmap beatmap, Mod[] mods, double clockRate) => new Skill[0];
+        protected override Skill[] CreateSkills(IBeatmap beatmap, Mod[] mods, double clockRate) => [];
     }
 }

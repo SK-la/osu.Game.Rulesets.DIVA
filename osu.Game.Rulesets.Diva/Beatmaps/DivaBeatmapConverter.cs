@@ -26,8 +26,9 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
 
         private Vector2 prevObjectPos = Vector2.Zero;
 
-        private float osuObjectSize = 0;
-        private int streamLength = 0;
+        private readonly float osuObjectSize;
+
+        private int streamLength;
         //these variables were at the end of the class, such heresy had i done
 
         private const float approach_piece_distance = 1200;
@@ -43,7 +44,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                 _ => 1,
             };
 
-            osuObjectSize = (54.4f - 4.48f *  beatmap.Difficulty.CircleSize) * 2;
+            osuObjectSize = (54.4f - 4.48f * beatmap.Difficulty.CircleSize) * 2;
 
             //Console.WriteLine(this.TargetButtons);
         }
@@ -65,9 +66,9 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                     Samples = original.Samples,
                     StartTime = original.StartTime,
                     Position = pos,
-                    ValidAction = ValidAction(pos, newCombo),
-                    DoubleAction = DoubleAction(prevAction),
-                    ApproachPieceOriginPosition = GetApproachPieceOriginPos(pos),
+                    ValidAction = validAction(pos, newCombo),
+                    DoubleAction = doubleAction(prevAction),
+                    ApproachPieceOriginPosition = getApproachPieceOriginPos(pos),
                 };
             }
             else
@@ -77,14 +78,13 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                     Samples = original.Samples,
                     StartTime = original.StartTime,
                     Position = pos,
-                    ValidAction = ValidAction(pos, newCombo),
-                    ApproachPieceOriginPosition = GetApproachPieceOriginPos(pos),
+                    ValidAction = validAction(pos, newCombo),
+                    ApproachPieceOriginPosition = getApproachPieceOriginPos(pos),
                 };
             }
-
         }
 
-        private static DivaAction DoubleAction(DivaAction ac) => ac switch
+        private static DivaAction doubleAction(DivaAction ac) => ac switch
         {
             DivaAction.Circle => DivaAction.Right,
             DivaAction.Cross => DivaAction.Down,
@@ -93,9 +93,10 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
         };
 
         //placeholder
-        private DivaAction ValidAction(Vector2 currentObjectPos, bool newCombo)
+        private DivaAction validAction(Vector2 currentObjectPos, bool newCombo)
         {
             var distance = (prevObjectPos - currentObjectPos).Length;
+
             if (distance < osuObjectSize * 1.2 && (streamLength < 20 || !newCombo))
             {
                 streamLength++;
@@ -112,16 +113,19 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             {
                 case DivaAction.Circle:
                     if (this.TargetButtons < 2) break;
+
                     ac = DivaAction.Cross;
                     break;
 
                 case DivaAction.Cross:
                     if (this.TargetButtons < 3) break;
+
                     ac = DivaAction.Square;
                     break;
 
                 case DivaAction.Square:
                     if (this.TargetButtons < 4) break;
+
                     ac = DivaAction.Triangle;
                     break;
             }
@@ -130,7 +134,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             return ac;
         }
 
-        private Vector2 GetApproachPieceOriginPos(Vector2 currentObjectPos)
+        private Vector2 getApproachPieceOriginPos(Vector2 currentObjectPos)
         {
             var dir = (prevObjectPos - currentObjectPos);
             prevObjectPos = currentObjectPos;

@@ -6,17 +6,17 @@ using osu.Framework.Input.Events;
 
 namespace osu.Game.Rulesets.Diva.Objects.Drawables
 {
-	public partial class DrawableDivaDoubleHitObject : DrawableDivaHitObject
+    public partial class DrawableDivaDoubleHitObject : DrawableDivaHitObject
     {
-        private const int MAX_COUNT = 2;
+        private const int max_count = 2;
         private List<DivaAction> inputs = new List<DivaAction>();
         private readonly DivaAction doubleAction;
-        private int inputCount = 0;
+        private int inputCount;
 
         public DrawableDivaDoubleHitObject(DivaHitObject hitObject)
             : base(hitObject)
         {
-            doubleAction = (hitObject as DoublePressButton).DoubleAction;
+            doubleAction = ((DoublePressButton)hitObject).DoubleAction;
         }
 
         protected override string GetTextureLocation() => "Doubles/" + base.GetTextureLocation();
@@ -28,14 +28,13 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             if (Judged || inputCount > 2)
                 return false;
 
-
-            if (e.Action == validAction || e.Action == doubleAction)
+            if (e.Action == ValidAction || e.Action == doubleAction)
                 inputCount++;
 
             if (inputCount == 2)
             {
-                pressed = true;
-                validPress = true;
+                Pressed = true;
+                ValidPress = true;
             }
 
             // inputs.Add(action);
@@ -43,8 +42,8 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
             // if(inputCount == 2)
             // {
-            // 	pressed = true;
-            // 	validPress = inputs.Contains(validAction) && inputs.Contains(doubleAction);
+            //  pressed = true;
+            //  validPress = inputs.Contains(validAction) && inputs.Contains(doubleAction);
             // }
 
             return true;
@@ -53,8 +52,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         // public override void OnReleased(KeyBindingReleaseEvent<DivaAction> e)
         // {
         //     // inputs.Remove(action);
-        // 	// inputCount--;
+        //  // inputCount--;
         // }
     }
-
 }

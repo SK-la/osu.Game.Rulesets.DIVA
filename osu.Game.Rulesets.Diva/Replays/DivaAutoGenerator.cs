@@ -28,13 +28,15 @@ namespace osu.Game.Rulesets.Diva.Replays
             Frames.Add(new DivaReplayFrame());
 
             double prevTime = 0d;
+
             for (int i = 0; i < Beatmap.HitObjects.Count; i++)
             {
                 DivaHitObject hitObject = Beatmap.HitObjects[i];
                 var hitTime = hitObject.StartTime + hitObject.HitWindows.WindowFor(HitResult.Perfect);
+
                 if (i > 0)
                 {
-                    Frames.Add(new DivaReplayFrame(Lerp(prevTime, hitTime, 0.1)));
+                    Frames.Add(new DivaReplayFrame(lerp(prevTime, hitTime, 0.1)));
                 }
 
                 if (hitObject is DoublePressButton dButt)
@@ -48,7 +50,6 @@ namespace osu.Game.Rulesets.Diva.Replays
             return Replay;
         }
 
-        double Lerp(double a, double b, double t)
-            => a + (b - a) * t;
+        private double lerp(double a, double b, double t) => a + (b - a) * t;
     }
 }

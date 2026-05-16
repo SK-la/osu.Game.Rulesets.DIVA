@@ -22,6 +22,7 @@ using osu.Game.Overlays.Settings;
 using osu.Game.Beatmaps.Legacy;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics.Rendering;
+using osu.Game.Rulesets.Diva.Difficulty;
 
 namespace osu.Game.Rulesets.Diva
 {
@@ -151,20 +152,20 @@ namespace osu.Game.Rulesets.Diva
 
         public override Drawable CreateIcon() => new DivaRulesetIcon(this);
 
-		public partial class DivaRulesetIcon : Sprite
-		{
-			private readonly Ruleset ruleset;
+        public partial class DivaRulesetIcon : Sprite
+        {
+            private readonly Ruleset ruleset;
 
-			public DivaRulesetIcon(Ruleset ruleset)
-			{
-				this.ruleset = ruleset;
-			}
+            public DivaRulesetIcon(Ruleset ruleset)
+            {
+                this.ruleset = ruleset;
+            }
 
-			[BackgroundDependencyLoader]
-			private void load(IRenderer renderer)
-			{
-				Texture = new TextureStore(renderer, new TextureLoaderStore(ruleset.CreateResourceStore()), false).Get("Textures/diva");
-			}
-		}
+            [BackgroundDependencyLoader]
+            private void load(IRenderer renderer)
+            {
+                Texture = new TextureStore(renderer, new TextureLoaderStore(ruleset.CreateResourceStore()), false).Get("Textures/diva");
+            }
+        }
     }
 }
