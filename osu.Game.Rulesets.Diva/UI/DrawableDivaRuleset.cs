@@ -1,7 +1,8 @@
-﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
+// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
 using System.Collections.Generic;
+using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Input;
 using osu.Game.Beatmaps;
@@ -11,6 +12,7 @@ using osu.Game.Rulesets.Diva.Objects;
 using osu.Game.Rulesets.Diva.Objects.Drawables;
 using osu.Game.Rulesets.Diva.Replays;
 using osu.Game.Rulesets.Mods;
+using osu.Game.Rulesets.Objects;
 using osu.Game.Rulesets.Objects.Drawables;
 using osu.Game.Rulesets.UI;
 
@@ -19,6 +21,8 @@ namespace osu.Game.Rulesets.Diva.UI
     [Cached]
     public partial class DrawableDivaRuleset : DrawableRuleset<DivaHitObject>
     {
+        private DivaKiaiHUD kiaiHUD;
+
         public DrawableDivaRuleset(DivaRuleset ruleset, IBeatmap beatmap, IReadOnlyList<Mod> mods = null)
             : base(ruleset, beatmap, mods)
         {
@@ -27,6 +31,49 @@ namespace osu.Game.Rulesets.Diva.UI
         public override PlayfieldAdjustmentContainer CreatePlayfieldAdjustmentContainer() => new DivaPlayfieldAdjustmentContainer();
 
         protected override Playfield CreatePlayfield() => new DivaPlayfield();
+
+        protected override void LoadComplete()
+        {
+            base.LoadComplete();
+
+            // 创建Kiai HUD
+            kiaiHUD = new DivaKiaiHUD();
+            var kiaiIntervals = extractKiaiIntervals();
+            kiaiHUD.SetKiaiIntervals(kiaiIntervals);
+
+            AddInternal(kiaiHUD);
+        }
+
+        private List<(double StartTime, double EndTime)> extractKiaiIntervals()
+        {
+            var intervals = new List<(double, double)>();
+            var effectPoints = Beatmap.ControlPointInfo.EffectPoints;
+
+            for (int i = 0; i < effectPoints.Count; i++)
+            {
+                var effectPoint = effectPoints[i];
+
+                if (effectPoint.KiaiMode)
+                {
+                    double startTime = effectPoint.Time;
+                    double endTime = Beatmap.HitObjects.LastOrDefault()?.GetEndTime() ?? startTime;
+
+                    // 查找下一个非Kiai效果点作为结束时间
+                    for (int j = i + 1; j < effectPoints.Count; j++)
+                    {
+                        if (!effectPoints[j].KiaiMode)
+                        {
+                            endTime = effectPoints[j].Time;
+                            break;
+                        }
+                    }
+
+                    intervals.Add((startTime, endTime));
+                }
+            }
+
+            return intervals;
+        }
 
         protected override ReplayInputHandler CreateReplayInputHandler(Replay replay) => new DivaFramedReplayInputHandler(replay);
 

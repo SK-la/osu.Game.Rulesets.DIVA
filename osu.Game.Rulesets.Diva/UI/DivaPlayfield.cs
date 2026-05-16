@@ -6,40 +6,31 @@ using System.Collections.Generic;
 using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
-using osu.Framework.Graphics.Pooling;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.Pooling;
 using osu.Framework.Input.Bindings;
-using osu.Game.Skinning;
+using osu.Framework.Input.Events;
 using osu.Game.Audio;
+using osu.Game.Rulesets.Diva.Objects.Drawables;
+using osu.Game.Rulesets.Diva.Scoring;
 using osu.Game.Rulesets.Judgements;
-using osu.Game.Rulesets.UI;
 using osu.Game.Rulesets.Objects;
 using osu.Game.Rulesets.Objects.Drawables;
 using osu.Game.Rulesets.Scoring;
-using osu.Game.Rulesets.Diva.Scoring;
-using osu.Game.Rulesets.Diva.Objects.Drawables;
-using osu.Framework.Input.Events;
+using osu.Game.Rulesets.UI;
+using osu.Game.Skinning;
 
 namespace osu.Game.Rulesets.Diva.UI
 {
     [Cached]
-	public partial class DivaPlayfield : Playfield, IKeyBindingHandler<DivaAction>
+    public partial class DivaPlayfield : Playfield, IKeyBindingHandler<DivaAction>
     {
-        SkinnableSound hitSample;
+        private SkinnableSound hitSample;
         private readonly JudgementContainer<DrawableDivaJudgement> judgementLayer;
 
         private readonly IDictionary<HitResult, DrawablePool<DrawableDivaJudgement>> poolDictionary = new Dictionary<HitResult, DrawablePool<DrawableDivaJudgement>>();
 
         private readonly Container judgementAboveHitObjectLayer;
-        [BackgroundDependencyLoader]
-        private void load()
-        {
-            AddRangeInternal(new Drawable[]
-            {
-                HitObjectContainer,
-                hitSample = new SkinnableSound(new SampleInfo("normal-hitnormal")),
-            });
-        }
 
         public DivaPlayfield()
         {
@@ -56,6 +47,16 @@ namespace osu.Game.Rulesets.Diva.UI
             AddRangeInternal(poolDictionary.Values);
 
             NewResult += onNewResult;
+        }
+
+        [BackgroundDependencyLoader]
+        private void load()
+        {
+            AddRangeInternal(new Drawable[]
+            {
+                HitObjectContainer,
+                hitSample = new SkinnableSound(new SampleInfo("normal-hitnormal"))
+            });
         }
 
         public bool OnPressed(KeyBindingPressEvent<DivaAction> e)
@@ -82,7 +83,7 @@ namespace osu.Game.Rulesets.Diva.UI
             judgementLayer.Add(explosion);
         }
 
-		private partial class DrawableJudgementPool : DrawablePool<DrawableDivaJudgement>
+        private partial class DrawableJudgementPool : DrawablePool<DrawableDivaJudgement>
         {
             private readonly HitResult result;
             private readonly Action<DrawableDivaJudgement> onLoaded;
