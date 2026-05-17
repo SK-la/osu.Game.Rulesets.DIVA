@@ -11,7 +11,7 @@ using osu.Framework.Graphics.Textures;
 using osu.Framework.Input.Bindings;
 using osu.Framework.Input.Events;
 using osu.Game.Audio;
-using osu.Game.Beatmaps.ControlPoints;
+using osu.Game.Rulesets.Diva.Audio;
 using osu.Game.Rulesets.Diva.Configuration;
 using osu.Game.Rulesets.Diva.Judgements;
 using osu.Game.Rulesets.Diva.Objects.Drawables.Pieces;
@@ -118,11 +118,15 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
         public override IEnumerable<HitSampleInfo> GetSamples()
         {
-            return [new HitSampleInfo(HitSampleInfo.HIT_NORMAL, SampleControlPoint.DEFAULT_BANK)];
+            return [CreateHitSample()];
         }
 
-        public override void PlaySamples()
+        protected virtual HitSampleInfo CreateHitSample()
         {
+            if (HitObject is DivaHoldHitObject)
+                return DivaHitSampleInfo.Sweep;
+
+            return DivaHitSampleInfo.Normal;
         }
 
         protected override void CheckForResult(bool userTriggered, double timeOffset)
@@ -184,8 +188,6 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
         public virtual bool OnPressed(KeyBindingPressEvent<DivaAction> e)
         {
-            Samples.Play();
-
             if (Judged)
                 return false;
 

@@ -6,6 +6,7 @@ using System.Linq;
 using osu.Game.Beatmaps;
 using osu.Game.Rulesets.Objects;
 using osu.Game.Rulesets.Objects.Types;
+using osu.Game.Rulesets.Diva.Audio;
 using osu.Game.Rulesets.Diva.Objects;
 using osuTK;
 using System.Threading;
@@ -63,7 +64,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             {
                 yield return new DoublePressButton
                 {
-                    Samples = original.Samples,
+                    Samples = [DivaHitSampleInfo.Normal],
                     StartTime = original.StartTime,
                     Position = pos,
                     ValidAction = validAction(pos, newCombo),
@@ -75,7 +76,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             {
                 yield return new DivaHitObject
                 {
-                    Samples = original.Samples,
+                    Samples = [DivaHitSampleInfo.Normal],
                     StartTime = original.StartTime,
                     Position = pos,
                     ValidAction = validAction(pos, newCombo),

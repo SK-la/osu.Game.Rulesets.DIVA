@@ -10,7 +10,6 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Pooling;
 using osu.Framework.Input.Bindings;
 using osu.Framework.Input.Events;
-using osu.Game.Audio;
 using osu.Game.Rulesets.Diva.Objects.Drawables;
 using osu.Game.Rulesets.Diva.Scoring;
 using osu.Game.Rulesets.Judgements;
@@ -18,14 +17,12 @@ using osu.Game.Rulesets.Objects;
 using osu.Game.Rulesets.Objects.Drawables;
 using osu.Game.Rulesets.Scoring;
 using osu.Game.Rulesets.UI;
-using osu.Game.Skinning;
 
 namespace osu.Game.Rulesets.Diva.UI
 {
     [Cached]
     public partial class DivaPlayfield : Playfield, IKeyBindingHandler<DivaAction>
     {
-        private SkinnableSound hitSample;
         private readonly JudgementContainer<DrawableDivaJudgement> judgementLayer;
 
         private readonly IDictionary<HitResult, DrawablePool<DrawableDivaJudgement>> poolDictionary = new Dictionary<HitResult, DrawablePool<DrawableDivaJudgement>>();
@@ -55,18 +52,10 @@ namespace osu.Game.Rulesets.Diva.UI
         [BackgroundDependencyLoader]
         private void load()
         {
-            AddRangeInternal(new Drawable[]
-            {
-                HitObjectContainer,
-                hitSample = new SkinnableSound(new SampleInfo("hit-normal"))
-            });
+            AddInternal(HitObjectContainer);
         }
 
-        public bool OnPressed(KeyBindingPressEvent<DivaAction> e)
-        {
-            hitSample.Play();
-            return false; // 不拦截事件，让音符对象也能接收
-        }
+        public bool OnPressed(KeyBindingPressEvent<DivaAction> e) => false;
 
         public void OnReleased(KeyBindingReleaseEvent<DivaAction> e)
         {
