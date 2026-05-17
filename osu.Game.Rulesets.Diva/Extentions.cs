@@ -3,7 +3,7 @@ using osuTK;
 
 namespace osu.Game.Rulesets.Diva
 {
-    public static class Extensions
+    public static partial class Extensions
     {
         public static Vector2 CubicInterpolate(Vector2 start, Vector2 end, float blend, float offsetDistance)
         {

@@ -1,0 +1,17 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.cs]
+# C# 代码风格
+csharp_preferred_modifier_order = public,private,protected,internal,static,extern,new,virtual,abstract,sealed,override,readonly,unsafe,volatile,async:suggestion
+
+# 禁用单部分 partial 类的警告（osu! framework 需要所有类都是 partial）
+dotnet_diagnostic.IDE0065.severity = none
+
+# 命名空间匹配文件夹结构
+dotnet_diagnostic.IDE0130.severity = warning

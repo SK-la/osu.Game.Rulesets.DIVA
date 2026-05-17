@@ -5,11 +5,11 @@ using osu.Framework.Localisation;
 
 namespace osu.Game.Rulesets.Diva.Mods
 {
-	public class DivaModKey1 : DivaKeyMod
-	{
-		public override int KeyCount => 1;
-		public override string Name => "One Button";
-		public override string Acronym => "1B";
-		public override LocalisableString Description => @"Play with one button.";
-	}
+    public partial class DivaModKey1 : DivaKeyMod
+    {
+        public override int KeyCount => 1;
+        public override string Name => "One Button";
+        public override string Acronym => "1B";
+        public override LocalisableString Description => @"Play with one button.";
+    }
 }

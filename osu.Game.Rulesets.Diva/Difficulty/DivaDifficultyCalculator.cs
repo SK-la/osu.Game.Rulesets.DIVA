@@ -1,4 +1,4 @@
-﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
+// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
 using System.Collections.Generic;
@@ -11,7 +11,7 @@ using osu.Game.Rulesets.Mods;
 
 namespace osu.Game.Rulesets.Diva.Difficulty
 {
-    public class DivaDifficultyCalculator : DifficultyCalculator
+    public partial class DivaDifficultyCalculator : DifficultyCalculator
     {
         public DivaDifficultyCalculator(IRulesetInfo ruleset, IWorkingBeatmap beatmap)
             : base(ruleset, beatmap)

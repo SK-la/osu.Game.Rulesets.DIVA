@@ -4,7 +4,7 @@ using osu.Game.Rulesets.Scoring;
 
 namespace osu.Game.Rulesets.Diva.Scoring
 {
-    public static class DivaHitJudgementEvaluator
+    public static partial class DivaHitJudgementEvaluator
     {
         public const double PERFECT_WINDOW = 32;
         public const double GREAT_WINDOW = 50;

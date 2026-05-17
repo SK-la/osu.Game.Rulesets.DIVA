@@ -8,7 +8,7 @@ using osu.Game.Rulesets.Scoring;
 
 namespace osu.Game.Rulesets.Diva.Judgements
 {
-    public class DivaJudgementResult : JudgementResult
+    public partial class DivaJudgementResult : JudgementResult
     {
         public enum DivaMehSource
         {

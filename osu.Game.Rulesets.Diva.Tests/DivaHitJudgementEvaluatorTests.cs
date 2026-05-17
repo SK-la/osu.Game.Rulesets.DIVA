@@ -6,7 +6,7 @@ using osu.Game.Rulesets.Scoring;
 namespace osu.Game.Rulesets.Diva.Tests
 {
     [TestFixture]
-    public class DivaHitJudgementEvaluatorTests
+    public partial class DivaHitJudgementEvaluatorTests
     {
         [TestCase(0, HitResult.Perfect)]
         [TestCase(22.5, HitResult.Perfect)]

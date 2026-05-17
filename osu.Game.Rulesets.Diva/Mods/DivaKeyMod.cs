@@ -9,27 +9,27 @@ using osu.Game.Rulesets.Mods;
 
 namespace osu.Game.Rulesets.Diva.Mods
 {
-	public abstract class DivaKeyMod : Mod, IApplicableToBeatmapConverter
-	{
-		public override string Acronym => Name;
-		public abstract int KeyCount { get; }
-		public override ModType Type => ModType.Conversion;
-		public override double ScoreMultiplier => 1;
-		public override bool UserPlayable => true;
+    public abstract partial class DivaKeyMod : Mod, IApplicableToBeatmapConverter
+    {
+        public override string Acronym => Name;
+        public abstract int KeyCount { get; }
+        public override ModType Type => ModType.Conversion;
+        public override double ScoreMultiplier => 1;
+        public override bool UserPlayable => true;
 
-		public void ApplyToBeatmapConverter(IBeatmapConverter beatmapConverter)
-		{
-			var bc = (DivaBeatmapConverter)beatmapConverter;
+        public void ApplyToBeatmapConverter(IBeatmapConverter beatmapConverter)
+        {
+            var bc = (DivaBeatmapConverter)beatmapConverter;
 
-			bc.TargetButtons = KeyCount;
-		}
+            bc.TargetButtons = KeyCount;
+        }
 
-		public override Type[] IncompatibleMods => new[]
-		{
-			typeof(DivaModKey1),
-			typeof(DivaModKey2),
-			typeof(DivaModKey3),
-			typeof(DivaModKey4)
-		}.Except(new[] { GetType() }).ToArray();
-	}
+        public override Type[] IncompatibleMods => new[]
+        {
+            typeof(DivaModKey1),
+            typeof(DivaModKey2),
+            typeof(DivaModKey3),
+            typeof(DivaModKey4)
+        }.Except(new[] { GetType() }).ToArray();
+    }
 }
