@@ -18,7 +18,6 @@ using osu.Game.Rulesets.UI;
 
 namespace osu.Game.Rulesets.Diva.UI
 {
-    [Cached]
     public partial class DrawableDivaRuleset : DrawableRuleset<DivaHitObject>
     {
         private DivaKiaiHUD kiaiHUD;
@@ -28,20 +27,13 @@ namespace osu.Game.Rulesets.Diva.UI
         {
         }
 
-        public override PlayfieldAdjustmentContainer CreatePlayfieldAdjustmentContainer() => new DivaPlayfieldAdjustmentContainer();
-
-        protected override Playfield CreatePlayfield() => new DivaPlayfield();
-
-        protected override void LoadComplete()
+        [BackgroundDependencyLoader]
+        private void load()
         {
-            base.LoadComplete();
-
-            // 创建Kiai HUD
             kiaiHUD = new DivaKiaiHUD();
             var kiaiIntervals = extractKiaiIntervals();
             kiaiHUD.SetKiaiIntervals(kiaiIntervals);
-
-            AddInternal(kiaiHUD);
+            Overlays.Add(kiaiHUD);
         }
 
         private List<(double StartTime, double EndTime)> extractKiaiIntervals()
@@ -75,11 +67,15 @@ namespace osu.Game.Rulesets.Diva.UI
             return intervals;
         }
 
+        public override PlayfieldAdjustmentContainer CreatePlayfieldAdjustmentContainer() => new DivaPlayfieldAdjustmentContainer();
+
+        protected override Playfield CreatePlayfield() => new DivaPlayfield();
+
         protected override ReplayInputHandler CreateReplayInputHandler(Replay replay) => new DivaFramedReplayInputHandler(replay);
 
         public override DrawableHitObject<DivaHitObject> CreateDrawableRepresentation(DivaHitObject h)
         {
-            //not sure how other rulessets do this so going with this for now
+            //not sure how other rulesets do this so going with this for now
             switch (h)
             {
                 case DoublePressButton:
