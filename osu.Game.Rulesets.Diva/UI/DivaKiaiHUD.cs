@@ -25,6 +25,7 @@ namespace osu.Game.Rulesets.Diva.UI
 
         private readonly SpriteText showText;
         private readonly Box backgroundBanner;
+        private readonly Box bottomBanner;
 
         private int currentKiaiIndex = -1;
 
@@ -41,30 +42,50 @@ namespace osu.Game.Rulesets.Diva.UI
             {
                 Anchor = Anchor.TopCentre,
                 Origin = Anchor.TopCentre,
-                RelativeSizeAxes = Axes.X,
-                AutoSizeAxes = Axes.Y,
+                RelativeSizeAxes = Axes.Both,
                 Children = new Drawable[]
                 {
-                    // 黑色横幅背景（贴合屏幕顶部）
-                    backgroundBanner = new Box
+                    // 顶部容器（包含横幅和文本）
+                    new Container
                     {
                         Anchor = Anchor.TopCentre,
                         Origin = Anchor.TopCentre,
                         RelativeSizeAxes = Axes.X,
-                        Height = 50, // 初始高度，会根据文本调整
+                        AutoSizeAxes = Axes.Y,
+                        Children = new Drawable[]
+                        {
+                            // 顶部黑色横幅背景
+                            backgroundBanner = new Box
+                            {
+                                Anchor = Anchor.Centre,
+                                Origin = Anchor.Centre,
+                                RelativeSizeAxes = Axes.X,
+                                Height = 50, // 初始高度，会根据文本调整
+                                Colour = Color4.Black,
+                                Alpha = 0,
+                            },
+                            // 文本（居中于横幅）
+                            showText = new SpriteText
+                            {
+                                Anchor = Anchor.Centre,
+                                Origin = Anchor.Centre,
+                                Font = OsuFont.Default.With(size: 36, weight: FontWeight.Bold),
+                                Colour = technical_zone_color,
+                                Alpha = 0,
+                                Padding = new MarginPadding { Horizontal = 20, Vertical = 10 },
+                            }
+                        }
+                    },
+                    // 底部黑色横幅背景（对称于顶部）
+                    bottomBanner = new Box
+                    {
+                        Anchor = Anchor.BottomCentre,
+                        Origin = Anchor.BottomCentre,
+                        RelativeSizeAxes = Axes.X,
+                        Height = 50, // 与顶部横幅相同的高度
                         Colour = Color4.Black,
                         Alpha = 0,
                     },
-                    // 文本容器
-                    showText = new SpriteText
-                    {
-                        Anchor = Anchor.Centre,
-                        Origin = Anchor.Centre,
-                        Font = OsuFont.Default.With(size: 36, weight: FontWeight.Bold),
-                        Colour = technical_zone_color,
-                        Alpha = 0,
-                        Padding = new MarginPadding { Horizontal = 20, Vertical = 10 },
-                    }
                 }
             };
         }
@@ -126,15 +147,18 @@ namespace osu.Game.Rulesets.Diva.UI
 
                     // 更新背景高度以匹配文本高度
                     backgroundBanner.Height = showText.DrawHeight;
+                    bottomBanner.Height = showText.DrawHeight;
 
                     showText.FadeIn(200);
                     backgroundBanner.FadeIn(200);
+                    bottomBanner.FadeIn(200);
                 }
                 else
                 {
                     // 离开Kiai区间
                     showText.FadeOut(200);
                     backgroundBanner.FadeOut(200);
+                    bottomBanner.FadeOut(200);
                 }
             }
         }
