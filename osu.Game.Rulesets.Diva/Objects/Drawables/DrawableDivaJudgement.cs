@@ -18,6 +18,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
     {
         internal SkinnableLighting Lighting { get; private set; }
         internal Color4 AccentColour { get; private set; }
+        private DrawableHitObject judgedDrawableObject;
 
         // 定义每种判定结果的渐变色（起始色和结束色）- 根据 DIVA 原版风格
         private static readonly Dictionary<HitResult, (Color4 Start, Color4 End)> judgement_gradients = new Dictionary<HitResult, (Color4, Color4)>
@@ -53,6 +54,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         public override void Apply(JudgementResult result, DrawableHitObject judgedObject)
         {
             base.Apply(result, judgedObject);
+            judgedDrawableObject = judgedObject;
 
             // 使用自定义的判定渐变色
             if (judgement_gradients.TryGetValue(result.Type, out var gradient))
@@ -69,10 +71,11 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         {
             base.PrepareForUse();
 
-            Lighting.ResetAnimation();
+            // 重置并应用判定结果到爆炸动画
+            Lighting.Apply(Result, judgedDrawableObject);
             Lighting.SetColourFrom(this, Result);
 
-            if (JudgedHitObject is DivaHitObject divaObject)
+            if (judgedDrawableObject?.HitObject is DivaHitObject divaObject)
             {
                 Position = divaObject.Position;
                 Scale = new Vector2(1);
@@ -83,16 +86,14 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         {
             bool hitLightingEnabled = config.Get<bool>(OsuSetting.HitLighting);
 
-            Lighting.Alpha = 0;
-
-            if (hitLightingEnabled && Lighting.Drawable != null)
+            if (hitLightingEnabled && Result != null && Result.Type != HitResult.Miss)
             {
-                // todo: this animation changes slightly based on new/old legacy skin versions.
-                Lighting.ScaleTo(0.8f).ScaleTo(1.2f, 600, Easing.Out);
-                Lighting.FadeIn(200).Then().Delay(200).FadeOut(1000);
+                // 播放分层爆炸动画
+                Lighting.PlayAnimation();
 
-                // extend the lifetime to cover lighting fade
-                LifetimeEnd = Lighting.LatestTransformEndTime;
+                // 使用内置资源爆炸的真实时长，避免和动画帧数脱节。
+                if (Lighting.AnimationDuration > 0)
+                    LifetimeEnd = Time.Current + Lighting.AnimationDuration;
             }
 
             base.ApplyHitAnimations();
