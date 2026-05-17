@@ -48,7 +48,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
                 Origin = Anchor.Centre,
                 Blending = BlendingParameters.Additive,
                 Depth = float.MaxValue,
-                Alpha = 0
+                Alpha = 1
             });
         }
 
@@ -70,10 +70,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
         protected override void PrepareForUse()
         {
-            base.PrepareForUse();
-
-            // 重置并应用判定结果到爆炸动画
-            Lighting.Apply(Result, judgedDrawableObject);
+            Lighting.ResetAnimation();
             Lighting.SetColourFrom(this, Result);
 
             if (judgedDrawableObject?.HitObject is DivaHitObject divaObject)
@@ -81,23 +78,29 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
                 Position = divaObject.Position;
                 Scale = new Vector2(1);
             }
+
+            base.PrepareForUse();
         }
 
         protected override void ApplyHitAnimations()
         {
             bool hitLightingEnabled = config.Get<bool>(OsuSetting.HitLighting);
+            bool visualBurstsEnabled = judgedDrawableObject is DrawableDivaHitObject drawable && drawable.EnableVisualBursts.Value;
 
-            if (hitLightingEnabled && Result != null && Result.Type != HitResult.Miss)
+            Lighting.Alpha = 1;
+
+            if (hitLightingEnabled && visualBurstsEnabled && Result != null && Result.Type != HitResult.Miss)
             {
-                // 播放分层爆炸动画
-                Lighting.PlayAnimation();
+                Lighting.Animate(Result);
 
-                // 使用内置资源爆炸的真实时长，避免和动画帧数脱节。
-                if (Lighting.AnimationDuration > 0)
-                    LifetimeEnd = Time.Current + Lighting.AnimationDuration;
+                // 与 osu! 一致：在 lighting 容器上用 transform 控制淡出，而非按帧数推算生命周期。
+                Lighting.FadeIn(1).Then().Delay(250).FadeOut(100);
             }
 
             base.ApplyHitAnimations();
+
+            if (Lighting.LatestTransformEndTime > LifetimeEnd)
+                LifetimeEnd = Lighting.LatestTransformEndTime;
         }
 
         protected override Drawable CreateDefaultJudgement(HitResult result) => new DivaJudgementPiece(this, result);
@@ -116,6 +119,9 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
                 if (!string.IsNullOrEmpty(suffix))
                     text = $"{text} {suffix}";
             }
+
+            if (result.Type is HitResult.Miss or HitResult.Meh)
+                return text;
 
             return $"{text} {result.ComboAfterJudgement}";
         }

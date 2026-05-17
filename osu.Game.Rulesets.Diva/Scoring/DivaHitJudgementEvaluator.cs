@@ -1,10 +1,13 @@
+// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
+// See the LICENCE file in the repository root for full licence text.
+
 using System;
 using osu.Game.Rulesets.Diva.Judgements;
 using osu.Game.Rulesets.Scoring;
 
 namespace osu.Game.Rulesets.Diva.Scoring
 {
-    public static partial class DivaHitJudgementEvaluator
+    public static class DivaHitJudgementEvaluator
     {
         public const double PERFECT_WINDOW = 32;
         public const double GREAT_WINDOW = 50;
@@ -25,6 +28,18 @@ namespace osu.Game.Rulesets.Diva.Scoring
 
         public static bool IsWithinOkWindow(double timeOffset) => Math.Abs(timeOffset) <= OK_WINDOW;
 
+        public static bool ShouldMiss(double timeOffset) => timeOffset > OK_WINDOW;
+
+        public static HitResult GetPressResult(bool validPress, double timeOffset)
+        {
+            var timingResult = GetResultFor(timeOffset);
+
+            if (timingResult == HitResult.None)
+                return HitResult.None;
+
+            return validPress ? timingResult : HitResult.Meh;
+        }
+
         public static DivaJudgementResult.DivaMehSource GetMehSourceFor(HitResult result) => result switch
         {
             HitResult.Perfect => DivaJudgementResult.DivaMehSource.PerfectWindowWrongPress,
@@ -35,4 +50,3 @@ namespace osu.Game.Rulesets.Diva.Scoring
         };
     }
 }
-

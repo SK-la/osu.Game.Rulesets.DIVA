@@ -16,12 +16,16 @@ namespace osu.Game.Rulesets.Diva.Configuration
 
             SetDefault(DivaRulesetSettings.UseXBoxButtons, false);
             SetDefault(DivaRulesetSettings.EnableVisualBursts, true);
+            SetDefault(DivaRulesetSettings.NoteSize, 40.0, 24.0, 64.0, 1.0);
+            SetDefault(DivaRulesetSettings.ApproachDuration, 1800.0, 1200.0, 3000.0, 50.0);
         }
     }
 
     public enum DivaRulesetSettings
     {
         UseXBoxButtons,
-        EnableVisualBursts
+        EnableVisualBursts,
+        NoteSize,
+        ApproachDuration,
     }
 }

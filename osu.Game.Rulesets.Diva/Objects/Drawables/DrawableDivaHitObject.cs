@@ -27,11 +27,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
     public partial class DrawableDivaHitObject : DrawableHitObject<DivaHitObject>, IKeyBindingHandler<DivaAction>
     {
         public const float BASE_SIZE = 40;
-
-        // 音符预读时间（毫秒），数值越大音符飞得越慢
-        private const double time_preempt = 1250;
-        private const double time_fadein = 300;
-        private const double time_action = 150;
+        private const double fade_in_ratio = 0.24;
 
         public override bool HandlePositionalInput => false;
 
@@ -40,12 +36,16 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
         protected readonly DivaAction ValidAction;
 
-        protected bool ValidPress;
-        protected bool Pressed;
+        private bool? pendingValidPress;
         private DivaJudgementResult.DivaMehSource pendingMehSource = DivaJudgementResult.DivaMehSource.None;
 
         protected BindableBool UseXb = new BindableBool(false);
-        protected BindableBool EnableVisualBursts = new BindableBool(true);
+        internal BindableBool EnableVisualBursts { get; } = new BindableBool(true);
+        protected BindableDouble NoteSize = new BindableDouble(BASE_SIZE);
+        protected BindableDouble ApproachDuration = new BindableDouble(1250);
+
+        private double timePreempt => ApproachDuration.Value;
+        private double timeFadein => ApproachDuration.Value * fade_in_ratio;
 
         protected override JudgementResult CreateResult(Judgement judgement)
         {
@@ -95,6 +95,10 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         {
             config?.BindWith(DivaRulesetSettings.UseXBoxButtons, UseXb);
             config?.BindWith(DivaRulesetSettings.EnableVisualBursts, EnableVisualBursts);
+            config?.BindWith(DivaRulesetSettings.NoteSize, NoteSize);
+            config?.BindWith(DivaRulesetSettings.ApproachDuration, ApproachDuration);
+
+            NoteSize.BindValueChanged(_ => Size = new Vector2((float)NoteSize.Value), true);
             string textureLocation = GetTextureLocation();
 
             AddInternal(new Sprite
@@ -123,51 +127,34 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
         protected override void CheckForResult(bool userTriggered, double timeOffset)
         {
-            if (Judged)
+            if (!userTriggered)
             {
-                Pressed = false;
-                ValidPress = false;
+                if (DivaHitJudgementEvaluator.ShouldMiss(timeOffset))
+                    ApplyResult((r, _) => r.Type = HitResult.Miss);
+
                 return;
             }
 
-            bool withinOkWindow = DivaHitJudgementEvaluator.IsWithinOkWindow(timeOffset);
+            if (pendingValidPress == null)
+                return;
 
-            // 玩家按键后，立即尝试判定；如果太早，则保留状态，等待进入判定窗口。
-            if (Pressed)
-            {
-                var result = DivaHitJudgementEvaluator.GetResultFor(timeOffset);
+            bool validPress = pendingValidPress.Value;
+            pendingValidPress = null;
 
-                if (result != HitResult.None && timeOffset > -time_action)
-                {
-                    applyPressResult(result);
+            var result = DivaHitJudgementEvaluator.GetPressResult(validPress, timeOffset);
 
-                    Pressed = false;
-                    ValidPress = false;
-                    return;
-                }
-            }
-
-            // 未按键时，或者按键太早/未命中窗口，超出 Ok 后直接 Miss。
-            if (Time.Current > HitObject.StartTime && !withinOkWindow)
-            {
-                if (!Judged)
-                {
-                    ApplyResult((r, _) => r.Type = HitResult.Miss);
-                    Pressed = false;
-                    ValidPress = false;
-                }
-            }
+            if (result != HitResult.None)
+                applyPressResult(result, validPress);
         }
 
-        protected override double InitialLifetimeOffset => time_preempt;
+        protected override double InitialLifetimeOffset => timePreempt;
 
         protected override void UpdateInitialTransforms()
         {
-            this.FadeInFromZero(time_fadein);
-            ApproachHand.ScaleTo(2, time_fadein, Easing.In);
+            this.FadeInFromZero(timeFadein);
+            ApproachHand.ScaleTo(2, timeFadein, Easing.In);
 
-            ApproachHand.RotateTo(360, time_preempt, Easing.In);
-            //this.approachPiece.MoveTo(Vector2.Zero, time_preempt, Easing.None);
+            ApproachHand.RotateTo(360, timePreempt, Easing.In);
         }
 
         protected override void UpdateHitStateTransforms(ArmedState state)
@@ -175,9 +162,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             switch (state)
             {
                 case ArmedState.Hit:
-
-                    if (EnableVisualBursts.Value)
-                        this.ScaleTo(2f, 1500, Easing.OutQuint).FadeOut(1500, Easing.OutQuint).Expire();
+                    this.FadeOut(100).Expire();
                     break;
 
                 case ArmedState.Miss:
@@ -192,7 +177,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
         protected override void Update()
         {
-            var b = (float)((Time.Current - LifetimeStart) / time_preempt);
+            var b = (float)((Time.Current - LifetimeStart) / timePreempt);
             if (b < 1f)
                 ApproachPiece.UpdatePos(b);
         }
@@ -204,53 +189,52 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             if (Judged)
                 return false;
 
-            // 方向键 -> 符号键的映射
-            var directionToSymbol = e.Action switch
-            {
-                DivaAction.Right => DivaAction.Circle,
-                DivaAction.Down => DivaAction.Cross,
-                DivaAction.Up => DivaAction.Triangle,
-                DivaAction.Left => DivaAction.Square,
-                _ => e.Action,
-            };
+            if (!AcceptsInput(e.Action))
+                return false;
 
-            // 符号键 -> 方向键的映射
-            var symbolToDirection = e.Action switch
-            {
-                DivaAction.Circle => DivaAction.Right,
-                DivaAction.Cross => DivaAction.Down,
-                DivaAction.Triangle => DivaAction.Up,
-                DivaAction.Square => DivaAction.Left,
-                _ => e.Action,
-            };
-
-            // 检查是否匹配：直接匹配、方向转符号、符号转方向
-            ValidPress = e.Action == ValidAction ||
-                         directionToSymbol == ValidAction ||
-                         symbolToDirection == ValidAction;
-            Pressed = true;
-
-            double timeOffset = Time.Current - HitObject.StartTime;
-
-            if (DivaHitJudgementEvaluator.IsWithinOkWindow(timeOffset) && timeOffset > -time_action)
-            {
-                applyPressResult(DivaHitJudgementEvaluator.GetResultFor(timeOffset));
-                Pressed = false;
-                ValidPress = false;
-            }
-
-            return true;
+            pendingValidPress = ComputeValidPress(e.Action);
+            return UpdateResult(true);
         }
 
         public virtual void OnReleased(KeyBindingReleaseEvent<DivaAction> e)
         {
         }
 
-        private void applyPressResult(HitResult result)
+        protected virtual bool AcceptsInput(DivaAction action) => true;
+
+        protected virtual bool ComputeValidPress(DivaAction action)
+        {
+            var directionToSymbol = MapDirectionToSymbol(action);
+            var symbolToDirection = MapSymbolToDirection(action);
+
+            return action == ValidAction ||
+                   directionToSymbol == ValidAction ||
+                   symbolToDirection == ValidAction;
+        }
+
+        protected static DivaAction MapDirectionToSymbol(DivaAction action) => action switch
+        {
+            DivaAction.Right => DivaAction.Circle,
+            DivaAction.Down => DivaAction.Cross,
+            DivaAction.Up => DivaAction.Triangle,
+            DivaAction.Left => DivaAction.Square,
+            _ => action,
+        };
+
+        protected static DivaAction MapSymbolToDirection(DivaAction action) => action switch
+        {
+            DivaAction.Circle => DivaAction.Right,
+            DivaAction.Cross => DivaAction.Down,
+            DivaAction.Triangle => DivaAction.Up,
+            DivaAction.Square => DivaAction.Left,
+            _ => action,
+        };
+
+        private void applyPressResult(HitResult result, bool validPress)
         {
             ApplyResult((r, _) =>
             {
-                if (ValidPress)
+                if (validPress)
                 {
                     r.Type = result;
                     return;

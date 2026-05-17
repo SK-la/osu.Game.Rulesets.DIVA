@@ -1,7 +1,9 @@
+// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
+// See the LICENCE file in the repository root for full licence text.
+
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Game.Rulesets.Judgements;
-using osu.Game.Rulesets.Objects.Drawables;
 using osuTK.Graphics;
 
 namespace osu.Game.Rulesets.Diva.Objects.Drawables
@@ -35,11 +37,9 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             updateColour();
         }
 
-        public void Apply(JudgementResult result, DrawableHitObject judgedObject) => explosion.Apply(result, judgedObject);
+        public void Animate(JudgementResult result) => explosion.Animate(result);
 
-        public void PlayAnimation() => explosion.PlayAnimation();
-
-        public double AnimationDuration => explosion.AnimationDuration;
+        public void ResetAnimation() => explosion.ResetAnimation();
 
         private void updateColour()
         {

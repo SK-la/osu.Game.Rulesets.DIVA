@@ -4,11 +4,10 @@
 using System.Collections.Generic;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
+using osu.Framework.Graphics.Animations;
 using osu.Framework.Graphics.Pooling;
-using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.Textures;
 using osu.Game.Rulesets.Judgements;
-using osu.Game.Rulesets.Objects.Drawables;
 using osu.Game.Rulesets.Scoring;
 
 namespace osu.Game.Rulesets.Diva.Objects.Drawables
@@ -16,18 +15,21 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
     /// <summary>
     /// 内置资源驱动的打击爆炸动画，分层播放 normal / great / perfect 三段效果。
     /// </summary>
-    public partial class DefaultHitExplosion : PoolableDrawable
+    public partial class DefaultHitExplosion : PoolableDrawable, IHitExplosion
     {
-        private const double frame_duration = 50;
-        private const string texture_prefix = "HitExplosion/";
+        private const string normal_base_path = "HitExplosion/hit-normal";
+        private const string great_base_path = "HitExplosion/hit-great";
+        private const string perfect_base_path = "HitExplosion/hit-perfect";
+        private const int normal_frame_count = 9;
+        private const int great_frame_count = 9;
+        private const int perfect_frame_count = 10;
+        private const double min_frame_duration = 1000.0 / 30.0;
 
-        private FrameLayer normalLayer;
-        private FrameLayer greatLayer;
-        private FrameLayer perfectLayer;
+        private TextureAnimation normalAnimation = null!;
+        private TextureAnimation greatAnimation = null!;
+        private TextureAnimation perfectAnimation = null!;
 
         private JudgementResult judgementResult;
-
-        public double AnimationDuration { get; private set; }
 
         [BackgroundDependencyLoader]
         private void load(TextureStore textures)
@@ -36,162 +38,94 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             Anchor = Anchor.Centre;
             Origin = Anchor.Centre;
 
-            normalLayer = createLayer(textures, "hit-normal", 9);
-            greatLayer = createLayer(textures, "hit-great", 9);
-            perfectLayer = createLayer(textures, "hit-perfect", 10);
+            normalAnimation = createAnimation(textures, normal_base_path, normal_frame_count, 0);
+            greatAnimation = createAnimation(textures, great_base_path, great_frame_count, 1, defaultAlpha: 0);
+            perfectAnimation = createAnimation(textures, perfect_base_path, perfect_frame_count, 2, defaultAlpha: 0);
 
-            AddInternal(normalLayer.Sprite);
-            AddInternal(greatLayer.Sprite);
-            AddInternal(perfectLayer.Sprite);
-        }
-
-        protected override void PrepareForUse()
-        {
-            base.PrepareForUse();
-
-            resetAnimation();
-            judgementResult = null;
-            AnimationDuration = 0;
-        }
-
-        public void Apply(JudgementResult result, DrawableHitObject judgedObject)
-        {
-            judgementResult = result;
-            AnimationDuration = result?.Type switch
+            AddRangeInternal(new Drawable[]
             {
-                HitResult.Perfect => 10 * frame_duration,
-                HitResult.Great => 9 * frame_duration,
-                HitResult.Good => 9 * frame_duration,
-                HitResult.Ok => 9 * frame_duration,
-                HitResult.Meh => 9 * frame_duration,
-                _ => 0
-            };
+                normalAnimation,
+                greatAnimation,
+                perfectAnimation
+            });
         }
 
-        public void PlayAnimation()
+        private TextureAnimation createAnimation(TextureStore textures, string basePath, int frameCount, int depth, double defaultAlpha = 1)
         {
-            if (judgementResult == null || judgementResult.Type == HitResult.Miss || judgementResult.Type == HitResult.None)
-                return;
-
-            resetAnimation();
-
-            normalLayer.Start(Time.Current);
-
-            switch (judgementResult.Type)
-            {
-                case HitResult.Perfect:
-                    greatLayer.Start(Time.Current);
-                    perfectLayer.Start(Time.Current);
-                    break;
-
-                case HitResult.Great:
-                    greatLayer.Start(Time.Current);
-                    break;
-            }
-        }
-
-        protected override void Update()
-        {
-            base.Update();
-
-            normalLayer.Update(Time.Current);
-            greatLayer.Update(Time.Current);
-            perfectLayer.Update(Time.Current);
-        }
-
-        private FrameLayer createLayer(TextureStore textures, string prefix, int frameCount)
-        {
-            var frames = new List<Texture>(frameCount);
+            var animation = new TextureAnimation();
+            var frames = new List<Texture>();
 
             for (int i = 0; i < frameCount; i++)
             {
-                var texture = textures.Get($"{texture_prefix}{prefix}-{i}");
+                var texture = textures.Get($"{basePath}-{i}");
 
                 if (texture != null)
                     frames.Add(texture);
             }
 
-            return new FrameLayer(frames, frame_duration);
+            animation.Anchor = Anchor.Centre;
+            animation.Origin = Anchor.Centre;
+            animation.Depth = depth;
+            animation.Alpha = (float)defaultAlpha;
+            animation.Loop = false;
+            animation.DefaultFrameLength = min_frame_duration;
+            animation.AddFrames(frames);
+
+            return animation;
         }
 
-        private void resetAnimation()
+        public void ResetAnimation()
         {
-            normalLayer?.Reset();
-            greatLayer?.Reset();
-            perfectLayer?.Reset();
+            resetLayer(normalAnimation, 1);
+            resetLayer(greatAnimation, 0);
+            resetLayer(perfectAnimation, 0);
         }
 
-        private sealed class FrameLayer
+        private static void resetLayer(TextureAnimation animation, float defaultAlpha)
         {
-            private readonly Texture[] frames;
-            private readonly double frameDuration;
+            animation.ClearTransforms();
+            animation.Stop();
+            animation.GotoFrame(0);
+            animation.Alpha = defaultAlpha;
+        }
 
-            private int currentFrame;
-            private bool playing;
-            private double startTime;
+        public void Animate(JudgementResult result)
+        {
+            judgementResult = result;
 
-            public Sprite Sprite { get; }
+            if (judgementResult == null)
+                return;
 
-            public double TotalDuration => frames.Length * frameDuration;
+            if (judgementResult.Type.GetIndexForOrderedDisplay() > HitResult.Good.GetIndexForOrderedDisplay())
+                return;
 
-            public FrameLayer(IReadOnlyList<Texture> frames, double frameDuration)
+            playAnimationForJudgement();
+        }
+
+        private void playAnimationForJudgement()
+        {
+            playAnimation(normalAnimation);
+
+            switch (judgementResult.Type)
             {
-                this.frames = new Texture[frames.Count];
-                for (int i = 0; i < frames.Count; i++)
-                    this.frames[i] = frames[i];
+                case HitResult.Perfect:
+                    playAnimation(greatAnimation);
+                    playAnimation(perfectAnimation);
+                    break;
 
-                this.frameDuration = frameDuration;
-
-                Sprite = new Sprite
-                {
-                    RelativeSizeAxes = Axes.Both,
-                    Anchor = Anchor.Centre,
-                    Origin = Anchor.Centre,
-                    Alpha = 0,
-                };
-
-                if (this.frames.Length > 0)
-                    Sprite.Texture = this.frames[0];
+                case HitResult.Great:
+                    playAnimation(greatAnimation);
+                    break;
             }
+        }
 
-            public void Start(double currentTime)
+        private void playAnimation(TextureAnimation animation)
+        {
+            if (animation.FrameCount > 0)
             {
-                if (frames.Length == 0)
-                    return;
-
-                playing = true;
-                startTime = currentTime;
-                currentFrame = 0;
-                Sprite.Texture = frames[0];
-                Sprite.Alpha = 1;
-            }
-
-            public void Update(double currentTime)
-            {
-                if (!playing || frames.Length == 0)
-                    return;
-
-                currentFrame = (int)((currentTime - startTime) / frameDuration);
-
-                if (currentFrame >= frames.Length)
-                {
-                    playing = false;
-                    currentFrame = frames.Length - 1;
-                    Sprite.Texture = frames[currentFrame];
-                    return;
-                }
-
-                Sprite.Texture = frames[currentFrame];
-            }
-
-            public void Reset()
-            {
-                playing = false;
-                currentFrame = 0;
-                Sprite.Alpha = 0;
-
-                if (frames.Length > 0)
-                    Sprite.Texture = frames[0];
+                animation.Alpha = 1;
+                animation.GotoFrame(0);
+                animation.Play();
             }
         }
     }

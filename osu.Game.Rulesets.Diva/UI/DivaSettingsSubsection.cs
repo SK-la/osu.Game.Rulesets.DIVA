@@ -9,9 +9,9 @@ using osu.Game.Rulesets.Diva.Configuration;
 
 namespace osu.Game.Rulesets.Diva.UI
 {
-	public partial class DivaSettingsSubsection : RulesetSettingsSubsection
+    public partial class DivaSettingsSubsection : RulesetSettingsSubsection
     {
-        protected override LocalisableString Header => new("osu!DIVA");
+        protected override LocalisableString Header => new LocalisableString("osu!DIVA");
 
         public DivaSettingsSubsection(Ruleset ruleset)
             : base(ruleset)
@@ -37,6 +37,16 @@ namespace osu.Game.Rulesets.Diva.UI
                 {
                     LabelText = "Enable visual bursts",
                     Current = config.GetBindable<bool>(DivaRulesetSettings.EnableVisualBursts)
+                },
+                new SettingsSlider<double>
+                {
+                    LabelText = "Note size",
+                    Current = config.GetBindable<double>(DivaRulesetSettings.NoteSize),
+                },
+                new SettingsSlider<double>
+                {
+                    LabelText = "Approach duration (ms)",
+                    Current = config.GetBindable<double>(DivaRulesetSettings.ApproachDuration),
                 }
             };
         }
