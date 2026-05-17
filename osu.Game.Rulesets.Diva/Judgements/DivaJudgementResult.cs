@@ -9,6 +9,12 @@ namespace osu.Game.Rulesets.Diva.Judgements
 {
     public class DivaJudgementResult : JudgementResult
     {
+        public enum DivaMehSource
+        {
+            None,
+            PerfectWindowWrongPress
+        }
+
         /// <summary>
         /// The <see cref="DivaHitObject"/> that was judged.
         /// </summary>
@@ -28,6 +34,16 @@ namespace osu.Game.Rulesets.Diva.Judgements
         /// Invoked when this judgement result is reverted.
         /// </summary>
         public event Action<DivaJudgementResult> Reverted;
+
+        /// <summary>
+        /// Indicates why this result became <see cref="osu.Game.Rulesets.Scoring.HitResult.Meh"/>.
+        /// </summary>
+        public DivaMehSource SpecialMehSource { get; internal set; }
+
+        /// <summary>
+        /// Whether this result is a special Meh that should be treated differently by later systems.
+        /// </summary>
+        public bool IsSpecialMeh => Type == osu.Game.Rulesets.Scoring.HitResult.Meh && SpecialMehSource != DivaMehSource.None;
 
         public DivaJudgementResult(DivaHitObject hitObject, Judgement judgement)
             : base(hitObject, judgement)

@@ -20,7 +20,10 @@ namespace osu.Game.Rulesets.Diva.Scoring
         // Kiai奖励相关字段
         private readonly List<(double StartTime, double EndTime)> kiaiIntervals = new List<(double, double)>();
         private readonly Dictionary<double, HitResult> judgementResults = new Dictionary<double, HitResult>();
+        private readonly Dictionary<double, DivaJudgementResult.DivaMehSource> specialMehResults = new Dictionary<double, DivaJudgementResult.DivaMehSource>();
         private double kiaiBonusAccuracy;
+
+        public IReadOnlyDictionary<double, DivaJudgementResult.DivaMehSource> SpecialMehResults => specialMehResults;
 
         public DivaScoreProcessor()
             : base(new DivaRuleset())
@@ -30,7 +33,7 @@ namespace osu.Game.Rulesets.Diva.Scoring
             // 但这会导致循环调用，所以我们需要一个标志来防止无限递归
         }
 
-        private bool isApplyingBonus = false;
+        private bool isApplyingBonus;
 
         private void onAccuracyChanged()
         {
@@ -95,6 +98,9 @@ namespace osu.Game.Rulesets.Diva.Scoring
 
         private void onJudgementApplied(DivaJudgementResult result)
         {
+            if (result.IsSpecialMeh)
+                specialMehResults[result.HitObject.StartTime] = result.SpecialMehSource;
+
             if (result.Type.AffectsAccuracy())
             {
                 judgementResults[result.HitObject.StartTime] = result.Type;
@@ -105,6 +111,9 @@ namespace osu.Game.Rulesets.Diva.Scoring
 
         private void onJudgementReverted(DivaJudgementResult result)
         {
+            if (result.IsSpecialMeh)
+                specialMehResults.Remove(result.HitObject.StartTime);
+
             if (result.Type.AffectsAccuracy())
             {
                 judgementResults.Remove(result.HitObject.StartTime);

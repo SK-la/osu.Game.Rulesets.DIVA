@@ -41,11 +41,22 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
         protected bool ValidPress;
         protected bool Pressed;
+        private DivaJudgementResult.DivaMehSource pendingMehSource = DivaJudgementResult.DivaMehSource.None;
 
         protected BindableBool UseXb = new BindableBool(false);
         protected BindableBool EnableVisualBursts = new BindableBool(true);
 
-        protected override JudgementResult CreateResult(Judgement judgement) => new DivaJudgementResult(HitObject, judgement);
+        protected override JudgementResult CreateResult(Judgement judgement)
+        {
+            var result = new DivaJudgementResult(HitObject, judgement)
+            {
+                SpecialMehSource = pendingMehSource
+            };
+
+            pendingMehSource = DivaJudgementResult.DivaMehSource.None;
+
+            return result;
+        }
 
         public DrawableDivaHitObject(DivaHitObject hitObject)
             : base(hitObject)
@@ -101,9 +112,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         protected virtual string GetTextureLocation() => UseXb.Value ? "XB/" : "";
 
         public override IEnumerable<HitSampleInfo> GetSamples() =>
-        [
-            new HitSampleInfo(HitSampleInfo.HIT_NORMAL, SampleControlPoint.DEFAULT_BANK)
-        ];
+        [new HitSampleInfo(HitSampleInfo.HIT_NORMAL, SampleControlPoint.DEFAULT_BANK)];
 
         public override void PlaySamples()
         {
@@ -139,7 +148,19 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
                 if (result != HitResult.None && timeOffset > -time_action)
                 {
                     // 根据按键是否正确给予相应判定
-                    ApplyResult((r, s) => r.Type = ValidPress ? result : HitResult.Miss);
+                    ApplyResult((r, _) =>
+                    {
+                        if (ValidPress)
+                        {
+                            r.Type = result;
+                            return;
+                        }
+
+                        if (result == HitResult.Perfect)
+                            pendingMehSource = DivaJudgementResult.DivaMehSource.PerfectWindowWrongPress;
+
+                        r.Type = HitResult.Meh;
+                    });
 
                     // 清理状态
                     Pressed = false;
@@ -154,7 +175,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
                 // 只有在未判定的情况下才应用Miss
                 if (!Judged)
                 {
-                    ApplyResult((r, s) => r.Type = HitResult.Miss);
+                    ApplyResult((r, _) => r.Type = HitResult.Miss);
                     Pressed = false;
                     ValidPress = false;
                 }

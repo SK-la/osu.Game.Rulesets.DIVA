@@ -12,7 +12,7 @@ namespace osu.Game.Rulesets.Diva.Scoring
                 case HitResult.Great:
                 case HitResult.Good:
                 case HitResult.Ok:
-                // case HitResult.Meh: //  TODO: 不允许直接判定 Meh，必须通过特殊条件进行判定，对齐 Wrong 的多类型判定方式。
+                case HitResult.Meh:
                 case HitResult.Miss:
                     return true;
             }

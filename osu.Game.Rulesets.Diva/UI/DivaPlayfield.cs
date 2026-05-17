@@ -44,6 +44,9 @@ namespace osu.Game.Rulesets.Diva.UI
             foreach (var result in Enum.GetValues(typeof(HitResult)).OfType<HitResult>().Where(r => r > HitResult.None && hitWindows.IsHitResultAllowed(r)))
                 poolDictionary.Add(result, new DrawableJudgementPool(result, onJudgementLoaded));
 
+            if (!poolDictionary.ContainsKey(HitResult.Miss))
+                poolDictionary.Add(HitResult.Miss, new DrawableJudgementPool(HitResult.Miss, onJudgementLoaded));
+
             AddRangeInternal(poolDictionary.Values);
 
             NewResult += onNewResult;
@@ -79,7 +82,10 @@ namespace osu.Game.Rulesets.Diva.UI
             if (!judgedObject.DisplayResult)
                 return;
 
-            DrawableDivaJudgement explosion = poolDictionary[result.Type].Get(doj => doj.Apply(result, judgedObject));
+            if (!poolDictionary.TryGetValue(result.Type, out var pool))
+                return;
+
+            DrawableDivaJudgement explosion = pool.Get(doj => doj.Apply(result, judgedObject));
             judgementLayer.Add(explosion);
         }
 
