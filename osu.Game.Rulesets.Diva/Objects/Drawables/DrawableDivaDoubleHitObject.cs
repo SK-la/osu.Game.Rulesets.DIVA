@@ -25,7 +25,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
         public override bool OnPressed(KeyBindingPressEvent<DivaAction> e)
         {
-            this.Samples.Play();
+            Samples.Play();
 
             if (Judged)
                 return false;
@@ -63,11 +63,5 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
             return true;
         }
-
-        // public override void OnReleased(KeyBindingReleaseEvent<DivaAction> e)
-        // {
-        //     // inputs.Remove(action);
-        //  // inputCount--;
-        // }
     }
 }

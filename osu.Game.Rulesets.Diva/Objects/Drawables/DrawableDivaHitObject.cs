@@ -3,23 +3,23 @@
 
 using System.Collections.Generic;
 using osu.Framework.Allocation;
+using osu.Framework.Bindables;
 using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.Textures;
 using osu.Framework.Input.Bindings;
+using osu.Framework.Input.Events;
 using osu.Game.Audio;
 using osu.Game.Beatmaps.ControlPoints;
+using osu.Game.Rulesets.Diva.Configuration;
+using osu.Game.Rulesets.Diva.Judgements;
+using osu.Game.Rulesets.Diva.Objects.Drawables.Pieces;
+using osu.Game.Rulesets.Judgements;
 using osu.Game.Rulesets.Objects.Drawables;
 using osu.Game.Rulesets.Scoring;
-using osu.Game.Rulesets.Diva.Objects.Drawables.Pieces;
 using osuTK;
 using osuTK.Graphics;
-using osu.Game.Rulesets.Diva.Configuration;
-using osu.Framework.Bindables;
-using osu.Game.Rulesets.Diva.Judgements;
-using osu.Game.Rulesets.Judgements;
-using osu.Framework.Input.Events;
 
 namespace osu.Game.Rulesets.Diva.Objects.Drawables
 {
@@ -56,7 +56,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             Position = hitObject.Position;
 
             AddRangeInternal([
-                ApproachHand = new Sprite()
+                ApproachHand = new Sprite
                 {
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
@@ -64,7 +64,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
                     Rotation = 180f,
                     Depth = 1,
                 },
-                ApproachPiece = new ApproachPiece()
+                ApproachPiece = new ApproachPiece
                 {
                     Depth = 0,
                     RelativeSizeAxes = Axes.Both,
@@ -98,9 +98,10 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             ApproachHand.Texture = textures.Get("hand");
         }
 
-        protected virtual string GetTextureLocation() => (UseXb.Value) ? "XB/" : "";
+        protected virtual string GetTextureLocation() => UseXb.Value ? "XB/" : "";
 
-        public override IEnumerable<HitSampleInfo> GetSamples() => [
+        public override IEnumerable<HitSampleInfo> GetSamples() =>
+        [
             new HitSampleInfo(HitSampleInfo.HIT_NORMAL, SampleControlPoint.DEFAULT_BANK)
         ];
 
@@ -108,37 +109,54 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         {
         }
 
-        protected static void ApplyMiss(JudgementResult r, DrawableHitObject s) => r.Type = HitResult.Miss;
-
         protected override void CheckForResult(bool userTriggered, double timeOffset)
         {
+            // 情况1：未触发且超出判定窗口 → 直接Miss
+            if (!userTriggered)
+            {
+                if (!HitObject.HitWindows.CanBeHit(timeOffset))
+                {
+                    ApplyMinResult();
+                }
+
+                return;
+            }
+
+            // 情况2：已判定完成 → 清理状态并退出
             if (Judged)
             {
                 Pressed = false;
+                ValidPress = false;
                 return;
             }
 
-            var result = HitObject.HitWindows.ResultFor(timeOffset);
-
-            // 如果有有效的判定结果且玩家已按下按键
-            if (result != HitResult.None && Pressed && timeOffset > (-time_action))
+            // 情况3：玩家已按下按键，进行判定
+            if (Pressed)
             {
-                if (ValidPress)
-                    ApplyResult((r, s) => r.Type = result);
-                else
-                    ApplyResult(ApplyMiss);
-                Pressed = false;
-                return;
+                var result = HitObject.HitWindows.ResultFor(timeOffset);
+
+                // 如果有有效的判定结果且在允许的时间范围内
+                if (result != HitResult.None && timeOffset > -time_action)
+                {
+                    // 根据按键是否正确给予相应判定
+                    ApplyResult((r, s) => r.Type = ValidPress ? result : HitResult.Miss);
+
+                    // 清理状态
+                    Pressed = false;
+                    ValidPress = false;
+                    return;
+                }
             }
 
-            // 如果已经超出可判定时间窗口且当前时间已超过 note 开始时间，判定为 Miss
-            // 但要确保不是在玩家刚刚按下按键的瞬间
+            // 情况4：超出判定窗口且Note已开始 → Miss（防止漏键）
             if (!HitObject.HitWindows.CanBeHit(timeOffset) && Time.Current > HitObject.StartTime)
             {
-                // 只有在没有按下按键的情况下才判定为 Miss
-                if (!Pressed)
+                // 只有在未判定的情况下才应用Miss
+                if (!Judged)
                 {
-                    ApplyResult(ApplyMiss);
+                    ApplyResult((r, s) => r.Type = HitResult.Miss);
+                    Pressed = false;
+                    ValidPress = false;
                 }
             }
         }
@@ -148,9 +166,9 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         protected override void UpdateInitialTransforms()
         {
             this.FadeInFromZero(time_fadein);
-            this.ApproachHand.ScaleTo(2, time_fadein, Easing.In);
+            ApproachHand.ScaleTo(2, time_fadein, Easing.In);
 
-            this.ApproachHand.RotateTo(360, time_preempt, Easing.In);
+            ApproachHand.RotateTo(360, time_preempt, Easing.In);
             //this.approachPiece.MoveTo(Vector2.Zero, time_preempt, Easing.None);
         }
 
@@ -178,12 +196,12 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         {
             var b = (float)((Time.Current - LifetimeStart) / time_preempt);
             if (b < 1f)
-                this.ApproachPiece.UpdatePos(b);
+                ApproachPiece.UpdatePos(b);
         }
 
         public virtual bool OnPressed(KeyBindingPressEvent<DivaAction> e)
         {
-            this.Samples.Play();
+            Samples.Play();
 
             if (Judged)
                 return false;
