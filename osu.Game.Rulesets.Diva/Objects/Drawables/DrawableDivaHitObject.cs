@@ -15,6 +15,7 @@ using osu.Game.Beatmaps.ControlPoints;
 using osu.Game.Rulesets.Diva.Configuration;
 using osu.Game.Rulesets.Diva.Judgements;
 using osu.Game.Rulesets.Diva.Objects.Drawables.Pieces;
+using osu.Game.Rulesets.Diva.Scoring;
 using osu.Game.Rulesets.Judgements;
 using osu.Game.Rulesets.Objects.Drawables;
 using osu.Game.Rulesets.Scoring;
@@ -25,7 +26,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 {
     public partial class DrawableDivaHitObject : DrawableHitObject<DivaHitObject>, IKeyBindingHandler<DivaAction>
     {
-        public const float BASE_SIZE = 43;
+        public const float BASE_SIZE = 40;
 
         // 音符预读时间（毫秒），数值越大音符飞得越慢
         private const double time_preempt = 1250;
@@ -122,18 +123,6 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
         protected override void CheckForResult(bool userTriggered, double timeOffset)
         {
-            // 情况1：未触发且超出判定窗口 → 直接Miss
-            if (!userTriggered)
-            {
-                if (!HitObject.HitWindows.CanBeHit(timeOffset))
-                {
-                    ApplyMinResult();
-                }
-
-                return;
-            }
-
-            // 情况2：已判定完成 → 清理状态并退出
             if (Judged)
             {
                 Pressed = false;
@@ -141,39 +130,26 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
                 return;
             }
 
-            // 情况3：玩家已按下按键，进行判定
+            bool withinOkWindow = DivaHitJudgementEvaluator.IsWithinOkWindow(timeOffset);
+
+            // 玩家按键后，立即尝试判定；如果太早，则保留状态，等待进入判定窗口。
             if (Pressed)
             {
-                var result = HitObject.HitWindows.ResultFor(timeOffset);
+                var result = DivaHitJudgementEvaluator.GetResultFor(timeOffset);
 
-                // 如果有有效的判定结果且在允许的时间范围内
                 if (result != HitResult.None && timeOffset > -time_action)
                 {
-                    // 根据按键是否正确给予相应判定
-                    ApplyResult((r, _) =>
-                    {
-                        if (ValidPress)
-                        {
-                            r.Type = result;
-                            return;
-                        }
+                    applyPressResult(result);
 
-                        pendingMehSource = getMehSourceFor(result);
-
-                        r.Type = HitResult.Meh;
-                    });
-
-                    // 清理状态
                     Pressed = false;
                     ValidPress = false;
                     return;
                 }
             }
 
-            // 情况4：超出判定窗口且Note已开始 → Miss（防止漏键）
-            if (!HitObject.HitWindows.CanBeHit(timeOffset) && Time.Current > HitObject.StartTime)
+            // 未按键时，或者按键太早/未命中窗口，超出 Ok 后直接 Miss。
+            if (Time.Current > HitObject.StartTime && !withinOkWindow)
             {
-                // 只有在未判定的情况下才应用Miss
                 if (!Judged)
                 {
                     ApplyResult((r, _) => r.Type = HitResult.Miss);
@@ -254,6 +230,15 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
                          symbolToDirection == ValidAction;
             Pressed = true;
 
+            double timeOffset = Time.Current - HitObject.StartTime;
+
+            if (DivaHitJudgementEvaluator.IsWithinOkWindow(timeOffset) && timeOffset > -time_action)
+            {
+                applyPressResult(DivaHitJudgementEvaluator.GetResultFor(timeOffset));
+                Pressed = false;
+                ValidPress = false;
+            }
+
             return true;
         }
 
@@ -261,13 +246,19 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         {
         }
 
-        private static DivaJudgementResult.DivaMehSource getMehSourceFor(HitResult result) => result switch
+        private void applyPressResult(HitResult result)
         {
-            HitResult.Perfect => DivaJudgementResult.DivaMehSource.PerfectWindowWrongPress,
-            HitResult.Great => DivaJudgementResult.DivaMehSource.GreatWindowWrongPress,
-            HitResult.Good => DivaJudgementResult.DivaMehSource.GoodWindowWrongPress,
-            HitResult.Ok => DivaJudgementResult.DivaMehSource.OkWindowWrongPress,
-            _ => DivaJudgementResult.DivaMehSource.None
-        };
+            ApplyResult((r, _) =>
+            {
+                if (ValidPress)
+                {
+                    r.Type = result;
+                    return;
+                }
+
+                pendingMehSource = DivaHitJudgementEvaluator.GetMehSourceFor(result);
+                r.Type = HitResult.Meh;
+            });
+        }
     }
 }

@@ -4,12 +4,6 @@ namespace osu.Game.Rulesets.Diva.Scoring
 {
     public class DivaHitWindows : HitWindows
     {
-        // Fixed windows for this ruleset.
-        private const double perfect_window = 22.5;
-        private const double great_window = 45.0;
-        private const double good_window = 90.0;
-        private const double ok_window = 135.0;
-
         public override bool IsHitResultAllowed(HitResult result)
         {
             switch (result)
@@ -28,10 +22,10 @@ namespace osu.Game.Rulesets.Diva.Scoring
 
         public override double WindowFor(HitResult result) => result switch
         {
-            HitResult.Perfect => perfect_window,
-            HitResult.Great => great_window,
-            HitResult.Good => good_window,
-            HitResult.Ok => ok_window,
+            HitResult.Perfect => DivaHitJudgementEvaluator.PERFECT_WINDOW,
+            HitResult.Great => DivaHitJudgementEvaluator.GREAT_WINDOW,
+            HitResult.Good => DivaHitJudgementEvaluator.GOOD_WINDOW,
+            HitResult.Ok => DivaHitJudgementEvaluator.OK_WINDOW,
             // Meh/Worst is a special penalty result and should not be obtainable from timing alone.
             HitResult.Meh => 0,
             _ => 0

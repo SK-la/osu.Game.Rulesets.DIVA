@@ -126,7 +126,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             HitResult.Great => "fine",
             HitResult.Good => "safe",
             HitResult.Ok => "sad",
-            HitResult.Meh => "worst",
+            HitResult.Meh => "wrong",
             HitResult.Miss => "worst",
             _ => result.ToString().ToLowerInvariant()
         };
