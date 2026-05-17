@@ -7,6 +7,7 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Animations;
 using osu.Framework.Graphics.Pooling;
 using osu.Framework.Graphics.Textures;
+using osu.Game.Rulesets.Diva.Configuration;
 using osu.Game.Rulesets.Judgements;
 using osu.Game.Rulesets.Scoring;
 
@@ -31,12 +32,20 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
         private JudgementResult judgementResult;
 
+        private float hitExplosionAlpha = 1.0f;
+
+        [Resolved(CanBeNull = true)]
+        private DivaRulesetConfigManager config { get; set; }
+
         [BackgroundDependencyLoader]
         private void load(TextureStore textures)
         {
             RelativeSizeAxes = Axes.Both;
             Anchor = Anchor.Centre;
             Origin = Anchor.Centre;
+
+            // 获取配置中的透明度值
+            hitExplosionAlpha = (float)(config?.Get<double>(DivaRulesetSettings.HitExplosionAlpha) ?? 1.0);
 
             normalAnimation = createAnimation(textures, normal_base_path, normal_frame_count, 0);
             greatAnimation = createAnimation(textures, great_base_path, great_frame_count, 1, defaultAlpha: 0);
@@ -76,7 +85,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
         public void ResetAnimation()
         {
-            resetLayer(normalAnimation, 1);
+            resetLayer(normalAnimation, hitExplosionAlpha);
             resetLayer(greatAnimation, 0);
             resetLayer(perfectAnimation, 0);
         }
@@ -123,7 +132,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         {
             if (animation.FrameCount > 0)
             {
-                animation.Alpha = 1;
+                animation.Alpha = hitExplosionAlpha;
                 animation.GotoFrame(0);
                 animation.Play();
             }

@@ -18,6 +18,7 @@ namespace osu.Game.Rulesets.Diva.Configuration
             SetDefault(DivaRulesetSettings.EnableVisualBursts, true);
             SetDefault(DivaRulesetSettings.NoteSize, 40.0, 24.0, 64.0, 1.0);
             SetDefault(DivaRulesetSettings.ApproachDuration, 1800.0, 1200.0, 3000.0, 50.0);
+            SetDefault(DivaRulesetSettings.HitExplosionAlpha, 1.0, 0.0, 1.0, 0.05); // 默认完全不透明，范围0-1，步进0.05
         }
     }
 
@@ -27,5 +28,6 @@ namespace osu.Game.Rulesets.Diva.Configuration
         EnableVisualBursts,
         NoteSize,
         ApproachDuration,
+        HitExplosionAlpha, // 打击光透明度
     }
 }
