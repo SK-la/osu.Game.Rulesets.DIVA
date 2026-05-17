@@ -56,6 +56,7 @@ namespace osu.Game.Rulesets.Diva.Scoring
             // 提取Kiai区间
             kiaiIntervals.Clear();
             judgementResults.Clear();
+            specialMehResults.Clear();
             kiaiBonusAccuracy = 0;
 
             var effectPoints = beatmap.ControlPointInfo.EffectPoints;
@@ -152,7 +153,7 @@ namespace osu.Game.Rulesets.Diva.Scoring
             // 检查最后一个Kiai区间是否全部为Perfect/Great
             if (kiaiIntervals.Count > 0)
             {
-                var lastKiai = kiaiIntervals[kiaiIntervals.Count - 1];
+                var lastKiai = kiaiIntervals[^1];
                 var lastKiaiJudgements = judgementResults.Where(j => j.Key >= lastKiai.StartTime && j.Key <= lastKiai.EndTime).ToList();
 
                 if (lastKiaiJudgements.Count > 0 &&

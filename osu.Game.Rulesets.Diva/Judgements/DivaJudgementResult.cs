@@ -4,6 +4,7 @@
 using System;
 using osu.Game.Rulesets.Diva.Objects;
 using osu.Game.Rulesets.Judgements;
+using osu.Game.Rulesets.Scoring;
 
 namespace osu.Game.Rulesets.Diva.Judgements
 {
@@ -12,7 +13,10 @@ namespace osu.Game.Rulesets.Diva.Judgements
         public enum DivaMehSource
         {
             None,
-            PerfectWindowWrongPress
+            PerfectWindowWrongPress,
+            GreatWindowWrongPress,
+            GoodWindowWrongPress,
+            OkWindowWrongPress
         }
 
         /// <summary>
@@ -43,7 +47,7 @@ namespace osu.Game.Rulesets.Diva.Judgements
         /// <summary>
         /// Whether this result is a special Meh that should be treated differently by later systems.
         /// </summary>
-        public bool IsSpecialMeh => Type == osu.Game.Rulesets.Scoring.HitResult.Meh && SpecialMehSource != DivaMehSource.None;
+        public bool IsSpecialMeh => Type == HitResult.Meh && SpecialMehSource != DivaMehSource.None;
 
         public DivaJudgementResult(DivaHitObject hitObject, Judgement judgement)
             : base(hitObject, judgement)

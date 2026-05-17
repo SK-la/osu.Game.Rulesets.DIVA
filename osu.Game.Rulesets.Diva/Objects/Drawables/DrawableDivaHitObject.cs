@@ -111,8 +111,10 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
         protected virtual string GetTextureLocation() => UseXb.Value ? "XB/" : "";
 
-        public override IEnumerable<HitSampleInfo> GetSamples() =>
-        [new HitSampleInfo(HitSampleInfo.HIT_NORMAL, SampleControlPoint.DEFAULT_BANK)];
+        public override IEnumerable<HitSampleInfo> GetSamples()
+        {
+            return [new HitSampleInfo(HitSampleInfo.HIT_NORMAL, SampleControlPoint.DEFAULT_BANK)];
+        }
 
         public override void PlaySamples()
         {
@@ -156,8 +158,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
                             return;
                         }
 
-                        if (result == HitResult.Perfect)
-                            pendingMehSource = DivaJudgementResult.DivaMehSource.PerfectWindowWrongPress;
+                        pendingMehSource = getMehSourceFor(result);
 
                         r.Type = HitResult.Meh;
                     });
@@ -259,5 +260,14 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         public virtual void OnReleased(KeyBindingReleaseEvent<DivaAction> e)
         {
         }
+
+        private static DivaJudgementResult.DivaMehSource getMehSourceFor(HitResult result) => result switch
+        {
+            HitResult.Perfect => DivaJudgementResult.DivaMehSource.PerfectWindowWrongPress,
+            HitResult.Great => DivaJudgementResult.DivaMehSource.GreatWindowWrongPress,
+            HitResult.Good => DivaJudgementResult.DivaMehSource.GoodWindowWrongPress,
+            HitResult.Ok => DivaJudgementResult.DivaMehSource.OkWindowWrongPress,
+            _ => DivaJudgementResult.DivaMehSource.None
+        };
     }
 }
