@@ -55,7 +55,7 @@ namespace osu.Game.Rulesets.Diva.UI
             AddRangeInternal(new Drawable[]
             {
                 HitObjectContainer,
-                hitSample = new SkinnableSound(new SampleInfo("normal-hitnormal"))
+                hitSample = new SkinnableSound(new SampleInfo("hit-normal"))
             });
         }
 
