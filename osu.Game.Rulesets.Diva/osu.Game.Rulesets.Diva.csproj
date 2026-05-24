@@ -14,7 +14,7 @@
 	</ItemGroup>
 	<ItemGroup>
 <!--		<PackageReference Include="ppy.osu.Framework" Version="2026.513.0"/>-->
-		<PackageReference Include="ppy.osu.Game" Version="2026.505.0"/>
-		<PackageReference Include="ppy.osu.Game.Rulesets.Osu" Version="2026.505.0"/>
+		<PackageReference Include="ppy.osu.Game" Version="2026.522.0" />
+		<PackageReference Include="ppy.osu.Game.Rulesets.Osu" Version="2026.522.0" />
 	</ItemGroup>
 </Project>
