@@ -1,34 +1,69 @@
-#
-# This workflow triggers whenever a new tag is created which begins with v
-# For example, a tag v42.0.1 will create a new version.
-#
-
-name: dotnet-release
+# 发布 tag 格式：yyyy.mdd.0（与 osu! lazer 一致，例如 2026.524.0）
+name: Release DIVA ruleset
 
 on:
-    push:
-        tags:
-            - 'v*'
+  push:
+    tags:
+      - '20*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '发布版本（如 2026.524.0）'
+        required: true
+        type: string
+
+permissions:
+  contents: write
 
 jobs:
-    dotnet-build:
-        name: Generate release assets
-        runs-on: ubuntu-latest
-        permissions:
-            contents: write
-        steps:
-          - name: Checkout code
-            uses: actions/checkout@v3
+  release:
+    name: Build and publish ruleset DLL
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-          - uses: actions/setup-dotnet@v4
-            with:
-                dotnet-version: '9.0.x'
-          - name: Build the release DLL
-            run: dotnet publish -c Release osu.Game.Rulesets.Diva
-          - name: Upload as asset
-            uses: softprops/action-gh-release@v1
-            with:
-                files: osu.Game.Rulesets.Diva/bin/Release/*/osu.Game.Rulesets.Diva.dll
-            env:
-                GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
 
+      - name: Resolve release version
+        id: version
+        shell: pwsh
+        run: |
+          $tag = '${{ github.event.inputs.tag }}'
+          if ([string]::IsNullOrWhiteSpace($tag)) {
+            $tag = '${{ github.ref_name }}'
+          }
+          if ($tag -notmatch '^[0-9]+\.[0-9]+\.[0-9]+$') {
+            Write-Error "Tag must be yyyy.mdd.0 (e.g. 2026.524.0), got: $tag"
+            exit 1
+          }
+          Write-Host "ReleaseVersion=$tag"
+          "value=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+      - name: Publish ruleset
+        run: >
+          dotnet publish osu.Game.Rulesets.Diva/osu.Game.Rulesets.Diva.csproj
+          -c Release
+          -p:OfficialRelease=true
+          -p:ReleaseVersion=${{ steps.version.outputs.value }}
+
+      - name: Upload release asset (tag push)
+        if: github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Release ${{ steps.version.outputs.value }}
+          files: osu.Game.Rulesets.Diva/bin/Release/net8.0/publish/osu.Game.Rulesets.Diva.dll
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload release asset (manual)
+        if: github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.value }}
+          name: Release ${{ steps.version.outputs.value }}
+          generate_release_notes: true
+          files: osu.Game.Rulesets.Diva/bin/Release/net8.0/publish/osu.Game.Rulesets.Diva.dll
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

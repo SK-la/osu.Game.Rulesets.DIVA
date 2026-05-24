@@ -19,10 +19,10 @@ jobs:
           - name: Checkout code
             uses: actions/checkout@v3
 
-          - name: Install .NET Core
+          - name: Install .NET SDK
             uses: actions/setup-dotnet@v4
             with:
-                dotnet-version: '9.0.x'
+                dotnet-version: '8.0.x'
           - name: Build the debug DLL
             id: build
             run: dotnet build

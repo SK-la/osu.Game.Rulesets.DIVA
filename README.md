@@ -2,6 +2,8 @@
 
 A try to recreate Hatsune Miku: Project DIVA as a custom mode for osu!
 
+Compatible with **official osu! lazer** and forks (e.g. Ez2Lazer) — drop the DLL into the `rulesets` folder.
+
 ## Installation
 
 1. Get the dll from:
@@ -18,14 +20,17 @@ A try to recreate Hatsune Miku: Project DIVA as a custom mode for osu!
 
 ### Dependencies
 
-- [.NET 8.0(min) SDK](https://dotnet.microsoft.com/en-us/download/dotnet)
-- [git](https://git-scm.com/downloads) (optional, you can just download this repo manually)
+- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+- Official NuGet: `ppy.osu.Game`, `ppy.osu.Game.Rulesets.Osu` (versions in [Dependencies.props](Dependencies.props))
 
 ### Steps
 
 1. Clone the repo
-`git clone https://github.com/Artemis-chan/osu-DIVA.git`
-2. Get inside **osu-DIVA/osu.Game.Rulesets.Diva** folder
-`cd osu-DIVA/osu.Game.Rulesets.Diva`
-3. Run `dotnet publish -c Release`
-4. The compiled ***osu.Game.Rulesets.Diva.dll*** can be found in **bin/Release/net6.0/publish**
+2. `dotnet publish osu.Game.Rulesets.Diva/osu.Game.Rulesets.Diva.csproj -c Release`
+3. Output: `osu.Game.Rulesets.Diva/bin/Release/net8.0/publish/osu.Game.Rulesets.Diva.dll`
+
+### Release
+
+- **Tag format**: `yyyy.mdd.0` (e.g. `2026.524.0`, same as osu! lazer releases)
+- Push a tag to trigger [release.yml](.github/workflows/release.yml) — the DLL gets proper assembly version metadata
+- [update-deps.yml](.github/workflows/update-deps.yml) **约每 3 天**查询 nuget.org 上 `ppy.osu.Game`、`ppy.osu.Game.Rulesets.Osu` 最新稳定版；有更新则改 [Dependencies.props](Dependencies.props)、开 PR，**无冲突且可合并时自动 squash 合并**（Actions 里可 `workflow_dispatch` 立即跑一次）

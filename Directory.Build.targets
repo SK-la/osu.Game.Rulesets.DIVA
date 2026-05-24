@@ -1,0 +1,9 @@
+<Project>
+  <!-- 发布 tag（yyyy.mdd.0）时写入程序集版本 -->
+  <PropertyGroup Condition="'$(OfficialRelease)' == 'true' and '$(ReleaseVersion)' != ''">
+    <Version>$(ReleaseVersion)</Version>
+    <FileVersion>$(ReleaseVersion)</FileVersion>
+    <AssemblyVersion>$(ReleaseVersion)</AssemblyVersion>
+    <InformationalVersion>$(ReleaseVersion)</InformationalVersion>
+  </PropertyGroup>
+</Project>
