@@ -27,6 +27,10 @@ jobs:
             id: build
             run: dotnet build
             # continue-on-error: true
+          - name: Publish debug ruleset for verification
+            run: dotnet publish osu.Game.Rulesets.Diva/osu.Game.Rulesets.Diva.csproj -c Debug --no-build
+          - name: Verify ruleset assembly loads
+            run: pwsh .github/scripts/Verify-RulesetAssembly.ps1 -AssemblyPath osu.Game.Rulesets.Diva/bin/Debug/net8.0/publish/osu.Game.Rulesets.Diva.dll
           - name: Open an issue if bump fails
             id: issue
             if: steps.build.outcome == 'failure' && github.actor == 'dependabot'

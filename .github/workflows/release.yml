@@ -48,6 +48,9 @@ jobs:
           -p:OfficialRelease=true
           -p:ReleaseVersion=${{ steps.version.outputs.value }}
 
+      - name: Verify ruleset assembly loads
+        run: pwsh .github/scripts/Verify-RulesetAssembly.ps1 -AssemblyPath osu.Game.Rulesets.Diva/bin/Release/net8.0/publish/osu.Game.Rulesets.Diva.dll
+
       - name: Upload release asset (tag push)
         if: github.event_name == 'push'
         uses: softprops/action-gh-release@v2

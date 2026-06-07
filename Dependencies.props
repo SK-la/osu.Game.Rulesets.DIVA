@@ -1,7 +1,8 @@
-<!-- 通用 osu! 规则集：依赖官方 ppy.* NuGet，版本由此文件维护 -->
+﻿<!-- 通用 osu! 规则集：依赖官方 ppy.* NuGet，版本由此文件维护 -->
 <Project>
   <PropertyGroup Label="Dependencies">
     <PpyOsuGameVersion>2026.605.0</PpyOsuGameVersion>
     <PpyOsuGameRulesetsOsuVersion>2026.605.0</PpyOsuGameRulesetsOsuVersion>
+    <PpyOsuFrameworkSourceGenerationVersion>2025.1121.1</PpyOsuFrameworkSourceGenerationVersion>
   </PropertyGroup>
 </Project>

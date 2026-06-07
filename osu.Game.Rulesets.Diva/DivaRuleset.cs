@@ -35,6 +35,8 @@ namespace osu.Game.Rulesets.Diva
 
         public override string Description => "osu!DIVA";
 
+        public override string RulesetAPIVersionSupported => CURRENT_RULESET_API_VERSION;
+
         public override DrawableRuleset CreateDrawableRulesetWith(IBeatmap beatmap, IReadOnlyList<Mod> mods = null) => new DrawableDivaRuleset(this, beatmap, mods);
 
         public override ScoreProcessor CreateScoreProcessor() => new DivaScoreProcessor();
