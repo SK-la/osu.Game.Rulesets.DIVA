@@ -1,56 +1,41 @@
 #
 # This workflow triggers at every commit push that changes code.
-# This is useful for keeping Dependabot from pushing broken dependencies.
 #
 
 name: dotnet-debug
 
 on:
-    push:
-        paths:
-            - '**/*.cs'
-            - '**/*.csproj'
+  push:
+    paths:
+      - '**/*.cs'
+      - '**/*.csproj'
 
 jobs:
-    dotnet-test:
-        name: Check if the project can still build
-        runs-on: ubuntu-latest
-        steps:
-          - name: Checkout code
-            uses: actions/checkout@v3
+  dotnet-test:
+    name: Check if the project can still build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-          - name: Install .NET SDK
-            uses: actions/setup-dotnet@v4
-            with:
-                dotnet-version: '8.0.x'
-          - name: Build the debug DLL
-            id: build
-            run: dotnet build
-            # continue-on-error: true
-          - name: Publish debug ruleset for verification
-            run: dotnet publish osu.Game.Rulesets.Diva/osu.Game.Rulesets.Diva.csproj -c Debug --no-build
-          - name: Verify ruleset assembly loads
-            run: pwsh .github/scripts/Verify-RulesetAssembly.ps1 -AssemblyPath osu.Game.Rulesets.Diva/bin/Debug/net8.0/publish/osu.Game.Rulesets.Diva.dll
-          - name: Open an issue if bump fails
-            id: issue
-            if: steps.build.outcome == 'failure' && github.actor == 'dependabot'
-            uses: rishabhgupta/git-action-issue@v2
-            with:
-                token: ${{ secrets.GITHUB_TOKEN }}
-                title: Incompatibility with latest version of osu!
-                body: |
-                    Dependabot tried to build this project against the latest version of osu!, but failed with the following result:
-                    ```
-                    ${{join(steps.build.outputs.*, '\n')}}
-                    ```
-                run: |
-                    echo "Opened ${{ steps.issue.outputs.issue }}"
-                    exit 1
-          - name: Give unit tests a spin
-            run: dotnet test --no-build
-          - name: Upload artifact for further testing
-            uses: actions/upload-artifact@v4
-            with:
-                name: release
-                path: osu.Game.Rulesets.Diva/bin
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
 
+      - name: Build with dependencies for verification
+        id: build
+        run: dotnet build -p:RulesetVerifyBuild=true
+
+      - name: Verify ruleset assembly loads
+        run: pwsh .github/scripts/Verify-RulesetAssembly.ps1 -AssemblyPath osu.Game.Rulesets.Diva/bin/Debug/net8.0/osu.Game.Rulesets.Diva.dll
+
+      - name: Publish single-DLL ruleset artifact
+        run: dotnet publish osu.Game.Rulesets.Diva/osu.Game.Rulesets.Diva.csproj -c Debug --no-build
+
+      - name: Give unit tests a spin
+        run: dotnet test --no-build
+
+      - name: Upload artifact for further testing
+        uses: actions/upload-artifact@v4
+        with:
+          name: release
+          path: osu.Game.Rulesets.Diva/bin/Debug/net8.0/publish/osu.Game.Rulesets.Diva.dll

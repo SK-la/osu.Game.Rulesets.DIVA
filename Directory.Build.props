@@ -3,6 +3,9 @@
     <LangVersion>12.0</LangVersion>
     <Nullable>enable</Nullable>
     <Version Condition="'$(Version)' == ''">0.0.0</Version>
+    <!-- 外部规则集 publish 只保留自身 DLL；RulesetVerifyBuild 时复制依赖供 CI 反射校验 -->
+    <CopyLocalLockFileAssemblies Condition="'$(RulesetVerifyBuild)' == 'true'">true</CopyLocalLockFileAssemblies>
+    <CopyLocalLockFileAssemblies Condition="'$(RulesetVerifyBuild)' != 'true'">false</CopyLocalLockFileAssemblies>
   </PropertyGroup>
   <Import Project="$(MSBuildThisFileDirectory)Dependencies.props" />
 </Project>

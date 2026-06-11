@@ -3,7 +3,6 @@ name: Update osu! NuGet dependencies
 
 on:
   schedule:
-    # 每天触发一次，job 内按 UTC 天数 % 3 决定是否真正执行（约每 3 天一次）
     - cron: '0 6 * * *'
   workflow_dispatch:
 
@@ -28,12 +27,11 @@ jobs:
 
           $daysSinceEpoch = [int]([DateTime]::UtcNow - [DateTime]'1970-01-01').TotalDays
           if ($daysSinceEpoch % 3 -ne 0) {
-            Write-Host "Skipping: scheduled run only every 3 days (UTC day $daysSinceEpoch, mod 3 = $($daysSinceEpoch % 3))."
+            Write-Host "Skipping: scheduled run only every 3 days (UTC day $daysSinceEpoch)."
             'run=false' | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
             exit 0
           }
 
-          Write-Host "Running scheduled dependency check (UTC day $daysSinceEpoch)."
           'run=true' | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
       - uses: actions/checkout@v4
@@ -81,26 +79,22 @@ jobs:
         shell: pwsh
         run: |
           $pr = '${{ steps.cpr.outputs.pull-request-number }}'
-          Write-Host "Waiting for PR #$pr to become mergeable..."
           Start-Sleep -Seconds 8
 
           foreach ($attempt in 1..24) {
             $info = gh pr view $pr --json mergeable,mergeStateStatus | ConvertFrom-Json
 
             if ($info.mergeable -eq 'CONFLICTING') {
-              Write-Host "PR #$pr has merge conflicts; leaving open for manual resolution."
+              Write-Host "PR #$pr has merge conflicts; leaving open."
               exit 0
             }
 
             if ($info.mergeable -eq 'MERGEABLE' -and $info.mergeStateStatus -eq 'CLEAN') {
               gh pr merge $pr --squash --delete-branch
-              Write-Host "Merged PR #$pr (squash)."
               exit 0
             }
 
-            Write-Host "Attempt ${attempt}: mergeable=$($info.mergeable) state=$($info.mergeStateStatus)"
             Start-Sleep -Seconds 10
           }
 
-          Write-Host "PR not immediately mergeable; enabling auto-merge."
           gh pr merge $pr --squash --delete-branch --auto

@@ -41,15 +41,21 @@ jobs:
           Write-Host "ReleaseVersion=$tag"
           "value=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
+      - name: Verify ruleset assembly loads
+        run: >
+          dotnet build osu.Game.Rulesets.Diva/osu.Game.Rulesets.Diva.csproj
+          -c Release
+          -p:RulesetVerifyBuild=true
+          &&
+          pwsh .github/scripts/Verify-RulesetAssembly.ps1
+          -AssemblyPath osu.Game.Rulesets.Diva/bin/Release/net8.0/osu.Game.Rulesets.Diva.dll
+
       - name: Publish ruleset
         run: >
           dotnet publish osu.Game.Rulesets.Diva/osu.Game.Rulesets.Diva.csproj
           -c Release
           -p:OfficialRelease=true
           -p:ReleaseVersion=${{ steps.version.outputs.value }}
-
-      - name: Verify ruleset assembly loads
-        run: pwsh .github/scripts/Verify-RulesetAssembly.ps1 -AssemblyPath osu.Game.Rulesets.Diva/bin/Release/net8.0/publish/osu.Game.Rulesets.Diva.dll
 
       - name: Upload release asset (tag push)
         if: github.event_name == 'push'

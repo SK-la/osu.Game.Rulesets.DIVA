@@ -1,4 +1,4 @@
-﻿<!-- 通用 osu! 规则集：依赖官方 ppy.* NuGet，版本由此文件维护 -->
+﻿<!-- 外部规则集：编译期引用官方 ppy.* NuGet，运行时由客户端已加载程序集解析 -->
 <Project>
   <PropertyGroup Label="Dependencies">
     <PpyOsuGameVersion>2026.605.0</PpyOsuGameVersion>

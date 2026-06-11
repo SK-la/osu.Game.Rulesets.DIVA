@@ -1,9 +1,17 @@
 <Project>
-  <!-- 发布 tag（yyyy.mdd.0）时写入程序集版本 -->
+  <!-- 发布 tag 时写入程序集版本 -->
   <PropertyGroup Condition="'$(OfficialRelease)' == 'true' and '$(ReleaseVersion)' != ''">
     <Version>$(ReleaseVersion)</Version>
     <FileVersion>$(ReleaseVersion)</FileVersion>
     <AssemblyVersion>$(ReleaseVersion)</AssemblyVersion>
     <InformationalVersion>$(ReleaseVersion)</InformationalVersion>
   </PropertyGroup>
+
+  <!-- 外部规则集 publish 只保留自身 DLL，避免用户误拷整包依赖进 rulesets/ -->
+  <Target Name="FilterRulesetPublishOutput" AfterTargets="ComputeFilesToPublish" Condition="'$(RulesetVerifyBuild)' != 'true'">
+    <ItemGroup>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)"
+                             Condition="'%(Filename)' != '$(AssemblyName)'" />
+    </ItemGroup>
+  </Target>
 </Project>
