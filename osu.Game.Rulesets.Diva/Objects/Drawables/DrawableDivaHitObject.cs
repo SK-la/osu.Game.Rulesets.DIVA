@@ -91,7 +91,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         }
 
         [BackgroundDependencyLoader(true)]
-        private void load(TextureStore textures, DivaRulesetConfigManager config)
+        private void load(TextureStore textures, DivaRulesetConfigManager? config)
         {
             config?.BindWith(DivaRulesetSettings.UseXBoxButtons, UseXb);
             config?.BindWith(DivaRulesetSettings.EnableVisualBursts, EnableVisualBursts);

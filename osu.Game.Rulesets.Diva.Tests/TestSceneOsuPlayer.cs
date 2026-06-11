@@ -9,7 +9,6 @@ namespace osu.Game.Rulesets.Diva.Tests
     [TestFixture]
     public partial class TestSceneOsuPlayer : PlayerTestScene
     {
-        protected override Ruleset CreatePlayerRuleset()
-            => new DivaRuleset();
+        protected override Ruleset CreatePlayerRuleset() => new DivaRuleset();
     }
 }

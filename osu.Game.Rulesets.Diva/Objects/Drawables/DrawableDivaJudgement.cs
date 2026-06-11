@@ -107,7 +107,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
         protected override Drawable CreateDefaultJudgement(HitResult result) => new DivaJudgementPiece(this, result);
 
-        internal string GetJudgementDisplayText(JudgementResult result)
+        internal string GetJudgementDisplayText(JudgementResult? result)
         {
             if (result == null)
                 return string.Empty;
