@@ -17,9 +17,9 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 {
     public partial class DrawableDivaJudgement : DrawableJudgement
     {
-        internal SkinnableLighting Lighting { get; private set; }
+        internal SkinnableLighting Lighting { get; private set; } = null!;
         internal Color4 AccentColour { get; private set; }
-        private DrawableHitObject judgedDrawableObject;
+        private DrawableHitObject? judgedDrawableObject;
 
         // 定义每种判定结果的渐变色（起始色和结束色）- 根据 DIVA 原版风格
         private static readonly Dictionary<HitResult, (Color4 Start, Color4 End)> judgement_gradients = new Dictionary<HitResult, (Color4, Color4)>
@@ -37,7 +37,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         };
 
         [Resolved]
-        private OsuConfigManager config { get; set; }
+        private OsuConfigManager config { get; set; } = null!;
 
         [BackgroundDependencyLoader]
         private void load()
@@ -52,7 +52,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             });
         }
 
-        public override void Apply(JudgementResult result, DrawableHitObject judgedObject)
+        public override void Apply(JudgementResult result, DrawableHitObject? judgedObject)
         {
             base.Apply(result, judgedObject);
             judgedDrawableObject = judgedObject;
@@ -71,7 +71,9 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         protected override void PrepareForUse()
         {
             Lighting.ResetAnimation();
-            Lighting.SetColourFrom(this, Result);
+
+            if (Result != null)
+                Lighting.SetColourFrom(this, Result);
 
             if (judgedDrawableObject?.HitObject is DivaHitObject divaObject)
             {
@@ -85,7 +87,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         protected override void ApplyHitAnimations()
         {
             bool hitLightingEnabled = config.Get<bool>(OsuSetting.HitLighting);
-            bool visualBurstsEnabled = judgedDrawableObject is DrawableDivaHitObject drawable && drawable.EnableVisualBursts.Value;
+            bool visualBurstsEnabled = judgedDrawableObject is DrawableDivaHitObject { EnableVisualBursts.Value: true };
 
             Lighting.Alpha = 1;
 
@@ -174,12 +176,12 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
                     };
                 }
 
-                JudgementText.Text = parent.GetJudgementDisplayText(parent.Result);
+                JudgementText.Text = parent.GetJudgementDisplayText(parent.Result!);
             }
 
             public override void PlayAnimation()
             {
-                JudgementText.Text = parent.GetJudgementDisplayText(parent.Result);
+                JudgementText.Text = parent.GetJudgementDisplayText(parent.Result!);
                 base.PlayAnimation();
             }
         }

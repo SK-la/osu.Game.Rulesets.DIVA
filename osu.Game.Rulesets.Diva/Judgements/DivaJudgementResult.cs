@@ -32,12 +32,12 @@ namespace osu.Game.Rulesets.Diva.Judgements
         /// <summary>
         /// Invoked when this judgement result is applied.
         /// </summary>
-        public event Action<DivaJudgementResult> Applied;
+        public event Action<DivaJudgementResult>? Applied;
 
         /// <summary>
         /// Invoked when this judgement result is reverted.
         /// </summary>
-        public event Action<DivaJudgementResult> Reverted;
+        public event Action<DivaJudgementResult>? Reverted;
 
         /// <summary>
         /// Indicates why this result became <see cref="osu.Game.Rulesets.Scoring.HitResult.Meh"/>.

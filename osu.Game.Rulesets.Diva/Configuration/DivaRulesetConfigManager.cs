@@ -5,7 +5,7 @@ namespace osu.Game.Rulesets.Diva.Configuration
 {
     public partial class DivaRulesetConfigManager : RulesetConfigManager<DivaRulesetSettings>
     {
-        public DivaRulesetConfigManager(SettingsStore settings, RulesetInfo ruleset, int? variant = null)
+        public DivaRulesetConfigManager(SettingsStore? settings, RulesetInfo ruleset, int? variant = null)
             : base(settings, ruleset, variant)
         {
         }

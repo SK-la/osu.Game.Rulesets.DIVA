@@ -20,9 +20,9 @@ namespace osu.Game.Rulesets.Diva.UI
 {
     public partial class DrawableDivaRuleset : DrawableRuleset<DivaHitObject>
     {
-        private DivaKiaiHUD kiaiHUD;
+        private DivaKiaiHUD kiaiHUD = null!;
 
-        public DrawableDivaRuleset(DivaRuleset ruleset, IBeatmap beatmap, IReadOnlyList<Mod> mods = null)
+        public DrawableDivaRuleset(DivaRuleset ruleset, IBeatmap beatmap, IReadOnlyList<Mod>? mods = null)
             : base(ruleset, beatmap, mods)
         {
         }
@@ -86,6 +86,6 @@ namespace osu.Game.Rulesets.Diva.UI
             }
         }
 
-        protected override PassThroughInputManager CreateInputManager() => new DivaInputManager(Ruleset?.RulesetInfo);
+        protected override PassThroughInputManager CreateInputManager() => new DivaInputManager(Ruleset.RulesetInfo);
     }
 }

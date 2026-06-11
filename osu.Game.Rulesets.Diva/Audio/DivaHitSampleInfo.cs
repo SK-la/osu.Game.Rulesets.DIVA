@@ -30,10 +30,10 @@ namespace osu.Game.Rulesets.Diva.Audio
 
         public static DivaHitSampleInfo Sweep { get; } = new DivaHitSampleInfo(SWEEP_LOOKUP);
 
-        public bool Equals(DivaHitSampleInfo other)
+        public bool Equals(DivaHitSampleInfo? other)
             => other != null && lookupNames[0] == other.lookupNames[0];
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
             => obj is DivaHitSampleInfo other && Equals(other);
 
         public override int GetHashCode() => lookupNames[0].GetHashCode();

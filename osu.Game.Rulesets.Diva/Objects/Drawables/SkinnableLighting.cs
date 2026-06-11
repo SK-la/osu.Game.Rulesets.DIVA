@@ -12,8 +12,8 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
     {
         private readonly DefaultHitExplosion explosion = new DefaultHitExplosion();
 
-        private DrawableDivaJudgement targetObject;
-        private JudgementResult targetResult;
+        private DrawableDivaJudgement? targetObject;
+        private JudgementResult? targetResult;
 
         public SkinnableLighting()
         {
@@ -29,7 +29,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         /// </summary>
         /// <param name="targetObject">The <see cref="DrawableDivaJudgement"/> that's been judged.</param>
         /// <param name="targetResult">The <see cref="JudgementResult"/> that <paramref name="targetObject"/> was judged with.</param>
-        public void SetColourFrom(DrawableDivaJudgement targetObject, JudgementResult targetResult)
+        public void SetColourFrom(DrawableDivaJudgement targetObject, JudgementResult? targetResult)
         {
             this.targetObject = targetObject;
             this.targetResult = targetResult;

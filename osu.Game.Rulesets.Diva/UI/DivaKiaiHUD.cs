@@ -30,7 +30,7 @@ namespace osu.Game.Rulesets.Diva.UI
         private int currentKiaiIndex = -1;
 
         [Resolved]
-        private IGameplayClock gameplayClock { get; set; }
+        private IGameplayClock gameplayClock { get; set; } = null!;
 
         public DivaKiaiHUD()
         {

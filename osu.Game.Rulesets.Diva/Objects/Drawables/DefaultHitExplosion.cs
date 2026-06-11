@@ -30,12 +30,12 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         private TextureAnimation greatAnimation = null!;
         private TextureAnimation perfectAnimation = null!;
 
-        private JudgementResult judgementResult;
+        private JudgementResult? judgementResult;
 
         private float hitExplosionAlpha = 1.0f;
 
         [Resolved(CanBeNull = true)]
-        private DivaRulesetConfigManager config { get; set; }
+        private DivaRulesetConfigManager? config { get; set; }
 
         [BackgroundDependencyLoader]
         private void load(TextureStore textures)
@@ -115,7 +115,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         {
             playAnimation(normalAnimation);
 
-            switch (judgementResult.Type)
+            switch (judgementResult!.Type)
             {
                 case HitResult.Perfect:
                     playAnimation(greatAnimation);

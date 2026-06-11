@@ -37,7 +37,7 @@ namespace osu.Game.Rulesets.Diva
 
         public override string RulesetAPIVersionSupported => CURRENT_RULESET_API_VERSION;
 
-        public override DrawableRuleset CreateDrawableRulesetWith(IBeatmap beatmap, IReadOnlyList<Mod> mods = null) => new DrawableDivaRuleset(this, beatmap, mods);
+        public override DrawableRuleset CreateDrawableRulesetWith(IBeatmap beatmap, IReadOnlyList<Mod>? mods = null) => new DrawableDivaRuleset(this, beatmap, mods);
 
         public override ScoreProcessor CreateScoreProcessor() => new DivaScoreProcessor();
 
@@ -49,7 +49,7 @@ namespace osu.Game.Rulesets.Diva
 
         public override RulesetSettingsSubsection CreateSettings() => new DivaSettingsSubsection(this);
 
-        public override IRulesetConfigManager CreateConfig(SettingsStore settings) => new DivaRulesetConfigManager(settings, RulesetInfo);
+        public override IRulesetConfigManager CreateConfig(SettingsStore? settings) => new DivaRulesetConfigManager(settings, RulesetInfo);
 
         public override IEnumerable<Mod> ConvertFromLegacyMods(LegacyMods mods)
         {
