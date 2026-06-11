@@ -3,12 +3,14 @@
 
 using osu.Framework.Graphics.Sprites;
 using osuTK;
+
 namespace osu.Game.Rulesets.Diva.Objects.Drawables.Pieces
 {
-	public partial class ApproachPiece : Sprite
+    public partial class ApproachPiece : Sprite
     {
         private const float slerp_distance = 150;
         public Vector2 StartPos;
+
         public void UpdatePos(float blend)
         {
             Position = Extensions.CubicInterpolate(StartPos, Vector2.Zero, blend, slerp_distance);

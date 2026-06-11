@@ -31,11 +31,11 @@ namespace osu.Game.Rulesets.Diva.UI
 
         public DivaPlayfield()
         {
-            InternalChildren = new Drawable[]
-            {
+            InternalChildren =
+            [
                 judgementLayer = new JudgementContainer<DrawableDivaJudgement> { RelativeSizeAxes = Axes.Both },
                 judgementAboveHitObjectLayer = new Container { RelativeSizeAxes = Axes.Both }
-            };
+            ];
 
             var hitWindows = new DivaHitWindows();
             foreach (var result in Enum.GetValues(typeof(HitResult)).OfType<HitResult>().Where(r => r > HitResult.None && hitWindows.IsHitResultAllowed(r)))

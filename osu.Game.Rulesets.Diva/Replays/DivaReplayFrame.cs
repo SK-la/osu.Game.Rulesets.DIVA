@@ -14,7 +14,8 @@ namespace osu.Game.Rulesets.Diva.Replays
         {
         }
 
-        public DivaReplayFrame(double time, params DivaAction[] actions) : base(time)
+        public DivaReplayFrame(double time, params DivaAction[] actions)
+            : base(time)
         {
             Actions.AddRange(actions);
         }

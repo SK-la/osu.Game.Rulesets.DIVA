@@ -6,12 +6,12 @@ using osu.Game.Tests.Visual;
 
 namespace osu.Game.Rulesets.Diva.Tests
 {
-	public partial class TestSceneOsuGame : OsuTestScene
+    public partial class TestSceneOsuGame : OsuTestScene
     {
         [BackgroundDependencyLoader]
         private void load()
         {
-			AddGame(new OsuGame());
-		}
+            AddGame(new OsuGame());
+        }
     }
 }
