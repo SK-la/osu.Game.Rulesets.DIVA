@@ -48,10 +48,10 @@ namespace osu.Game.Rulesets.Diva.UI
                     LabelText = "Approach duration (ms)",
                     Current = config.GetBindable<double>(DivaRulesetSettings.ApproachDuration),
                 },
-                new SettingsSlider<float>
+                new SettingsSlider<double>
                 {
                     LabelText = "Hit Explosion alpha",
-                    Current = config.GetBindable<float>(DivaRulesetSettings.HitExplosionAlpha),
+                    Current = config.GetBindable<double>(DivaRulesetSettings.HitExplosionAlpha),
                 }
             };
         }
