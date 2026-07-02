@@ -97,7 +97,7 @@ namespace osu.Game.Rulesets.Diva.UI
                 // just a placeholder to initialise the correct drawable hierarchy for this pool.
                 judgement.Apply(new JudgementResult(new HitObject(), new Judgement()) { Type = result }, null);
 
-                onLoaded?.Invoke(judgement);
+                onLoaded.Invoke(judgement);
 
                 return judgement;
             }
