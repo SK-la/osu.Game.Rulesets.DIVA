@@ -11,9 +11,9 @@
     <EmbeddedResource Include="Resources\**" />
   </ItemGroup>
   <ItemGroup Label="Package References">
-    <PackageReference Include="ppy.osu.Game" Version="[$(PpyOsuGameVersion)]" />
-    <PackageReference Include="ppy.osu.Game.Rulesets.Osu" Version="[$(PpyOsuGameRulesetsOsuVersion)]" />
-    <PackageReference Include="ppy.osu.Framework.SourceGeneration" Version="[$(PpyOsuFrameworkSourceGenerationVersion)]">
+    <PackageReference Include="ppy.osu.Game" />
+    <PackageReference Include="ppy.osu.Game.Rulesets.Osu" />
+    <PackageReference Include="ppy.osu.Framework.SourceGeneration">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

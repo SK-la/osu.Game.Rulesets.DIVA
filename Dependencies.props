@@ -1,8 +1,0 @@
-<!-- 外部规则集：编译期引用官方 ppy.* NuGet，运行时由客户端已加载程序集解析 -->
-<Project>
-  <PropertyGroup Label="Dependencies">
-    <PpyOsuGameVersion>2026.730.0</PpyOsuGameVersion>
-    <PpyOsuGameRulesetsOsuVersion>2026.730.0</PpyOsuGameRulesetsOsuVersion>
-    <PpyOsuFrameworkSourceGenerationVersion>2025.1121.1</PpyOsuFrameworkSourceGenerationVersion>
-  </PropertyGroup>
-</Project>

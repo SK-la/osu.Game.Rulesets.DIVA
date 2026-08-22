@@ -1,0 +1,39 @@
+name: Dependabot auto-merge
+
+# Dependabot 开 PR → CI 跑 build/test → 成功后 squash 合并到 master。
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.actor.login == 'dependabot[bot]'
+    steps:
+      - name: Squash-merge Dependabot PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          prs=$(gh api "repos/${REPO}/commits/${HEAD_SHA}/pulls" \
+            -H "Accept: application/vnd.github.groot-preview+json")
+          number=$(echo "$prs" | jq -r '.[0].number // empty')
+          if [[ -z "$number" ]]; then
+            echo "No open PR for $HEAD_SHA"
+            exit 0
+          fi
+
+          title=$(gh pr view "$number" --repo "$REPO" --json title --jq '.title')
+          echo "Merging PR #$number: $title"
+          gh pr merge "$number" --repo "$REPO" --squash --delete-branch

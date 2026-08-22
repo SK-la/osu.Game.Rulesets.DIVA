@@ -1,18 +1,14 @@
-#
-# This workflow triggers at every commit push that changes code.
-#
-
-name: dotnet-debug
+name: CI
 
 on:
   push:
-    paths:
-      - '**/*.cs'
-      - '**/*.csproj'
+    branches: [master]
+  pull_request:
+    branches: [master]
 
 jobs:
-  dotnet-test:
-    name: Check if the project can still build
+  build:
+    name: Build, verify, and test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,7 +18,6 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Build with dependencies for verification
-        id: build
         run: dotnet build -p:RulesetVerifyBuild=true
 
       - name: Verify ruleset assembly loads
@@ -31,10 +26,11 @@ jobs:
       - name: Publish single-DLL ruleset artifact
         run: dotnet publish osu.Game.Rulesets.Diva/osu.Game.Rulesets.Diva.csproj -c Debug --no-build
 
-      - name: Give unit tests a spin
+      - name: Unit tests
         run: dotnet test --no-build
 
-      - name: Upload artifact for further testing
+      - name: Upload artifact
+        if: github.event_name == 'push'
         uses: actions/upload-artifact@v4
         with:
           name: release

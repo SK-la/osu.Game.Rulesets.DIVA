@@ -1,0 +1,22 @@
+<!--
+  中央包版本（CPM）。Dependabot 每日检查，两种 PR：
+  - ppy-osu：ppy.osu.Game / Rulesets.Osu（可单包或双包同 PR），CI 通过即合
+  - other-nuget：其余包同 PR，CI 通过即合
+-->
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageVersion Include="ppy.osu.Game" Version="2026.730.0" />
+    <PackageVersion Include="ppy.osu.Game.Rulesets.Osu" Version="2026.730.0" />
+    <PackageVersion Include="ppy.osu.Framework.SourceGeneration" Version="2025.1121.1" />
+
+    <PackageVersion Include="Appveyor.TestLogger" Version="2.0.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.7.0" />
+    <PackageVersion Include="NUnit" Version="4.6.1" />
+    <PackageVersion Include="NUnit3TestAdapter" Version="6.2.0" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="2.1.4" />
+  </ItemGroup>
+</Project>

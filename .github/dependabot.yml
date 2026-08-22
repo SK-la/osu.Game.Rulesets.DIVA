@@ -1,0 +1,21 @@
+# Dependabot：每日检查 NuGet；仅两种 PR（互不混入）。
+# ppy-osu 组可只更其中一个包，也可两个同 PR。
+version: 2
+updates:
+  - package-ecosystem: "nuget"
+    directory: "/"
+    target-branch: "master"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 10
+    groups:
+      ppy-osu:
+        patterns:
+          - "ppy.osu.Game"
+          - "ppy.osu.Game.Rulesets.Osu"
+      other-nuget:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "ppy.osu.Game"
+          - "ppy.osu.Game.Rulesets.Osu"

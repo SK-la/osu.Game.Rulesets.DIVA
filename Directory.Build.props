@@ -7,5 +7,4 @@
     <CopyLocalLockFileAssemblies Condition="'$(RulesetVerifyBuild)' == 'true'">true</CopyLocalLockFileAssemblies>
     <CopyLocalLockFileAssemblies Condition="'$(RulesetVerifyBuild)' != 'true'">false</CopyLocalLockFileAssemblies>
   </PropertyGroup>
-  <Import Project="$(MSBuildThisFileDirectory)Dependencies.props" />
 </Project>

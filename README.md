@@ -18,7 +18,7 @@ Do **not** copy `osu.Game.dll`, `osu.Framework.dll`, or other dependencies into 
 ### Dependencies
 
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
-- Compile-time NuGet: `ppy.osu.Game`, `ppy.osu.Game.Rulesets.Osu` (versions in [Dependencies.props](Dependencies.props))
+- Compile-time NuGet: `ppy.osu.Game`, `ppy.osu.Game.Rulesets.Osu`（版本见 [Directory.Packages.props](Directory.Packages.props)）
 - Runtime: the client's already-loaded `osu.Game` / `osu.Framework` assemblies (via `RulesetStore.AssemblyResolve`)
 
 ### Steps
@@ -33,7 +33,7 @@ Output: `osu.Game.Rulesets.Diva/bin/Release/net8.0/publish/osu.Game.Rulesets.Div
 
 - **Tag format**: `yyyy.mdd.0` (e.g. `2026.524.0`, same as osu! lazer releases)
 - Push a tag to trigger [release.yml](.github/workflows/release.yml)
-- [update-deps.yml](.github/workflows/update-deps.yml) periodically bumps `ppy.osu.Game` on nuget.org
+- Dependabot 每日检查 NuGet（`ppy-osu` / `other-nuget` 两组 PR）；[CI](.github/workflows/ci.yml) 通过后自动 squash 合并到 `master`
 
 ## Troubleshooting
 
