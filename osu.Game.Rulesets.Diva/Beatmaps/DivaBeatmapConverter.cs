@@ -55,33 +55,41 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
         protected override IEnumerable<DivaHitObject> ConvertHitObject(HitObject original, IBeatmap beatmap, CancellationToken cancellationToken)
         {
             //not sure if handling the cancellation is needed, as offical modes doesnt handle *scratches my head* or even its possible
-            var pos = (original as IHasPosition)?.Position ?? Vector2.Zero;
-            var newCombo = (original as IHasCombo)?.NewCombo ?? true;
+            var positionData = original as IHasPosition;
+            // Legacy convert hit objects (internal to osu.Game) implement IHasCombo at runtime.
+            // ReSharper disable once SuspiciousTypeConversion.Global
+            var comboData = original as IHasCombo;
+            var newCombo = comboData?.NewCombo ?? true;
 
             //currently press presses are placed in place of sliders as placeholder, but arcade slider are better suited for these
             //another option would be long sliders: arcade sliders, short sliders: doubles
-            if (AllowDoubles && original is IHasPathWithRepeats)
+            switch (original)
             {
-                yield return new DoublePressButton
-                {
-                    Samples = [DivaHitSampleInfo.Normal],
-                    StartTime = original.StartTime,
-                    Position = pos,
-                    ValidAction = validAction(pos, newCombo),
-                    DoubleAction = doubleAction(prevAction),
-                    ApproachPieceOriginPosition = getApproachPieceOriginPos(pos),
-                };
-            }
-            else
-            {
-                yield return new DivaHitObject
-                {
-                    Samples = [DivaHitSampleInfo.Normal],
-                    StartTime = original.StartTime,
-                    Position = pos,
-                    ValidAction = validAction(pos, newCombo),
-                    ApproachPieceOriginPosition = getApproachPieceOriginPos(pos),
-                };
+                // ReSharper disable once SuspiciousTypeConversion.Global
+                case IHasPathWithRepeats when AllowDoubles:
+                    yield return new DoublePressButton
+                    {
+                        Samples = [DivaHitSampleInfo.Normal],
+                        StartTime = original.StartTime,
+                        Position = positionData?.Position ?? Vector2.Zero,
+                        ValidAction = validAction(positionData?.Position ?? Vector2.Zero, newCombo),
+                        DoubleAction = doubleAction(prevAction),
+                        ApproachPieceOriginPosition = getApproachPieceOriginPos(positionData?.Position ?? Vector2.Zero),
+                    };
+
+                    break;
+
+                default:
+                    yield return new DivaHitObject
+                    {
+                        Samples = [DivaHitSampleInfo.Normal],
+                        StartTime = original.StartTime,
+                        Position = positionData?.Position ?? Vector2.Zero,
+                        ValidAction = validAction(positionData?.Position ?? Vector2.Zero, newCombo),
+                        ApproachPieceOriginPosition = getApproachPieceOriginPos(positionData?.Position ?? Vector2.Zero),
+                    };
+
+                    break;
             }
         }
 

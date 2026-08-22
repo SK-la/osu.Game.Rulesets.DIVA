@@ -20,7 +20,7 @@ namespace osu.Game.Rulesets.Diva.Difficulty
 
         protected override DifficultyAttributes CreateDifficultyAttributes(IBeatmap beatmap, Mod[] mods, Skill[] skills)
         {
-            double od = beatmap.BeatmapInfo.Difficulty.OverallDifficulty;
+            // double od = beatmap.BeatmapInfo.Difficulty.OverallDifficulty;
 
             //TODO: This will need to be rewritten once we start work on #9
             double difficulty = beatmap.BeatmapInfo.Difficulty.OverallDifficulty switch
