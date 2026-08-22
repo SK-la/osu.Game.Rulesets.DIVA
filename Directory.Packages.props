@@ -14,7 +14,7 @@
     <PackageVersion Include="ppy.osu.Framework.SourceGeneration" Version="2025.1121.1" />
 
     <PackageVersion Include="Appveyor.TestLogger" Version="2.0.0" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.7.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.9.0" />
     <PackageVersion Include="NUnit" Version="4.6.1" />
     <PackageVersion Include="NUnit3TestAdapter" Version="6.2.0" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="2.1.4" />
