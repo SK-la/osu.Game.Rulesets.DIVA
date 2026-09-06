@@ -47,6 +47,40 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
             };
         }
 
+        /// <summary>
+        /// Resolves the first RES video event for storyboard playback, mapped onto lazer's track clock.
+        /// </summary>
+        public static DivaVideoPlayback? ResolvePrimaryVideo(DivaChart chart)
+        {
+            if (chart == null)
+                throw new ArgumentNullException(nameof(chart));
+
+            List<DivaResourceEvent> effective = getEffectiveVideoEvents(chart);
+
+            if (effective.Count == 0)
+                return null;
+
+            DivaResourceEvent primary = effective[0];
+            string? relative = chart.ResolveRelativePath(chart.ResourceFiles[primary.ResourceId]);
+
+            if (string.IsNullOrWhiteSpace(relative))
+                return null;
+
+            double videoSourceOffset = chart.ResourceEvents
+                                           .Where(e => e.DeclaredSourceOffsetMs != null)
+                                           .OrderBy(e => e.Sequence)
+                                           .Select(e => e.DeclaredSourceOffsetMs!.Value)
+                                           .LastOrDefault();
+
+            DivaPlaybackTimeline timeline = Create(chart);
+
+            // Storyboard video starts at StartTime with file position 0; choose StartTime so that
+            // at the resource event's playback instant the file position equals videoSourceOffset.
+            double startTime = timeline.ToPlaybackTime(primary.TimeMs) - videoSourceOffset;
+
+            return new DivaVideoPlayback(relative, startTime, videoSourceOffset, primary.TimeMs);
+        }
+
         private static DivaPlaybackTimeline? createFromBgm(DivaChart chart)
         {
             List<DivaBgmEvent> effective = chart.BgmEvents
@@ -95,14 +129,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
 
         private static DivaPlaybackTimeline? createFromResource(DivaChart chart)
         {
-            List<DivaResourceEvent> effective = chart.ResourceEvents
-                                                          .GroupBy(e => e.FrameIndex)
-                                                          .Select(g => g.OrderBy(e => e.Sequence).Last())
-                                                          .Where(e => chart.ResourceFiles.TryGetValue(e.ResourceId, out string? path)
-                                                                      && DivaVideoAudioExtractor.IsVideoExtension(path))
-                                                          .OrderBy(e => e.TimeMs)
-                                                          .ThenBy(e => e.Sequence)
-                                                          .ToList();
+            List<DivaResourceEvent> effective = getEffectiveVideoEvents(chart);
 
             if (effective.Count == 0)
                 return null;
@@ -127,6 +154,16 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
             };
         }
 
+        private static List<DivaResourceEvent> getEffectiveVideoEvents(DivaChart chart)
+            => chart.ResourceEvents
+                    .GroupBy(e => e.FrameIndex)
+                    .Select(g => g.OrderBy(e => e.Sequence).Last())
+                    .Where(e => chart.ResourceFiles.TryGetValue(e.ResourceId, out string? path)
+                                && DivaVideoAudioExtractor.IsVideoExtension(path))
+                    .OrderBy(e => e.TimeMs)
+                    .ThenBy(e => e.Sequence)
+                    .ToList();
+
         private static string? resolveFallbackAudio(DivaChart chart)
         {
             foreach (string file in chart.WavFiles.Values)
@@ -144,4 +181,10 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
             return null;
         }
     }
+
+    public readonly record struct DivaVideoPlayback(
+        string RelativePath,
+        double StoryboardStartTimeMs,
+        double SourceOffsetMs,
+        double EventTimeMs);
 }

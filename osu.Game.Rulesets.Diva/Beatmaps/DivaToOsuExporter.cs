@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using osu.Game.Rulesets.Diva.Beatmaps.DivaFormat;
+using osu.Game.Utils;
 using osuTK;
 
 namespace osu.Game.Rulesets.Diva.Beatmaps
@@ -69,6 +70,20 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             sb.AppendLine("//Background and Video events");
             if (!string.IsNullOrWhiteSpace(background))
                 sb.AppendLine($"0,0,\"{Path.GetFileName(background)}\",0,0");
+
+            DivaVideoPlayback? video = DivaPlaybackTimeline.ResolvePrimaryVideo(chart);
+            if (video != null)
+            {
+                string videoFile = Path.GetFileName(video.Value.RelativePath);
+                string ext = Path.GetExtension(videoFile).ToLowerInvariant();
+
+                if (SupportedExtensions.VIDEO_EXTENSIONS.Contains(ext))
+                {
+                    sb.AppendLine(string.Create(CultureInfo.InvariantCulture,
+                        $"Video,{video.Value.StoryboardStartTimeMs:0.###},\"{videoFile}\""));
+                }
+            }
+
             sb.AppendLine();
             sb.AppendLine("[TimingPoints]");
 

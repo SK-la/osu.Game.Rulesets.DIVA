@@ -337,6 +337,54 @@ namespace osu.Game.Rulesets.Diva.Tests
             Assert.That(timeline.OffsetMs, Is.EqualTo(-eventTime).Within(0.01));
             Assert.That(timeline.ToPlaybackTime(parsed.Notes.Single().StartTimeMs),
                 Is.EqualTo(48 * DivaChartConstants.MsPerFrame(120)).Within(0.01));
+
+            DivaVideoPlayback? video = DivaPlaybackTimeline.ResolvePrimaryVideo(parsed);
+            Assert.That(video, Is.Not.Null);
+            Assert.That(video!.Value.RelativePath, Is.EqualTo("movie.avi"));
+            Assert.That(video.Value.StoryboardStartTimeMs, Is.EqualTo(0).Within(0.01));
+        }
+
+        [Test]
+        public void ResolvePrimaryVideo_with_bgm_maps_start_onto_bgm_clock()
+        {
+            string chart = """
+                           1.0.4.8
+                           Mixed Song
+                           Mapper
+                           Artist
+                           Style
+                           bg.png
+                           1
+                           1
+                           120
+                           2
+                           0 120
+                           -1
+                           48 7
+                           -1
+                           0 0 1
+                           -1
+                           96 0 8 8 0 0 0
+                           -1
+                           1 song.ogg
+                           -1
+                           0 bg.png
+                           7 movie.avi
+                           -1
+                           -1 -1
+                           """;
+
+            using var reader = new StringReader(chart);
+            DivaChart parsed = DivaChartFileParser.Parse(reader, "mixed.diva", @"C:\songs\mixed");
+            DivaPlaybackTimeline timeline = DivaPlaybackTimeline.Create(parsed);
+            DivaVideoPlayback? video = DivaPlaybackTimeline.ResolvePrimaryVideo(parsed);
+
+            Assert.That(timeline.BgmWavId, Is.EqualTo(1));
+            Assert.That(video, Is.Not.Null);
+            Assert.That(video!.Value.RelativePath, Is.EqualTo("movie.avi"));
+            // Video event at frame 48, BGM offset 0 → storyboard start = ToPlaybackTime(48) = 48 frames.
+            Assert.That(video.Value.StoryboardStartTimeMs,
+                Is.EqualTo(48 * DivaChartConstants.MsPerFrame(120)).Within(0.01));
         }
 
         [Test]

@@ -25,6 +25,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
         {
             // EditorVer lines are typically "1.0.x.x".
             AddDecoder<Beatmap>("1.", _ => new DivaBeatmapDecoder());
+            DivaStoryboardDecoder.Register();
         }
 
         protected override void ParseStreamInto(LineBufferedReader stream, bool isPrimaryStream, Beatmap beatmap)

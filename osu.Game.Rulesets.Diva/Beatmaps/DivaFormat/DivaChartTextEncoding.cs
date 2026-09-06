@@ -132,6 +132,15 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
             if (File.Exists(direct))
                 return fileName;
 
+            // ProjectDIVA layout: media often lives under RES/ or WAV/ while charts store bare names.
+            foreach (string folder in new[] { "RES", "res", "WAV", "wav" })
+            {
+                string nested = Path.Combine(contentRoot, folder, fileName);
+
+                if (File.Exists(nested))
+                    return Path.Combine(folder, fileName).Replace('\\', '/');
+            }
+
             string extension = Path.GetExtension(fileName);
             if (string.IsNullOrEmpty(extension) || !Directory.Exists(contentRoot))
                 return null;
