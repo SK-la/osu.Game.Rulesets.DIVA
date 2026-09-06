@@ -10,6 +10,7 @@ namespace osu.Game.Rulesets.Diva.Difficulty
 {
     /// <summary>
     /// Star rating uses osu!standard difficulty skills on DIVA objects projected to hit circles.
+    /// Baseline PP uses the same projection via <see cref="DivaPerformanceCalculator"/>.
     /// </summary>
     public static class DivaDifficulty
     {

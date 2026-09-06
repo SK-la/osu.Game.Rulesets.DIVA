@@ -54,6 +54,8 @@ namespace osu.Game.Rulesets.Diva
 
         public override DifficultyCalculator CreateDifficultyCalculator(IWorkingBeatmap beatmap) => DivaDifficulty.CreateCalculator(beatmap);
 
+        public override PerformanceCalculator CreatePerformanceCalculator() => new DivaPerformanceCalculator();
+
         public override RulesetSettingsSubsection CreateSettings() => new DivaSettingsSubsection(this);
 
         public override IRulesetConfigManager CreateConfig(SettingsStore? settings) => new DivaRulesetConfigManager(settings, RulesetInfo);
