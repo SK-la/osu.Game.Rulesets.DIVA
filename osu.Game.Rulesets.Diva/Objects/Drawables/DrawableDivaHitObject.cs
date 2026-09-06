@@ -42,11 +42,12 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         protected readonly DivaAction ValidAction;
 
         private bool? pendingValidPress;
-        private DivaJudgementResult.DivaMehSource pendingMehSource = DivaJudgementResult.DivaMehSource.None;
+        protected DivaJudgementResult.DivaMehSource PendingMehSource = DivaJudgementResult.DivaMehSource.None;
 
         protected BindableBool UseXb = new BindableBool(false);
         internal BindableBool EnableVisualBursts { get; } = new BindableBool(true);
         protected BindableDouble NoteSize = new BindableDouble(BASE_SIZE);
+
         /// <summary>Multiplier on PD <c>note_standing × MsPerFrame(BPM)</c> (default 1.0).</summary>
         protected BindableDouble ApproachPreemptScale = new BindableDouble(1.0);
 
@@ -77,10 +78,10 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         {
             var result = new DivaJudgementResult(HitObject, judgement)
             {
-                SpecialMehSource = pendingMehSource
+                SpecialMehSource = PendingMehSource
             };
 
-            pendingMehSource = DivaJudgementResult.DivaMehSource.None;
+            PendingMehSource = DivaJudgementResult.DivaMehSource.None;
 
             return result;
         }
@@ -245,6 +246,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         protected override void Update()
         {
             var b = (float)((Time.Current - LifetimeStart) / TimePreempt);
+
             if (b < 1f)
             {
                 ApproachPiece.UpdatePos(b);
@@ -314,7 +316,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
                     return;
                 }
 
-                pendingMehSource = DivaHitJudgementEvaluator.GetMehSourceFor(result);
+                PendingMehSource = DivaHitJudgementEvaluator.GetMehSourceFor(result);
                 r.Type = HitResult.Meh;
             });
         }

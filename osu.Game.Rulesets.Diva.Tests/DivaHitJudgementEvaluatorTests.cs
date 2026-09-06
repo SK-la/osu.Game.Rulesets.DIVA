@@ -83,12 +83,43 @@ namespace osu.Game.Rulesets.Diva.Tests
             // Framework feeds Time.Current - EndTime into CheckForResult for IHasDuration.
             // A perfect head press therefore arrives as -Duration and must be remapped.
             const double duration = 500;
-            const double frameworkOffsetAtHead = -duration;
+            const double framework_offset_at_head = -duration;
 
-            Assert.That(DivaHitJudgementEvaluator.GetPressResult(true, frameworkOffsetAtHead), Is.EqualTo(HitResult.None),
+            Assert.That(DivaHitJudgementEvaluator.GetHoldPressResult(true, framework_offset_at_head), Is.EqualTo(HitResult.None),
                 "Raw EndTime offset would ignore a correct head press and later Miss.");
-            Assert.That(DivaHitJudgementEvaluator.GetPressResult(true, frameworkOffsetAtHead + duration), Is.EqualTo(HitResult.Perfect));
-            Assert.That(DivaHitJudgementEvaluator.ShouldMiss(frameworkOffsetAtHead + duration + 120.01), Is.True);
+            Assert.That(DivaHitJudgementEvaluator.GetHoldPressResult(true, framework_offset_at_head + duration), Is.EqualTo(HitResult.Perfect));
+            Assert.That(DivaHitJudgementEvaluator.ShouldMissHold(framework_offset_at_head + duration + 350.01), Is.True);
+        }
+
+        [TestCase(0, HitResult.Perfect)]
+        [TestCase(50.0, HitResult.Perfect)]
+        [TestCase(50.01, HitResult.Great)]
+        [TestCase(100.0, HitResult.Great)]
+        [TestCase(100.01, HitResult.Good)]
+        [TestCase(200.0, HitResult.Good)]
+        [TestCase(200.01, HitResult.Ok)]
+        [TestCase(300.0, HitResult.Ok)]
+        [TestCase(300.01, HitResult.None)]
+        public void GetHoldResultFor_matches_project_diva_strip_windows(double timeOffset, HitResult expected)
+        {
+            Assert.That(DivaHitJudgementEvaluator.GetHoldResultFor(timeOffset), Is.EqualTo(expected));
+            Assert.That(DivaHitJudgementEvaluator.GetHoldResultFor(-timeOffset), Is.EqualTo(expected));
+        }
+
+        [TestCase(HitResult.Perfect, HitResult.Great, HitResult.Great)]
+        [TestCase(HitResult.Ok, HitResult.Perfect, HitResult.Ok)]
+        [TestCase(HitResult.Perfect, HitResult.Miss, HitResult.Miss)]
+        public void CombineHoldResults_keeps_the_worse_grade(HitResult head, HitResult release, HitResult expected)
+        {
+            Assert.That(DivaHitJudgementEvaluator.CombineHoldResults(head, release), Is.EqualTo(expected));
+        }
+
+        [TestCase(350.0, false)]
+        [TestCase(350.01, true)]
+        public void ShouldMissHold_matches_project_diva_delay_timeout(double timeOffset, bool expected)
+        {
+            Assert.That(DivaHitJudgementEvaluator.ShouldMissHold(timeOffset), Is.EqualTo(expected));
+            Assert.That(DivaHitJudgementEvaluator.ShouldMissHold(-timeOffset), Is.False);
         }
     }
 }

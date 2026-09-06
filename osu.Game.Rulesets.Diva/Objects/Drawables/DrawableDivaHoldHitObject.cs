@@ -1,20 +1,30 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
-using System;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
+using osu.Framework.Input.Events;
 using osu.Game.Rulesets.Diva.Graphics;
 using osu.Game.Rulesets.Diva.Objects.Drawables.Pieces;
+using osu.Game.Rulesets.Diva.Scoring;
 using osu.Game.Rulesets.Objects.Drawables;
+using osu.Game.Rulesets.Scoring;
 using osuTK.Graphics;
 
 namespace osu.Game.Rulesets.Diva.Objects.Drawables
 {
+    /// <summary>
+    /// ProjectDIVA strip: press at head, keep held, release at tail.
+    /// </summary>
     public partial class DrawableDivaHoldHitObject : DrawableDivaHitObject
     {
         private HoldStripPiece? strip;
         private readonly double holdDuration;
+
+        private bool holding;
+        private bool pendingRelease;
+        private bool? pendingHeadPressValid;
+        private HitResult headResult = HitResult.None;
 
         public DrawableDivaHoldHitObject(DivaHoldHitObject hitObject)
             : base(hitObject)
@@ -41,31 +51,109 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             strip?.UpdateStrip(blend, offset);
         }
 
+        public override bool OnPressed(KeyBindingPressEvent<DivaAction> e)
+        {
+            if (Judged || holding)
+                return false;
+
+            if (!AcceptsInput(e.Action))
+                return false;
+
+            pendingHeadPressValid = ComputeValidPress(e.Action);
+            pendingRelease = false;
+            UpdateResult(true);
+            return holding || Judged;
+        }
+
+        public override void OnReleased(KeyBindingReleaseEvent<DivaAction> e)
+        {
+            if (!holding || Judged)
+                return;
+
+            if (!ComputeValidPress(e.Action))
+                return;
+
+            pendingRelease = true;
+            UpdateResult(true);
+        }
+
         protected override void CheckForResult(bool userTriggered, double timeOffset)
         {
-            // Framework passes Time.Current - GetEndTime() for IHasDuration objects.
-            // DIVA holds are scored at the head (StartTime), same as taps — convert back.
-            base.CheckForResult(userTriggered, timeOffset + holdDuration);
+            // Framework: timeOffset = Time.Current - EndTime.
+            double startOffset = timeOffset + holdDuration;
+            double endOffset = timeOffset;
+
+            if (!holding)
+            {
+                if (!userTriggered)
+                {
+                    if (DivaHitJudgementEvaluator.ShouldMissHold(startOffset))
+                        ApplyResult((r, _) => r.Type = HitResult.Miss);
+
+                    return;
+                }
+
+                if (pendingHeadPressValid == null)
+                    return;
+
+                bool validPress = pendingHeadPressValid.Value;
+                pendingHeadPressValid = null;
+
+                HitResult result = DivaHitJudgementEvaluator.GetHoldPressResult(validPress, startOffset);
+
+                if (result == HitResult.None)
+                    return;
+
+                if (!validPress)
+                {
+                    PendingMehSource = DivaHitJudgementEvaluator.GetMehSourceFor(result);
+                    ApplyResult((r, _) => r.Type = HitResult.Meh);
+                    return;
+                }
+
+                holding = true;
+                headResult = result;
+                hideFlyingPieces();
+                return;
+            }
+
+            if (pendingRelease)
+            {
+                pendingRelease = false;
+
+                HitResult releaseResult = DivaHitJudgementEvaluator.GetHoldResultFor(endOffset);
+                if (releaseResult == HitResult.None)
+                    releaseResult = HitResult.Miss;
+
+                ApplyResult((r, _) => r.Type = DivaHitJudgementEvaluator.CombineHoldResults(headResult, releaseResult));
+                return;
+            }
+
+            if (!userTriggered && DivaHitJudgementEvaluator.ShouldMissHold(endOffset))
+                ApplyResult((r, _) => r.Type = DivaHitJudgementEvaluator.CombineHoldResults(headResult, HitResult.Miss));
         }
 
         protected override void UpdateHitStateTransforms(ArmedState state)
         {
-            if (state == ArmedState.Hit)
+            switch (state)
             {
-                // ProjectDIVA: after head press, hide the flying rhythm piece immediately.
-                // Keep the fixed target + shrinking strip until EndTime, then clear.
-                // Lifetime is anchored to EndTime (not HitTime + Duration) so a late head
-                // press cannot leave the note stuck on the target after the strip finishes.
-                ApproachPiece.FadeOut(60);
-                ApproachHand.FadeOut(60);
-                ApproachTrail?.FadeOut(60);
+                case ArmedState.Hit:
+                    // Target + strip clear once the hold is fully resolved.
+                    this.FadeOut(80).Expire();
+                    break;
 
-                double remainingToEnd = Math.Max(0, ((DivaHoldHitObject)HitObject).EndTime - Time.Current);
-                this.Delay(remainingToEnd).FadeOut(80).Expire();
-                return;
+                default:
+                    base.UpdateHitStateTransforms(state);
+                    break;
             }
+        }
 
-            base.UpdateHitStateTransforms(state);
+        private void hideFlyingPieces()
+        {
+            // ProjectDIVA: after press, rhythm head is hidden; fixed target + strip remain.
+            ApproachPiece.FadeOut(60);
+            ApproachHand.FadeOut(60);
+            ApproachTrail?.FadeOut(60);
         }
     }
 }

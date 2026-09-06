@@ -6,7 +6,6 @@ using osu.Game.Beatmaps;
 using osu.Game.Replays;
 using osu.Game.Rulesets.Diva.Objects;
 using osu.Game.Rulesets.Replays;
-using osu.Game.Rulesets.Scoring;
 
 namespace osu.Game.Rulesets.Diva.Replays
 {
@@ -32,11 +31,25 @@ namespace osu.Game.Rulesets.Diva.Replays
             for (int i = 0; i < Beatmap.HitObjects.Count; i++)
             {
                 DivaHitObject hitObject = Beatmap.HitObjects[i];
-                var hitTime = hitObject.StartTime + hitObject.HitWindows.WindowFor(HitResult.Perfect);
+                // ProjectDIVA auto presses/releases at the ideal Start/End instants.
+                double hitTime = hitObject.StartTime;
 
                 if (i > 0)
                 {
-                    Frames.Add(new DivaReplayFrame(lerp(prevTime, hitTime, 0.1)));
+                    double releaseAnchor = Beatmap.HitObjects[i - 1] is DivaHoldHitObject prevHold
+                        ? prevHold.EndTime
+                        : prevTime;
+
+                    if (releaseAnchor < hitTime)
+                        Frames.Add(new DivaReplayFrame(lerp(releaseAnchor, hitTime, 0.1)));
+                }
+
+                if (hitObject is DivaHoldHitObject hold)
+                {
+                    Frames.Add(new DivaReplayFrame(hitTime, hold.ValidAction));
+                    Frames.Add(new DivaReplayFrame(hold.EndTime));
+                    prevTime = hold.EndTime;
+                    continue;
                 }
 
                 if (hitObject is DoublePressButton dButt)
