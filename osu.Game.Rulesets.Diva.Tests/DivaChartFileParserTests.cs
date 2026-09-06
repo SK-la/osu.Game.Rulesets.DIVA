@@ -7,6 +7,7 @@ using System.Linq;
 using NUnit.Framework;
 using osu.Game.Rulesets.Diva.Beatmaps;
 using osu.Game.Rulesets.Diva.Beatmaps.DivaFormat;
+using osuTK;
 
 namespace osu.Game.Rulesets.Diva.Tests
 {
@@ -23,7 +24,21 @@ namespace osu.Game.Rulesets.Diva.Tests
         }
 
         [Test]
-        public void Exporter_embeds_action_sample_names_and_black_star_version()
+        public void ResolveAction_uses_type_not_wav_key()
+        {
+            // type=0 Circle, key=3 is only a WAV index — must remain Circle.
+            var keyMisleading = new DivaChartNote { Type = 0, Key = 3 };
+            Assert.That(DivaActionEncoding.ResolveAction(keyMisleading), Is.EqualTo(DivaAction.Circle));
+
+            var triangle = new DivaChartNote { Type = 3, Key = 0 };
+            Assert.That(DivaActionEncoding.ResolveAction(triangle), Is.EqualTo(DivaAction.Triangle));
+
+            var holdRight = new DivaChartNote { Type = 12, Key = 0 }; // 8+4 = RIGHT hold
+            Assert.That(DivaActionEncoding.ResolveAction(holdRight), Is.EqualTo(DivaAction.Right));
+        }
+
+        [Test]
+        public void Exporter_embeds_action_from_type_and_approach_suffix()
         {
             string chartText = """
                                1.0.4.8
@@ -41,6 +56,7 @@ namespace osu.Game.Rulesets.Diva.Tests
                                -1
                                -1
                                0 0 8 8 0 0 3
+                               48 3 10 10 100 50 -1
                                -1
                                0 audio.ogg
                                -1
@@ -56,9 +72,34 @@ namespace osu.Game.Rulesets.Diva.Tests
             Assert.That(osu, Does.Contain("osu file format v14"));
             Assert.That(osu, Does.Contain("Mode: 0"));
             Assert.That(osu, Does.Contain(DivaActionEncoding.NATIVE_TAG));
-            Assert.That(osu, Does.Contain("diva-action-1")); // Triangle (UNIT/key 3)
+            // type=0 → Circle → enum id 2
+            Assert.That(osu, Does.Contain("diva-action-2"));
+            // type=3 → Triangle → enum id 1
+            Assert.That(osu, Does.Contain("diva-action-1"));
+            Assert.That(osu, Does.Contain("-ax"));
+            Assert.That(osu, Does.Contain("-ay"));
             Assert.That(osu, Does.Contain("AudioFilename: audio.ogg"));
             Assert.That(osu, Does.Contain("Version:★3 Easy"));
+        }
+
+        [Test]
+        public void Sample_roundtrip_preserves_approach_and_hold()
+        {
+            var approach = new Vector2(120.5f, -80f);
+            string leaf = DivaActionEncoding.EncodeSampleFileName(DivaAction.Cross, true, 1234, approach);
+
+            var fake = new osu.Game.Rulesets.Objects.HitObject
+            {
+                Samples = [new osu.Game.Audio.HitSampleInfo(leaf)]
+            };
+
+            Assert.That(DivaActionEncoding.TryParseFromHitObject(fake, out var action, out bool isHold, out double duration, out Vector2? parsed), Is.True);
+            Assert.That(action, Is.EqualTo(DivaAction.Cross));
+            Assert.That(isHold, Is.True);
+            Assert.That(duration, Is.EqualTo(1234).Within(0.01));
+            Assert.That(parsed, Is.Not.Null);
+            Assert.That(parsed!.Value.X, Is.EqualTo(120.5f).Within(0.01f));
+            Assert.That(parsed.Value.Y, Is.EqualTo(-80f).Within(0.01f));
         }
 
         [Test]
@@ -81,7 +122,7 @@ namespace osu.Game.Rulesets.Diva.Tests
                            -1
                            0 0 10 12 0 0 0
                            48 1 20 12 0 0 1
-                           96 8 15 10 0 0 2 500
+                           96 8 15 10 0 0 2 48
                            -1
                            0 song.mp3
                            -1
@@ -101,11 +142,17 @@ namespace osu.Game.Rulesets.Diva.Tests
             Assert.That(parsed.Notes.Count, Is.EqualTo(3));
             Assert.That(parsed.Notes[0].IsHold, Is.False);
             Assert.That(parsed.Notes[2].IsHold, Is.True);
-            Assert.That(parsed.Notes[2].DurationMs, Is.EqualTo(500).Within(0.01));
+
+            // 48 frames * MsPerFrame(120)
+            double expectedDuration = 48 * DivaChartConstants.MsPerFrame(120);
+            Assert.That(parsed.Notes[2].DurationMs, Is.EqualTo(expectedDuration).Within(0.01));
             Assert.That(parsed.WavFiles[0], Is.EqualTo("song.mp3"));
             Assert.That(DivaActionEncoding.ResolveAction(parsed.Notes[0]), Is.EqualTo(DivaAction.Circle));
             Assert.That(DivaActionEncoding.ResolveAction(parsed.Notes[1]), Is.EqualTo(DivaAction.Square));
             Assert.That(parsed.HasChanceTime, Is.False);
+
+            Vector2 approach = DivaActionEncoding.ComputeApproachOrigin(parsed.Notes[0], 120);
+            Assert.That(approach.Length, Is.EqualTo(DivaChartConstants.DISTANCE).Within(0.5f));
         }
 
         [Test]

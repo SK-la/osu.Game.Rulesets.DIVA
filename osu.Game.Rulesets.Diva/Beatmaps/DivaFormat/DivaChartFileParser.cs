@@ -161,10 +161,21 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
                 });
             }
 
+            double[] frameActiveBpms = buildFrameActiveBpms(frameBpms, headerBpm, frameCount);
+
             foreach ((int pos, int type, int x, int y, int tx, int ty, int key, double duration) raw in rawNotes)
             {
                 int clamped = Math.Clamp(raw.pos, 0, Math.Max(frameTimes.Length - 1, 0));
                 double start = frameTimes.Length == 0 ? 0 : frameTimes[clamped];
+                double bpmAtNote = frameActiveBpms.Length == 0
+                    ? (headerBpm > 0 ? headerBpm : 120)
+                    : frameActiveBpms[Math.Clamp(clamped, 0, frameActiveBpms.Length - 1)];
+
+                // ProjectDIVA: duration is in chart frames; runtime ms = duration * singleTime.
+                double durationMs = raw.duration > 0
+                    ? raw.duration * DivaChartConstants.MsPerFrame(bpmAtNote)
+                    : 0;
+
                 notes.Add(new DivaChartNote
                 {
                     FrameIndex = raw.pos,
@@ -175,7 +186,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
                     TailX = raw.tx,
                     TailY = raw.ty,
                     Key = raw.key,
-                    DurationMs = raw.duration
+                    DurationMs = durationMs
                 });
             }
 
@@ -279,6 +290,23 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
             }
 
             return times;
+        }
+
+        /// <summary>Active BPM at each frame index (propagates last timing change).</summary>
+        private static double[] buildFrameActiveBpms(double[] frameBpms, double headerBpm, int frameCount)
+        {
+            double[] active = new double[Math.Max(frameCount, 0)];
+            double bpm = headerBpm > 0 ? headerBpm : 120;
+
+            for (int i = 0; i < active.Length; i++)
+            {
+                if (frameBpms[i] > 0)
+                    bpm = frameBpms[i];
+
+                active[i] = bpm;
+            }
+
+            return active;
         }
 
         private static double snapLegacyBpm(double bpm)

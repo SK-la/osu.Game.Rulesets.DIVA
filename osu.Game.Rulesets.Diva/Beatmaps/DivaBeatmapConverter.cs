@@ -57,8 +57,10 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             bool newCombo = comboData?.NewCombo ?? true;
             Vector2 position = positionData?.Position ?? Vector2.Zero;
 
-            if (DivaActionEncoding.TryParseFromHitObject(original, out DivaAction encodedAction, out bool isHold, out double durationMs))
+            if (DivaActionEncoding.TryParseFromHitObject(original, out DivaAction encodedAction, out bool isHold, out double durationMs, out Vector2? encodedApproach))
             {
+                Vector2 approach = encodedApproach ?? getApproachPieceOriginPos(position);
+
                 if (isHold)
                 {
                     yield return new DivaHoldHitObject
@@ -68,7 +70,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                         Duration = durationMs,
                         Position = position,
                         ValidAction = encodedAction,
-                        ApproachPieceOriginPosition = getApproachPieceOriginPos(position)
+                        ApproachPieceOriginPosition = approach
                     };
                 }
                 else
@@ -79,9 +81,12 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                         StartTime = original.StartTime,
                         Position = position,
                         ValidAction = encodedAction,
-                        ApproachPieceOriginPosition = getApproachPieceOriginPos(position)
+                        ApproachPieceOriginPosition = approach
                     };
                 }
+
+                // Keep adjacent-note fallback chain updated even when approach was encoded.
+                prevObjectPos = position;
 
                 yield break;
             }

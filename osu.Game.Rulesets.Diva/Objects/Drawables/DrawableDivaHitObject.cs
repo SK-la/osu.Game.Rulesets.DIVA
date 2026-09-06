@@ -13,6 +13,7 @@ using osu.Framework.Input.Events;
 using osu.Game.Audio;
 using osu.Game.Rulesets.Diva.Audio;
 using osu.Game.Rulesets.Diva.Configuration;
+using osu.Game.Rulesets.Diva.Graphics;
 using osu.Game.Rulesets.Diva.Judgements;
 using osu.Game.Rulesets.Diva.Objects.Drawables.Pieces;
 using osu.Game.Rulesets.Diva.Scoring;
@@ -33,6 +34,8 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
         protected readonly Sprite ApproachHand;
         protected readonly ApproachPiece ApproachPiece;
+        protected ApproachTrailLayer? ApproachTrail;
+        protected Sprite? StatSprite;
 
         protected readonly DivaAction ValidAction;
 
@@ -70,6 +73,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             AddRangeInternal([
                 ApproachHand = new Sprite
                 {
+                    // hand.png canvas is authored so the tip sits at the texture centre.
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
                     RelativeSizeAxes = Axes.Both,
@@ -98,23 +102,59 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             config?.BindWith(DivaRulesetSettings.NoteSize, NoteSize);
             config?.BindWith(DivaRulesetSettings.ApproachDuration, ApproachDuration);
 
-            NoteSize.BindValueChanged(_ => Size = new Vector2((float)NoteSize.Value), true);
-            string textureLocation = GetTextureLocation();
+            NoteSize.BindValueChanged(v => Size = new Vector2((float)v.NewValue), true);
 
-            AddInternal(new Sprite
+            string textureLocation = GetTextureLocation();
+            DivaAction textureAction = GetTextureAction();
+
+            StatSprite = new Sprite
             {
                 Anchor = Anchor.Centre,
                 Origin = Anchor.Centre,
                 RelativeSizeAxes = Axes.Both,
-                Texture = textures.Get($"{textureLocation}{ValidAction.ToString()}Stat"),
+                Texture = textures.Get($"{textureLocation}{textureAction}Stat"),
                 Depth = 2,
-            });
+            };
+            AddInternal(StatSprite);
 
-            ApproachPiece.Texture = textures.Get($"{textureLocation}{ValidAction.ToString()}Move");
+            ApproachPiece.Texture = textures.Get($"{textureLocation}{textureAction}Move");
             ApproachHand.Texture = textures.Get("hand");
+
+            Color4 trailColour = DivaProjectDivaAtlas.GetUnitColor(ValidAction);
+            ApproachTrail = new ApproachTrailLayer(trailColour)
+            {
+                Depth = 3,
+            };
+            AddInternal(ApproachTrail);
         }
 
-        protected virtual string GetTextureLocation() => UseXb.Value ? "XB/" : "";
+        /// <summary>
+        ///     Root textures are face buttons (○□△✕).
+        ///     <c>Doubles/</c> textures are direction keys (→←↑↓); filenames were never renamed
+        ///     and still say Circle/Square/Triangle/Cross (= Right/Left/Up/Down).
+        /// </summary>
+        protected virtual string GetTextureLocation()
+        {
+            string xb = UseXb.Value ? "XB/" : "";
+
+            if (IsDirectionAction(ValidAction))
+                return "Doubles/" + xb;
+
+            return xb;
+        }
+
+        /// <summary>
+        ///     Filename stem under <c>Doubles/</c>: Right→Circle, Left→Square, Down→Cross, Up→Triangle.
+        ///     Face-button notes use their own action name under the root texture folder.
+        /// </summary>
+        protected virtual DivaAction GetTextureAction() =>
+            IsDirectionAction(ValidAction) ? DirectionToDoublesFileStem(ValidAction) : ValidAction;
+
+        protected static bool IsDirectionAction(DivaAction action) =>
+            action is DivaAction.Left or DivaAction.Right or DivaAction.Up or DivaAction.Down;
+
+        /// <summary>Doubles/ file stem for a direction action (filenames still use face-button names).</summary>
+        protected static DivaAction DirectionToDoublesFileStem(DivaAction direction) => MapDirectionToSymbol(direction);
 
         public override IEnumerable<HitSampleInfo> GetSamples()
         {
@@ -183,7 +223,16 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         {
             var b = (float)((Time.Current - LifetimeStart) / timePreempt);
             if (b < 1f)
+            {
                 ApproachPiece.UpdatePos(b);
+                ApproachTrail?.EmitAt(ApproachPiece.Position, Time.Elapsed);
+            }
+
+            OnApproachUpdate(b);
+        }
+
+        protected virtual void OnApproachUpdate(float blend)
+        {
         }
 
         public virtual bool OnPressed(KeyBindingPressEvent<DivaAction> e)

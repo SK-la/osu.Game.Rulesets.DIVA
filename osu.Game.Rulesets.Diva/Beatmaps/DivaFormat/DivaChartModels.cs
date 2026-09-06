@@ -156,6 +156,11 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
         public const int ORIGIN_Y = 52;
         public const int DELTA_X = 12;
         public const int DELTA_Y = 12;
+        public const int WIDTH = 480;
+        public const int HEIGHT = 272;
+        /// <summary>ProjectDIVA approach flight distance base (scaled by 120/BPM).</summary>
+        public const int DISTANCE = 500;
+        public const double BASE_BPM = 120;
         public const double SECOND = 1000.0;
 
         public static readonly string[] LEVEL_NAMES =

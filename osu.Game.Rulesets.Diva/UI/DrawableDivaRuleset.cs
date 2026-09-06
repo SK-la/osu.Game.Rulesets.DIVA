@@ -75,11 +75,13 @@ namespace osu.Game.Rulesets.Diva.UI
 
         public override DrawableHitObject<DivaHitObject> CreateDrawableRepresentation(DivaHitObject h)
         {
-            //not sure how other rulesets do this so going with this for now
             switch (h)
             {
                 case DoublePressButton:
                     return new DrawableDivaDoubleHitObject(h);
+
+                case DivaHoldHitObject hold:
+                    return new DrawableDivaHoldHitObject(hold);
 
                 default:
                     return new DrawableDivaHitObject(h);

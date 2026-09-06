@@ -6,15 +6,18 @@ using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Animations;
 using osu.Framework.Graphics.Pooling;
+using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.Textures;
 using osu.Game.Rulesets.Diva.Configuration;
+using osu.Game.Rulesets.Diva.Graphics;
 using osu.Game.Rulesets.Judgements;
 using osu.Game.Rulesets.Scoring;
+using osuTK;
 
 namespace osu.Game.Rulesets.Diva.Objects.Drawables
 {
     /// <summary>
-    /// 内置资源驱动的打击爆炸动画，分层播放 normal / great / perfect 三段效果。
+    ///     Hit explosion driven by bundled HitExplosion sheets; optional PD flame overlay.
     /// </summary>
     public partial class DefaultHitExplosion : PoolableDrawable, IHitExplosion
     {
@@ -29,6 +32,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         private TextureAnimation normalAnimation = null!;
         private TextureAnimation greatAnimation = null!;
         private TextureAnimation perfectAnimation = null!;
+        private Sprite? flameSprite;
 
         private JudgementResult? judgementResult;
 
@@ -44,18 +48,29 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             Anchor = Anchor.Centre;
             Origin = Anchor.Centre;
 
-            // 获取配置中的透明度值
             hitExplosionAlpha = (float)(config?.Get<double>(DivaRulesetSettings.HitExplosionAlpha) ?? 1.0);
 
             normalAnimation = createAnimation(textures, normal_base_path, normal_frame_count, 0);
             greatAnimation = createAnimation(textures, great_base_path, great_frame_count, 1, defaultAlpha: 0);
             perfectAnimation = createAnimation(textures, perfect_base_path, perfect_frame_count, 2, defaultAlpha: 0);
 
+            flameSprite = new Sprite
+            {
+                Texture = DivaProjectDivaAtlas.GetFlame(textures),
+                Anchor = Anchor.Centre,
+                Origin = Anchor.Centre,
+                Size = new Vector2(80),
+                Blending = BlendingParameters.Additive,
+                Alpha = 0,
+                Depth = -1,
+            };
+
             AddRangeInternal(new Drawable[]
             {
                 normalAnimation,
                 greatAnimation,
-                perfectAnimation
+                perfectAnimation,
+                flameSprite
             });
         }
 
@@ -88,6 +103,13 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             resetLayer(normalAnimation, hitExplosionAlpha);
             resetLayer(greatAnimation, 0);
             resetLayer(perfectAnimation, 0);
+
+            if (flameSprite != null)
+            {
+                flameSprite.ClearTransforms();
+                flameSprite.Alpha = 0;
+                flameSprite.Scale = Vector2.One;
+            }
         }
 
         private static void resetLayer(TextureAnimation animation, float defaultAlpha)
@@ -114,6 +136,14 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         private void playAnimationForJudgement()
         {
             playAnimation(normalAnimation);
+
+            if (flameSprite?.Texture != null)
+            {
+                flameSprite.Alpha = hitExplosionAlpha * 0.85f;
+                flameSprite.Scale = new Vector2(0.4f);
+                flameSprite.ScaleTo(1.6f, 280, Easing.OutQuad)
+                          .FadeOut(280);
+            }
 
             switch (judgementResult!.Type)
             {

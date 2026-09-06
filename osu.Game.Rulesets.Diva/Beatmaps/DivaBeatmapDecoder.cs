@@ -77,10 +77,14 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                 beatmap.ControlPointInfo.Add(chart.ChanceTimeEndMs, new EffectControlPoint { KiaiMode = false });
             }
 
+            double headerBpm = chart.Metadata.Bpm > 0 ? chart.Metadata.Bpm : DivaChartConstants.BASE_BPM;
+
             foreach (DivaChartNote note in chart.Notes.OrderBy(n => n.StartTimeMs))
             {
                 DivaAction action = DivaActionEncoding.ResolveAction(note);
-                Vector2 position = DivaActionEncoding.ToOsuPosition(note.GridX, note.GridY);
+                Vector2 position = DivaActionEncoding.ToPlayfieldPosition(note.GridX, note.GridY);
+                double bpm = resolveBpmAt(chart, note.StartTimeMs, headerBpm);
+                Vector2 approach = DivaActionEncoding.ComputeApproachOrigin(note, bpm);
 
                 if (note.IsHold)
                 {
@@ -91,7 +95,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                         Position = position,
                         ValidAction = action,
                         Samples = [DivaHitSampleInfo.Sweep],
-                        ApproachPieceOriginPosition = position
+                        ApproachPieceOriginPosition = approach
                     });
                 }
                 else
@@ -102,10 +106,26 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                         Position = position,
                         ValidAction = action,
                         Samples = [DivaHitSampleInfo.Normal],
-                        ApproachPieceOriginPosition = position
+                        ApproachPieceOriginPosition = approach
                     });
                 }
             }
+        }
+
+        private static double resolveBpmAt(DivaChart chart, double timeMs, double fallback)
+        {
+            double bpm = fallback;
+
+            foreach (DivaChartControlPoint point in chart.TimingPoints.OrderBy(p => p.TimeMs))
+            {
+                if (point.TimeMs > timeMs)
+                    break;
+
+                if (point.Bpm > 0)
+                    bpm = point.Bpm;
+            }
+
+            return bpm;
         }
     }
 }

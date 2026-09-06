@@ -97,9 +97,11 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
 
             foreach (DivaChartNote note in chart.Notes.OrderBy(n => n.StartTimeMs).ThenBy(n => n.FrameIndex))
             {
-                Vector2 pos = DivaActionEncoding.ToOsuPosition(note.GridX, note.GridY);
+                Vector2 pos = DivaActionEncoding.ToPlayfieldPosition(note.GridX, note.GridY);
                 DivaAction action = DivaActionEncoding.ResolveAction(note);
-                string sample = DivaActionEncoding.EncodeSampleFileName(action, note.IsHold, note.DurationMs);
+                double noteBpm = resolveBpmAt(chart, note.StartTimeMs, bpm);
+                Vector2 approach = DivaActionEncoding.ComputeApproachOrigin(note, noteBpm);
+                string sample = DivaActionEncoding.EncodeSampleFileName(action, note.IsHold, note.DurationMs, approach);
                 int x = (int)Math.Round(pos.X);
                 int y = (int)Math.Round(pos.Y);
                 int time = (int)Math.Round(note.StartTimeMs);
@@ -116,6 +118,22 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
         {
             Directory.CreateDirectory(Path.GetDirectoryName(destinationPath)!);
             File.WriteAllText(destinationPath, ExportToString(chart), new UTF8Encoding(false));
+        }
+
+        private static double resolveBpmAt(DivaChart chart, double timeMs, double fallback)
+        {
+            double current = fallback;
+
+            foreach (DivaChartControlPoint point in chart.TimingPoints.OrderBy(p => p.TimeMs))
+            {
+                if (point.TimeMs > timeMs)
+                    break;
+
+                if (point.Bpm > 0)
+                    current = point.Bpm;
+            }
+
+            return current;
         }
     }
 }

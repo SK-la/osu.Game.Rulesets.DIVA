@@ -16,7 +16,16 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             doubleAction = ((DoublePressButton)hitObject).DoubleAction;
         }
 
-        protected override string GetTextureLocation() => "Doubles/" + base.GetTextureLocation();
+        protected override string GetTextureLocation()
+        {
+            // Doubles/ = direction-key sprites (filenames still Circle/Square/…).
+            string xb = UseXb.Value ? "XB/" : "";
+            return "Doubles/" + xb;
+        }
+
+        protected override DivaAction GetTextureAction() =>
+            // ValidAction is the face half; its name matches the Doubles/ file for the paired direction.
+            ValidAction;
 
         protected override bool ComputeValidPress(DivaAction action)
         {
