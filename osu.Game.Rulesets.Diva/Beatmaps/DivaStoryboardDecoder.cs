@@ -3,7 +3,6 @@
 
 using System;
 using System.IO;
-using System.Text;
 using osu.Game.Beatmaps.Formats;
 using osu.Game.IO;
 using osu.Game.Rulesets.Diva.Beatmaps.DivaFormat;
@@ -28,23 +27,15 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             if (!isPrimaryStream)
                 return;
 
-            var sb = new StringBuilder();
-
-            while (stream.ReadLine() is { } line)
-                sb.AppendLine(line);
-
-            using var reader = new StringReader(sb.ToString());
-
-            // Song folder is unknown at decode time; ApplyVideo falls back to RES/ for bare names.
-            // External sync registers the on-disk relative path so storyboard lookup can resolve via basename.
-            DivaChart chart = DivaChartFileParser.Parse(reader, string.Empty, string.Empty);
-            ApplyVideo(storyboard, chart);
+            // Prefer FileStream path / raw bytes — LineBufferedReader is always UTF-8 and corrupts ANSI charts.
+            DivaChartStreamDecode.Result decoded = DivaChartStreamDecode.Parse(stream);
+            ApplyVideo(storyboard, decoded.Chart, decoded.SongFolder);
         }
 
         /// <summary>
         /// Adds the primary RES video as a storyboard video when present and lazer-supported.
         /// </summary>
-        public static void ApplyVideo(Storyboard storyboard, DivaChart chart)
+        public static void ApplyVideo(Storyboard storyboard, DivaChart chart, string? songFolder = null)
         {
             DivaVideoPlayback? video = DivaPlaybackTimeline.ResolvePrimaryVideo(chart);
 
@@ -52,6 +43,13 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                 return;
 
             string path = video.Value.RelativePath.Replace('\\', '/');
+
+            if (!string.IsNullOrWhiteSpace(songFolder))
+            {
+                string? resolved = DivaChartTextEncoding.ResolveExistingRelativePath(songFolder, path);
+                if (!string.IsNullOrEmpty(resolved))
+                    path = resolved.Replace('\\', '/');
+            }
 
             if (!path.Contains('/'))
                 path = $"RES/{path}";

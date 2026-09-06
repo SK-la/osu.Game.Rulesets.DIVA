@@ -21,42 +21,92 @@ namespace osu.Game.Rulesets.Diva.Tests
             Directory.CreateDirectory(root);
 
             // Mixed ASCII + CJK filename with spaces — typical ProjectDIVA community charts.
-            string audioName = "【Terror】 COVER 测试.mp3";
-            File.WriteAllBytes(Path.Combine(root, audioName), [0]);
+            const string audio_name = "【Terror】 COVER 测试.mp3";
+            File.WriteAllBytes(Path.Combine(root, audio_name), [0]);
 
-            string chartText = $"""
-                                1.0.4.8
-                                曲名测试
-                                Mapper
-                                Artist
-                                Style
-                                cover.jpg
-                                1
-                                3
-                                120
-                                1
-                                0 120
-                                -1
-                                -1
-                                -1
-                                0 0 8 8 0 0 0
-                                -1
-                                0 {audioName}
-                                -1
-                                0 cover.jpg
-                                -1
-                                -1 -1
-                                """;
+            const string chart_text = $"""
+                                      1.0.4.8
+                                      曲名测试
+                                      Mapper
+                                      Artist
+                                      Style
+                                      cover.jpg
+                                      1
+                                      3
+                                      120
+                                      1
+                                      0 120
+                                      -1
+                                      -1
+                                      -1
+                                      0 0 8 8 0 0 0
+                                      -1
+                                      0 {audio_name}
+                                      -1
+                                      0 cover.jpg
+                                      -1
+                                      -1 -1
+                                      """;
 
             string chartPath = Path.Combine(root, "chart.diva");
-            File.WriteAllBytes(chartPath, gbk.GetBytes(chartText.Replace("\r\n", "\n")));
+            File.WriteAllBytes(chartPath, gbk.GetBytes(chart_text.Replace("\r\n", "\n")));
 
             try
             {
                 DivaChart chart = DivaChartFileParser.Parse(chartPath);
-                Assert.That(chart.ResolvePrimaryAudioRelativePath(), Is.EqualTo(audioName));
+                Assert.That(chart.ResolvePrimaryAudioRelativePath(), Is.EqualTo(audio_name));
                 Assert.That(File.Exists(Path.Combine(root, chart.ResolvePrimaryAudioRelativePath()!)), Is.True);
                 Assert.That(chart.Metadata.Title, Is.EqualTo("曲名测试"));
+            }
+            finally
+            {
+                Directory.Delete(root, true);
+            }
+        }
+
+        [Test]
+        public void DecodeBytes_prefers_encoding_when_referenced_audio_exists()
+        {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            Encoding gbk = Encoding.GetEncoding(936);
+
+            string root = Path.Combine(Path.GetTempPath(), "diva-enc-bytes-" + Path.GetRandomFileName());
+            Directory.CreateDirectory(root);
+
+            const string audio_name = "【Terror】 COVER 测试.mp3";
+            File.WriteAllBytes(Path.Combine(root, audio_name), [0]);
+
+            const string chart_text = $"""
+                                      1.0.4.8
+                                      曲名测试
+                                      Mapper
+                                      Artist
+                                      Style
+                                      cover.jpg
+                                      1
+                                      3
+                                      120
+                                      1
+                                      0 120
+                                      -1
+                                      -1
+                                      -1
+                                      0 0 8 8 0 0 0
+                                      -1
+                                      0 {audio_name}
+                                      -1
+                                      0 cover.jpg
+                                      -1
+                                      -1 -1
+                                      """;
+
+            byte[] bytes = gbk.GetBytes(chart_text.Replace("\r\n", "\n"));
+
+            try
+            {
+                string text = DivaChartTextEncoding.DecodeBytes(bytes, root);
+                Assert.That(text, Does.Contain(audio_name));
+                Assert.That(DivaChartTextEncoding.DetectBestEncoding(bytes, root).CodePage, Is.EqualTo(936));
             }
             finally
             {
@@ -69,7 +119,7 @@ namespace osu.Game.Rulesets.Diva.Tests
         {
             string root = Path.Combine(Path.GetTempPath(), "diva-resolve-" + Path.GetRandomFileName());
             Directory.CreateDirectory(root);
-            string real = "【Terror】 COVER 测试.mp3";
+            const string real = "【Terror】 COVER 测试.mp3";
             File.WriteAllBytes(Path.Combine(root, real), [0]);
 
             try

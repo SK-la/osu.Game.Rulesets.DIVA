@@ -25,14 +25,24 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
             @"^\s*\d+\s+(.+\.(?:mp3|ogg|wav|flac|jpg|jpeg|png|bmp|mpg|mpeg|avi|mp4|wmv))\s*$",
             RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-        static DivaChartTextEncoding() => ensureCodePages();
+        static DivaChartTextEncoding()
+        {
+            ensureCodePages();
+        }
 
         public static string DecodeFile(string path)
         {
-            ensureCodePages();
-
             byte[] bytes = File.ReadAllBytes(path);
             string songFolder = Path.GetDirectoryName(path) ?? string.Empty;
+            return DecodeBytes(bytes, songFolder);
+        }
+
+        /// <summary>
+        /// Decodes raw <c>.diva</c> bytes using the same encoding candidates and scoring as <see cref="DecodeFile"/>.
+        /// </summary>
+        public static string DecodeBytes(byte[] bytes, string songFolder = "")
+        {
+            ensureCodePages();
 
             Encoding? best = null;
             string? bestText = null;
@@ -71,10 +81,17 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
         /// </summary>
         public static Encoding DetectBestEncoding(string path)
         {
-            ensureCodePages();
-
             byte[] bytes = File.ReadAllBytes(path);
             string songFolder = Path.GetDirectoryName(path) ?? string.Empty;
+            return DetectBestEncoding(bytes, songFolder);
+        }
+
+        /// <summary>
+        /// Detects the best encoding for raw <c>.diva</c> bytes (same scoring as <see cref="DecodeBytes"/>).
+        /// </summary>
+        public static Encoding DetectBestEncoding(byte[] bytes, string songFolder = "")
+        {
+            ensureCodePages();
 
             Encoding? best = null;
             int bestScore = int.MinValue;
@@ -162,8 +179,8 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
             if (!string.IsNullOrEmpty(asciiHint))
             {
                 string[] hinted = candidates
-                    .Where(f => Path.GetFileName(f).Contains(asciiHint, StringComparison.OrdinalIgnoreCase))
-                    .ToArray();
+                                  .Where(f => Path.GetFileName(f).Contains(asciiHint, StringComparison.OrdinalIgnoreCase))
+                                  .ToArray();
 
                 if (hinted.Length > 0)
                     matches = hinted;
@@ -211,6 +228,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
             if (bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF)
             {
                 yield return new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: false);
+
                 yield break;
             }
 

@@ -2,9 +2,7 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
-using System.IO;
 using System.Linq;
-using System.Text;
 using osu.Game.Beatmaps;
 using osu.Game.Beatmaps.ControlPoints;
 using osu.Game.Beatmaps.Formats;
@@ -30,13 +28,8 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
 
         protected override void ParseStreamInto(LineBufferedReader stream, bool isPrimaryStream, Beatmap beatmap)
         {
-            var sb = new StringBuilder();
-
-            while (stream.ReadLine() is { } line)
-                sb.AppendLine(line);
-
-            using var reader = new StringReader(sb.ToString());
-            DivaChart chart = DivaChartFileParser.Parse(reader, string.Empty, string.Empty);
+            // Prefer FileStream path / raw bytes — LineBufferedReader is always UTF-8 and corrupts ANSI charts.
+            DivaChart chart = DivaChartStreamDecode.Parse(stream).Chart;
             DivaPlaybackTimeline timeline = DivaPlaybackTimeline.Create(chart);
 
             beatmap.BeatmapInfo.DifficultyName = DivaChartConstants.FormatDifficultyName(chart.Metadata.Level, chart.Metadata.Hard);
