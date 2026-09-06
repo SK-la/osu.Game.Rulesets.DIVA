@@ -1,6 +1,7 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System;
 using System.Collections.Generic;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
@@ -86,7 +87,9 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
         protected override void ApplyHitAnimations()
         {
-            bool hitLightingEnabled = config.Get<bool>(OsuSetting.HitLighting);
+            // Resolve by name at runtime: OsuSetting ordinals drift across lazer versions, and a
+            // compile-time OsuSetting.HitLighting value can land on an unrelated BindableDouble.
+            bool hitLightingEnabled = tryGetOsuBoolSetting(config, nameof(OsuSetting.HitLighting), fallback: true);
             bool visualBurstsEnabled = judgedDrawableObject is DrawableDivaHitObject { EnableVisualBursts.Value: true };
 
             Lighting.Alpha = 1;
@@ -103,6 +106,21 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
             if (Lighting.LatestTransformEndTime > LifetimeEnd)
                 LifetimeEnd = Lighting.LatestTransformEndTime;
+        }
+
+        private static bool tryGetOsuBoolSetting(OsuConfigManager configManager, string settingName, bool fallback)
+        {
+            if (!Enum.TryParse(settingName, out OsuSetting setting))
+                return fallback;
+
+            try
+            {
+                return configManager.Get<bool>(setting);
+            }
+            catch (InvalidCastException)
+            {
+                return fallback;
+            }
         }
 
         protected override Drawable CreateDefaultJudgement(HitResult result) => new DivaJudgementPiece(this, result);
