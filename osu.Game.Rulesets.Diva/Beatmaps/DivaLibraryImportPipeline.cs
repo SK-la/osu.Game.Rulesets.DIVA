@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using osu.Framework.Logging;
@@ -29,16 +30,19 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
 
         public readonly struct ImportResult
         {
-            public ImportResult(int songCount, int importedSets, int failedSets)
+            public ImportResult(int songCount, int importedSets, int failedSets, IReadOnlyDictionary<string, IReadOnlyList<string>>? collectionHashesByPath = null)
             {
                 SongCount = songCount;
                 ImportedSets = importedSets;
                 FailedSets = failedSets;
+                CollectionHashesByPath = collectionHashesByPath
+                                         ?? new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase);
             }
 
             public int SongCount { get; }
             public int ImportedSets { get; }
             public int FailedSets { get; }
+            public IReadOnlyDictionary<string, IReadOnlyList<string>> CollectionHashesByPath { get; }
         }
 
         public static async Task<ImportResult> ImportToRealmAsync(
@@ -49,38 +53,63 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             CancellationToken cancellationToken = default)
         {
             reportProgress?.Invoke(new ImportProgress(0, "Scanning DIVA song folders…"));
-            IReadOnlyList<DivaSongFolder> songs = DivaLibraryScanner.Scan(paths);
 
-            if (songs.Count == 0)
-            {
-                reportProgress?.Invoke(new ImportProgress(1, "No .diva song folders found."));
-                return new ImportResult(0, 0, 0);
-            }
-
-            string stagingRoot = storage.GetFullPath(Path.Combine("diva-import-staging", Guid.NewGuid().ToString("N")), true);
+            var hashesByPath = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
             int imported = 0;
             int failed = 0;
+            int songCount = 0;
+
+            string stagingRoot = storage.GetFullPath(Path.Combine("diva-import-staging", Guid.NewGuid().ToString("N")), true);
 
             try
             {
-                for (int i = 0; i < songs.Count; i++)
+                foreach (string rootPath in paths)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    DivaSongFolder song = songs[i];
-                    double progress = (double)i / songs.Count;
-                    reportProgress?.Invoke(new ImportProgress(progress, $"Packaging {Path.GetFileName(song.FolderPath)}…"));
 
-                    try
+                    if (string.IsNullOrWhiteSpace(rootPath) || !Directory.Exists(rootPath))
+                        continue;
+
+                    string normalisedRoot = Path.GetFullPath(rootPath);
+                    IReadOnlyList<DivaSongFolder> songs = DivaLibraryScanner.Scan([normalisedRoot]);
+                    songCount += songs.Count;
+
+                    if (!hashesByPath.ContainsKey(normalisedRoot))
+                        hashesByPath[normalisedRoot] = [];
+
+                    for (int i = 0; i < songs.Count; i++)
                     {
-                        string packaged = DivaSongSetPackager.PackageSong(song, stagingRoot);
-                        reportProgress?.Invoke(new ImportProgress(progress + 0.5 / songs.Count, $"Importing {Path.GetFileName(song.FolderPath)}…"));
-                        await beatmapManager.Import(new ImportTask(packaged), cancellationToken: cancellationToken).ConfigureAwait(false);
-                        imported++;
-                    }
-                    catch (Exception ex)
-                    {
-                        failed++;
-                        Logger.Error(ex, $"[DIVA] Failed to import song folder '{song.FolderPath}'.");
+                        cancellationToken.ThrowIfCancellationRequested();
+                        DivaSongFolder song = songs[i];
+                        double progress = songCount == 0 ? 0 : (double)(imported + failed) / Math.Max(songCount, 1);
+                        reportProgress?.Invoke(new ImportProgress(progress, $"Packaging {Path.GetFileName(song.FolderPath)}…"));
+
+                        try
+                        {
+                            string packaged = DivaSongSetPackager.PackageSong(song, stagingRoot);
+                            reportProgress?.Invoke(new ImportProgress(progress + 0.01, $"Importing {Path.GetFileName(song.FolderPath)}…"));
+
+                            Live<BeatmapSetInfo>? live = await beatmapManager.Import(new ImportTask(packaged), cancellationToken: cancellationToken).ConfigureAwait(false);
+
+                            if (live != null)
+                            {
+                                live.PerformRead(set =>
+                                {
+                                    foreach (BeatmapInfo beatmap in set.Beatmaps)
+                                    {
+                                        if (!string.IsNullOrEmpty(beatmap.MD5Hash))
+                                            hashesByPath[normalisedRoot].Add(beatmap.MD5Hash);
+                                    }
+                                });
+                            }
+
+                            imported++;
+                        }
+                        catch (Exception ex)
+                        {
+                            failed++;
+                            Logger.Error(ex, $"[DIVA] Failed to import song folder '{song.FolderPath}'.");
+                        }
                     }
                 }
             }
@@ -97,8 +126,21 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                 }
             }
 
-            reportProgress?.Invoke(new ImportProgress(1, $"Imported {imported}/{songs.Count} song sets."));
-            return new ImportResult(songs.Count, imported, failed);
+            if (songCount == 0)
+            {
+                reportProgress?.Invoke(new ImportProgress(1, "No .diva song folders found."));
+                return new ImportResult(0, 0, 0);
+            }
+
+            reportProgress?.Invoke(new ImportProgress(1, $"Imported {imported}/{songCount} song sets."));
+            return new ImportResult(
+                songCount,
+                imported,
+                failed,
+                hashesByPath.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => (IReadOnlyList<string>)kvp.Value,
+                    StringComparer.OrdinalIgnoreCase));
         }
 
 #if NET10_0

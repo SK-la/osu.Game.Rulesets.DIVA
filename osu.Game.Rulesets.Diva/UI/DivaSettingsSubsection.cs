@@ -11,9 +11,11 @@ using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Logging;
 using osu.Framework.Platform;
 using osu.Framework.Screens;
 using osu.Game.Beatmaps;
+using osu.Game.Database;
 using osu.Game.Overlays;
 using osu.Game.Overlays.Notifications;
 using osu.Game.Overlays.Settings;
@@ -50,10 +52,8 @@ namespace osu.Game.Rulesets.Diva.UI
         [Resolved]
         private BeatmapManager beatmapManager { get; set; } = null!;
 
-#if NET10_0
         [Resolved]
-        private Database.RealmAccess realm { get; set; } = null!;
-#endif
+        private RealmAccess realm { get; set; } = null!;
 
         private CancellationTokenSource? importCts;
 
@@ -195,21 +195,54 @@ namespace osu.Game.Rulesets.Diva.UI
                         notification.Text = p.StatusMessage;
                     }
 
+                    DivaCollectionSynchronizer.SyncResult? collectionSync = null;
+
                     if (clearing)
                         report(new DivaLibraryImportPipeline.ImportProgress(1, "Paths cleared."));
                     else if (importToRealm)
-                        await DivaLibraryImportPipeline.ImportToRealmAsync(beatmapManager, storage, paths, report, token).ConfigureAwait(false);
+                    {
+                        DivaLibraryImportPipeline.ImportResult importResult =
+                            await DivaLibraryImportPipeline.ImportToRealmAsync(beatmapManager, storage, paths, report, token).ConfigureAwait(false);
+                        collectionSync = DivaCollectionSynchronizer.Apply(realm, importResult.CollectionHashesByPath);
+                    }
                     else
                     {
 #if NET10_0
                         await DivaLibraryImportPipeline.SynchronizeExternalAsync(realm, storage, ruleset.RulesetInfo, paths, report, token).ConfigureAwait(false);
+                        collectionSync = DivaCollectionSynchronizer.SyncFromLibraryPaths(realm, paths);
 #else
                         throw new NotSupportedException("External library linking requires Ez2Lazer (net10).");
 #endif
                     }
 
-                    notification.CompletionText = clearing ? "DIVA library paths cleared." : "DIVA library update complete.";
+                    string completion = clearing ? "DIVA library paths cleared." : "DIVA library update complete.";
+
+                    if (collectionSync is { CollectionCount: > 0 } sync)
+                    {
+                        completion += $" Synced {sync.CollectionCount} path collection(s), {sync.ChartCount} chart(s).";
+                        notificationOverlay?.Post(new SimpleNotification
+                        {
+                            Text = $"Synced {sync.CollectionCount} DIVA path collection(s), {sync.ChartCount} chart(s)."
+                        });
+                    }
+
+                    notification.CompletionText = completion;
                     notification.State = ProgressNotificationState.Completed;
+
+                    if (IsLoaded)
+                    {
+                        Schedule(() =>
+                        {
+                            updatePathStatus();
+
+                            if (collectionSync is { CollectionCount: > 0 } syncStatus)
+                            {
+                                cacheStatusNote.Current.Value = new SettingsNote.Data(
+                                    $"{paths.Count} path(s) ready. Collections: {syncStatus.CollectionCount} ({syncStatus.ChartCount} charts).",
+                                    SettingsNote.Type.Informational);
+                            }
+                        });
+                    }
                 }
                 catch (OperationCanceledException)
                 {
@@ -218,7 +251,11 @@ namespace osu.Game.Rulesets.Diva.UI
                 catch (Exception ex)
                 {
                     notification.State = ProgressNotificationState.Cancelled;
-                    notificationOverlay?.Post(new SimpleErrorNotification { Text = $"DIVA library update failed: {ex.Message}" });
+                    Logger.Error(ex, "[DIVA] Library update failed");
+                    notificationOverlay?.Post(new SimpleErrorNotification
+                    {
+                        Text = $"DIVA library update failed: {ex.GetType().Name}: {ex.Message}"
+                    });
                 }
             }, token);
         }

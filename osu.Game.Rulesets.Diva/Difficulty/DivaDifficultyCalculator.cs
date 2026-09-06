@@ -1,7 +1,9 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using osu.Game.Beatmaps;
 using osu.Game.Rulesets.Difficulty;
@@ -19,19 +21,37 @@ namespace osu.Game.Rulesets.Diva.Difficulty
         }
 
         protected override DifficultyAttributes CreateDifficultyAttributes(IBeatmap beatmap, Mod[] mods, Skill[] skills)
+            => new DifficultyAttributes(mods, ResolveNativeStarRating(beatmap.BeatmapInfo));
+
+        /// <summary>
+        /// ProjectDIVA has no algorithmic SR — panel stars should match chart <c>Hard</c>
+        /// (stored as OD, and as <c>★N</c> in <see cref="IBeatmapInfo.DifficultyName"/>).
+        /// </summary>
+        public static double ResolveNativeStarRating(IBeatmapInfo beatmapInfo)
         {
-            // double od = beatmap.BeatmapInfo.Difficulty.OverallDifficulty;
+            if (tryParseBlackStar(beatmapInfo.DifficultyName, out double fromName))
+                return fromName;
 
-            //TODO: This will need to be rewritten once we start work on #9
-            double difficulty = beatmap.BeatmapInfo.Difficulty.OverallDifficulty switch
-            {
-                >= 6.0f => 4,
-                >= 4.5f => 3,
-                >= 2f => 2,
-                _ => 1,
-            };
+            double od = beatmapInfo.Difficulty.OverallDifficulty;
+            return od > 0 ? od : 0;
+        }
 
-            return new DifficultyAttributes(mods, difficulty);
+        private static bool tryParseBlackStar(string? difficultyName, out double stars)
+        {
+            stars = 0;
+
+            if (string.IsNullOrEmpty(difficultyName) || difficultyName[0] != '★')
+                return false;
+
+            int end = 1;
+            while (end < difficultyName.Length && char.IsDigit(difficultyName[end]))
+                end++;
+
+            if (end == 1)
+                return false;
+
+            return double.TryParse(difficultyName.AsSpan(1, end - 1), NumberStyles.Integer, CultureInfo.InvariantCulture, out stars)
+                   && stars > 0;
         }
 
         protected override IEnumerable<DifficultyHitObject> CreateDifficultyHitObjects(IBeatmap beatmap, Mod[] mods) => Enumerable.Empty<DifficultyHitObject>();

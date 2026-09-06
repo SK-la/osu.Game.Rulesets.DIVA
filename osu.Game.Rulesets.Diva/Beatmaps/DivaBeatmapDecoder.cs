@@ -39,6 +39,8 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
 
             beatmap.BeatmapInfo.DifficultyName = DivaChartConstants.FormatDifficultyName(chart.Metadata.Level, chart.Metadata.Hard);
             beatmap.BeatmapInfo.Difficulty.OverallDifficulty = Math.Clamp(chart.Metadata.Hard, 1, 10);
+            // Native Hard is the displayed star rating (no algorithmic SR).
+            beatmap.BeatmapInfo.StarRating = Math.Max(0, chart.Metadata.Hard);
             beatmap.BeatmapInfo.Difficulty.CircleSize = 4;
             beatmap.BeatmapInfo.Difficulty.DrainRate = 5;
             beatmap.BeatmapInfo.Difficulty.ApproachRate = 8;

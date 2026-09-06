@@ -41,8 +41,9 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                 RulesetInfo managedRuleset = r.All<RulesetInfo>().FirstOrDefault(info => info.ShortName == divaRulesetInfo.ShortName)
                                              ?? throw new InvalidOperationException("DIVA ruleset is not available in realm.");
 
-                // Remove stale external DIVA sets that are no longer in the configured roots.
-                foreach (var existing in r.All<BeatmapSetInfo>().Where(s => s.HostingKind == BeatmapSetHostingKind.External).ToList())
+                // HostingKind is a CLR wrapper around HostingKindInt — do not use it in Realm LINQ
+                // (throws NotImplementedException). Filter on HostingKindInt or in-memory after materialise.
+                foreach (var existing in r.All<BeatmapSetInfo>().Where(s => s.HostingKindInt == (int)BeatmapSetHostingKind.External).ToList())
                 {
                     bool isDiva = existing.Beatmaps.Any(b => b.Ruleset.ShortName == DivaRuleset.SHORT_NAME);
                     if (!isDiva)
@@ -138,6 +139,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                         beatmap.BeatmapSet = destination;
                         beatmap.BPM = meta.Bpm;
                         beatmap.Difficulty.OverallDifficulty = Math.Clamp(meta.Hard, 1, 10);
+                        beatmap.StarRating = Math.Max(0, meta.Hard);
                         beatmap.Difficulty.CircleSize = 4;
                         beatmap.Difficulty.DrainRate = 5;
                         beatmap.Difficulty.ApproachRate = 8;
@@ -145,7 +147,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                         beatmap.Metadata.TitleUnicode = meta.Title;
                         beatmap.Metadata.Artist = meta.Artist;
                         beatmap.Metadata.ArtistUnicode = meta.Artist;
-                        beatmap.Metadata.Author = new RealmUser { Username = meta.Creator };
+                        beatmap.Metadata.Author.Username = meta.Creator;
                         beatmap.Metadata.Source = "ProjectDIVA";
                         beatmap.Metadata.Tags = $"{DivaActionEncoding.NATIVE_TAG} diva-external";
                         beatmap.Metadata.AudioFile = string.IsNullOrWhiteSpace(audio) ? string.Empty : Path.GetFileName(audio);
