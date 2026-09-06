@@ -42,6 +42,8 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
 
         public override bool CanConvert() => Beatmap.HitObjects.All(h => h is IHasPosition || h is DivaHitObject);
 
+        protected override Beatmap<DivaHitObject> CreateBeatmap() => new DivaBeatmap();
+
         protected override IEnumerable<DivaHitObject> ConvertHitObject(HitObject original, IBeatmap beatmap, CancellationToken cancellationToken)
         {
             if (original is DivaHitObject native)
