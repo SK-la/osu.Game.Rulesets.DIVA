@@ -90,6 +90,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
 
                         string? audio = null;
                         string background = meta.OverviewPicture;
+                        double? chartLengthMs = null;
 
                         try
                         {
@@ -97,6 +98,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                             DivaChart chart = DivaChartFileParser.Parse(chartPath);
                             audio = chart.ResolvePrimaryAudioRelativePath();
                             background = chart.ResolveBackgroundRelativePath() ?? background;
+                            chartLengthMs = computeChartLengthMs(chart);
                         }
                         catch
                         {
@@ -142,6 +144,8 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                         beatmap.Status = BeatmapOnlineStatus.LocallyModified;
                         beatmap.BeatmapSet = destination;
                         beatmap.BPM = meta.Bpm;
+                        if (chartLengthMs is > 0)
+                            beatmap.Length = chartLengthMs.Value;
                         beatmap.Difficulty.OverallDifficulty = Math.Clamp(meta.Hard, 1, 10);
                         beatmap.StarRating = Math.Max(0, meta.Hard);
                         beatmap.Difficulty.CircleSize = 4;
@@ -182,6 +186,18 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             }
 
             realm.Remove(set);
+        }
+
+        private static double? computeChartLengthMs(DivaChart chart)
+        {
+            if (chart.Notes.Count == 0)
+                return null;
+
+            double end = 0;
+            foreach (DivaChartNote note in chart.Notes)
+                end = Math.Max(end, note.StartTimeMs + note.DurationMs);
+
+            return end > 0 ? end : null;
         }
 
         private static string computeRelative(string chartPath, string contentRoot)
