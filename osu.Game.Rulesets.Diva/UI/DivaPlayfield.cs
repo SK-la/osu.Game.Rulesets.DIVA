@@ -8,8 +8,7 @@ using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Pooling;
-using osu.Framework.Input.Bindings;
-using osu.Framework.Input.Events;
+using osu.Game.Rulesets.Diva.Audio;
 using osu.Game.Rulesets.Diva.Objects.Drawables;
 using osu.Game.Rulesets.Diva.Scoring;
 using osu.Game.Rulesets.Judgements;
@@ -21,7 +20,7 @@ using osu.Game.Rulesets.UI;
 namespace osu.Game.Rulesets.Diva.UI
 {
     [Cached]
-    public partial class DivaPlayfield : Playfield, IKeyBindingHandler<DivaAction>
+    public partial class DivaPlayfield : Playfield
     {
         private readonly JudgementContainer<DrawableDivaJudgement> judgementLayer;
 
@@ -29,8 +28,13 @@ namespace osu.Game.Rulesets.Diva.UI
 
         private readonly Container judgementAboveHitObjectLayer;
 
+        [Cached]
+        private readonly DivaHitSamplePlayer hitSamplePlayer;
+
         public DivaPlayfield()
         {
+            hitSamplePlayer = new DivaHitSamplePlayer();
+
             InternalChildren =
             [
                 judgementLayer = new JudgementContainer<DrawableDivaJudgement> { RelativeSizeAxes = Axes.Both },
@@ -53,12 +57,10 @@ namespace osu.Game.Rulesets.Diva.UI
         private void load()
         {
             AddInternal(HitObjectContainer);
-        }
 
-        public bool OnPressed(KeyBindingPressEvent<DivaAction> e) => false;
-
-        public void OnReleased(KeyBindingReleaseEvent<DivaAction> e)
-        {
+            // After HitObjectContainer: reversed KeyBindingInputQueue hits us first (taiko/mania pattern).
+            AddInternal(hitSamplePlayer);
+            AddInternal(new DivaResultVoicePlayer());
         }
 
         private void onJudgementLoaded(DrawableDivaJudgement j)

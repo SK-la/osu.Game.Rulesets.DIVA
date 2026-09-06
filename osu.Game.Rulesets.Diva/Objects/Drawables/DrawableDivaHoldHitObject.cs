@@ -4,6 +4,7 @@
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Input.Events;
+using osu.Game.Rulesets.Diva.Audio;
 using osu.Game.Rulesets.Diva.Graphics;
 using osu.Game.Rulesets.Diva.Objects.Drawables.Pieces;
 using osu.Game.Rulesets.Diva.Scoring;
@@ -25,6 +26,9 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         private bool pendingRelease;
         private bool? pendingHeadPressValid;
         private HitResult headResult = HitResult.None;
+
+        [Resolved(canBeNull: true)]
+        private DivaHitSamplePlayer? hitSamplePlayer { get; set; }
 
         public DrawableDivaHoldHitObject(DivaHoldHitObject hitObject)
             : base(hitObject)
@@ -127,6 +131,9 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
                 HitResult releaseResult = DivaHitJudgementEvaluator.GetHoldResultFor(endOffset);
                 if (releaseResult == HitResult.None)
                     releaseResult = HitResult.Miss;
+
+                // ProjectDIVA: strip release always PlayHit(1) when a matching hold is released.
+                hitSamplePlayer?.PlayReleaseHit();
 
                 ApplyResult((r, _) => r.Type = DivaHitJudgementEvaluator.CombineHoldResults(headResult, releaseResult));
                 return;

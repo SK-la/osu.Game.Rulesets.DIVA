@@ -8,7 +8,7 @@ using osu.Game.Rulesets.Objects.Types;
 namespace osu.Game.Rulesets.Diva.Objects
 {
     /// <summary>
-    ///     Hold / long-press note. Uses <see cref="Audio.DivaHitSampleInfo.Sweep" /> for hit sounds.
+    ///     Hold / long-press note. Hit SE via <see cref="Audio.DivaHitSamplePlayer"/> (head keydown + tail release).
     ///     Judged like ProjectDIVA strips: press at <see cref="HitObject.StartTime"/>, release at <see cref="EndTime"/>.
     /// </summary>
     public partial class DivaHoldHitObject : DivaHitObject, IHasDuration

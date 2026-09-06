@@ -65,7 +65,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                 {
                     yield return new DivaHoldHitObject
                     {
-                        Samples = [DivaHitSampleInfo.Sweep],
+                        Samples = [DivaHitSampleInfo.Normal],
                         StartTime = original.StartTime,
                         Duration = durationMs,
                         Position = position,

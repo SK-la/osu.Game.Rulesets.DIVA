@@ -96,7 +96,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                         Duration = note.DurationMs,
                         Position = position,
                         ValidAction = action,
-                        Samples = [DivaHitSampleInfo.Sweep],
+                        Samples = [DivaHitSampleInfo.Normal],
                         ApproachPieceOriginPosition = approach
                     });
                 }

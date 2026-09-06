@@ -12,7 +12,6 @@ using osu.Framework.Input.Bindings;
 using osu.Framework.Input.Events;
 using osu.Game.Audio;
 using osu.Game.Beatmaps;
-using osu.Game.Rulesets.Diva.Audio;
 using osu.Game.Rulesets.Diva.Beatmaps.DivaFormat;
 using osu.Game.Rulesets.Diva.Configuration;
 using osu.Game.Rulesets.Diva.Graphics;
@@ -188,17 +187,14 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         /// <summary>Doubles/ file stem for a direction action (filenames still use face-button names).</summary>
         protected static DivaAction DirectionToDoublesFileStem(DivaAction direction) => MapDirectionToSymbol(direction);
 
-        public override IEnumerable<HitSampleInfo> GetSamples()
-        {
-            return [CreateHitSample()];
-        }
+        /// <summary>
+        /// Hit SE is played by <see cref="Audio.DivaHitSamplePlayer"/> on keydown (ProjectDIVA / Taiko pattern).
+        /// </summary>
+        public override IEnumerable<HitSampleInfo> GetSamples() => [];
 
-        protected virtual HitSampleInfo CreateHitSample()
+        public override void PlaySamples()
         {
-            if (HitObject is DivaHoldHitObject)
-                return DivaHitSampleInfo.Sweep;
-
-            return DivaHitSampleInfo.Normal;
+            // Handled by DivaHitSamplePlayer — avoid double playback on ArmedState.Hit.
         }
 
         protected override void CheckForResult(bool userTriggered, double timeOffset)
