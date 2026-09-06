@@ -37,6 +37,13 @@ namespace osu.Game.Rulesets.Diva
 
         public override string RulesetAPIVersionSupported => CURRENT_RULESET_API_VERSION;
 
+        public override string ShortName => SHORT_NAME;
+
+        static DivaRuleset()
+        {
+            DivaBeatmapDecoder.Register();
+        }
+
         public override DrawableRuleset CreateDrawableRulesetWith(IBeatmap beatmap, IReadOnlyList<Mod>? mods = null) => new DrawableDivaRuleset(this, beatmap, mods);
 
         public override ScoreProcessor CreateScoreProcessor() => new DivaScoreProcessor();
@@ -113,14 +120,14 @@ namespace osu.Game.Rulesets.Diva
                     return new Mod[]
                     {
                         new OsuModNoFail(),
-                        new MultiMod(new OsuModHalfTime(), new OsuModDaycore()),
+                        new MultiMod(new OsuModHalfTime(), new OsuModDaycore())
                     };
 
                 case ModType.DifficultyIncrease:
                     return new Mod[]
                     {
                         new OsuModSuddenDeath(),
-                        new MultiMod(new OsuModDoubleTime(), new OsuModNightcore()),
+                        new MultiMod(new OsuModDoubleTime(), new OsuModNightcore())
                     };
 
                 case ModType.Conversion:
@@ -133,15 +140,13 @@ namespace osu.Game.Rulesets.Diva
                             new DivaModKey3(),
                             new DivaModKey4()
                         ),
-                        new DivaModNoDoubles(),
+                        new DivaModNoDoubles()
                     };
 
                 default:
                     return Array.Empty<Mod>();
             }
         }
-
-        public override string ShortName => SHORT_NAME;
 
         public override IEnumerable<KeyBinding> GetDefaultKeyBindings(int variant = 0) => new[]
         {

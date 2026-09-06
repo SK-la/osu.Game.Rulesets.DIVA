@@ -3,66 +3,89 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using osu.Game.Beatmaps;
+using osu.Game.Rulesets.Diva.Audio;
+using osu.Game.Rulesets.Diva.Beatmaps.DivaFormat;
+using osu.Game.Rulesets.Diva.Objects;
 using osu.Game.Rulesets.Objects;
 using osu.Game.Rulesets.Objects.Types;
-using osu.Game.Rulesets.Diva.Audio;
-using osu.Game.Rulesets.Diva.Objects;
 using osuTK;
-using System.Threading;
 
 namespace osu.Game.Rulesets.Diva.Beatmaps
 {
     public partial class DivaBeatmapConverter : BeatmapConverter<DivaHitObject>
     {
-        //todo:
-        //make single position bursts to a line pattern
-        //every approach piece of a combo will come from one direction
-        //create patterns of same button
-
         public int TargetButtons;
         public bool AllowDoubles = true;
-
-        private DivaAction prevAction = DivaAction.Triangle;
-
-        private Vector2 prevObjectPos = Vector2.Zero;
-
         private readonly float osuObjectSize;
 
-        private int streamLength;
-        //these variables were at the end of the class, such heresy had i done
-
         private const float approach_piece_distance = 1200;
+
+        private DivaAction prevAction = DivaAction.Triangle;
+        private Vector2 prevObjectPos = Vector2.Zero;
+        private int streamLength;
 
         public DivaBeatmapConverter(IBeatmap beatmap, Ruleset ruleset)
             : base(beatmap, ruleset)
         {
-            this.TargetButtons = beatmap.BeatmapInfo.Difficulty.OverallDifficulty switch
+            TargetButtons = beatmap.BeatmapInfo.Difficulty.OverallDifficulty switch
             {
                 >= 6.0f => 4,
                 >= 4.5f => 3,
                 >= 2f => 2,
-                _ => 1,
+                _ => 1
             };
 
             osuObjectSize = (54.4f - 4.48f * beatmap.Difficulty.CircleSize) * 2;
-
-            //Console.WriteLine(this.TargetButtons);
         }
 
-        public override bool CanConvert() => Beatmap.HitObjects.All(h => h is IHasPosition);
+        public override bool CanConvert() => Beatmap.HitObjects.All(h => h is IHasPosition || h is DivaHitObject);
 
         protected override IEnumerable<DivaHitObject> ConvertHitObject(HitObject original, IBeatmap beatmap, CancellationToken cancellationToken)
         {
-            //not sure if handling the cancellation is needed, as offical modes doesnt handle *scratches my head* or even its possible
+            if (original is DivaHitObject native)
+            {
+                yield return native;
+
+                yield break;
+            }
+
             var positionData = original as IHasPosition;
-            // Legacy convert hit objects (internal to osu.Game) implement IHasCombo at runtime.
             // ReSharper disable once SuspiciousTypeConversion.Global
             var comboData = original as IHasCombo;
-            var newCombo = comboData?.NewCombo ?? true;
+            bool newCombo = comboData?.NewCombo ?? true;
+            Vector2 position = positionData?.Position ?? Vector2.Zero;
 
-            //currently press presses are placed in place of sliders as placeholder, but arcade slider are better suited for these
-            //another option would be long sliders: arcade sliders, short sliders: doubles
+            if (DivaActionEncoding.TryParseFromHitObject(original, out DivaAction encodedAction, out bool isHold, out double durationMs))
+            {
+                if (isHold)
+                {
+                    yield return new DivaHoldHitObject
+                    {
+                        Samples = [DivaHitSampleInfo.Sweep],
+                        StartTime = original.StartTime,
+                        Duration = durationMs,
+                        Position = position,
+                        ValidAction = encodedAction,
+                        ApproachPieceOriginPosition = getApproachPieceOriginPos(position)
+                    };
+                }
+                else
+                {
+                    yield return new DivaHitObject
+                    {
+                        Samples = [DivaHitSampleInfo.Normal],
+                        StartTime = original.StartTime,
+                        Position = position,
+                        ValidAction = encodedAction,
+                        ApproachPieceOriginPosition = getApproachPieceOriginPos(position)
+                    };
+                }
+
+                yield break;
+            }
+
             switch (original)
             {
                 // ReSharper disable once SuspiciousTypeConversion.Global
@@ -71,10 +94,10 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                     {
                         Samples = [DivaHitSampleInfo.Normal],
                         StartTime = original.StartTime,
-                        Position = positionData?.Position ?? Vector2.Zero,
-                        ValidAction = validAction(positionData?.Position ?? Vector2.Zero, newCombo),
+                        Position = position,
+                        ValidAction = validAction(position, newCombo),
                         DoubleAction = doubleAction(prevAction),
-                        ApproachPieceOriginPosition = getApproachPieceOriginPos(positionData?.Position ?? Vector2.Zero),
+                        ApproachPieceOriginPosition = getApproachPieceOriginPos(position)
                     };
 
                     break;
@@ -84,9 +107,9 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                     {
                         Samples = [DivaHitSampleInfo.Normal],
                         StartTime = original.StartTime,
-                        Position = positionData?.Position ?? Vector2.Zero,
-                        ValidAction = validAction(positionData?.Position ?? Vector2.Zero, newCombo),
-                        ApproachPieceOriginPosition = getApproachPieceOriginPos(positionData?.Position ?? Vector2.Zero),
+                        Position = position,
+                        ValidAction = validAction(position, newCombo),
+                        ApproachPieceOriginPosition = getApproachPieceOriginPos(position)
                     };
 
                     break;
@@ -101,39 +124,36 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             _ => DivaAction.Up
         };
 
-        //placeholder
         private DivaAction validAction(Vector2 currentObjectPos, bool newCombo)
         {
-            var distance = (prevObjectPos - currentObjectPos).Length;
+            float distance = (prevObjectPos - currentObjectPos).Length;
 
             if (distance < osuObjectSize * 1.2 && (streamLength < 20 || !newCombo))
             {
                 streamLength++;
                 return prevAction;
             }
-            else
-            {
-                streamLength = 0;
-            }
+
+            streamLength = 0;
 
             var ac = DivaAction.Circle;
 
             switch (prevAction)
             {
                 case DivaAction.Circle:
-                    if (this.TargetButtons < 2) break;
+                    if (TargetButtons < 2) break;
 
                     ac = DivaAction.Cross;
                     break;
 
                 case DivaAction.Cross:
-                    if (this.TargetButtons < 3) break;
+                    if (TargetButtons < 3) break;
 
                     ac = DivaAction.Square;
                     break;
 
                 case DivaAction.Square:
-                    if (this.TargetButtons < 4) break;
+                    if (TargetButtons < 4) break;
 
                     ac = DivaAction.Triangle;
                     break;
@@ -145,7 +165,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
 
         private Vector2 getApproachPieceOriginPos(Vector2 currentObjectPos)
         {
-            var dir = (prevObjectPos - currentObjectPos);
+            Vector2 dir = prevObjectPos - currentObjectPos;
             prevObjectPos = currentObjectPos;
 
             if (dir == Vector2.Zero)

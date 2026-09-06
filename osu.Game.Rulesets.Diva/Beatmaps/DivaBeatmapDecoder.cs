@@ -1,0 +1,104 @@
+// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
+// See the LICENCE file in the repository root for full licence text.
+
+using System;
+using System.IO;
+using System.Linq;
+using System.Text;
+using osu.Game.Beatmaps;
+using osu.Game.Beatmaps.ControlPoints;
+using osu.Game.Beatmaps.Formats;
+using osu.Game.IO;
+using osu.Game.Rulesets.Diva.Audio;
+using osu.Game.Rulesets.Diva.Beatmaps.DivaFormat;
+using osu.Game.Rulesets.Diva.Objects;
+using osuTK;
+
+namespace osu.Game.Rulesets.Diva.Beatmaps
+{
+    /// <summary>
+    ///     Decodes ProjectDIVA <c>.diva</c> text charts into a beatmap usable by the DIVA ruleset.
+    /// </summary>
+    public class DivaBeatmapDecoder : Decoder<Beatmap>
+    {
+        public static void Register()
+        {
+            // EditorVer lines are typically "1.0.x.x".
+            AddDecoder<Beatmap>("1.", _ => new DivaBeatmapDecoder());
+        }
+
+        protected override void ParseStreamInto(LineBufferedReader stream, bool isPrimaryStream, Beatmap beatmap)
+        {
+            var sb = new StringBuilder();
+
+            while (stream.ReadLine() is { } line)
+                sb.AppendLine(line);
+
+            using var reader = new StringReader(sb.ToString());
+            DivaChart chart = DivaChartFileParser.Parse(reader, string.Empty, string.Empty);
+
+            beatmap.BeatmapInfo.DifficultyName = DivaChartConstants.LEVEL_NAMES[
+                Math.Clamp(chart.Metadata.Level - 1, 0, DivaChartConstants.LEVEL_NAMES.Length - 1)];
+            beatmap.BeatmapInfo.Difficulty.OverallDifficulty = Math.Clamp(chart.Metadata.Hard, 1, 10);
+            beatmap.BeatmapInfo.Difficulty.CircleSize = 4;
+            beatmap.BeatmapInfo.Difficulty.DrainRate = 5;
+            beatmap.BeatmapInfo.Difficulty.ApproachRate = 8;
+            beatmap.BeatmapInfo.BPM = chart.Metadata.Bpm;
+            beatmap.Metadata.Title = chart.Metadata.Title;
+            beatmap.Metadata.TitleUnicode = chart.Metadata.Title;
+            beatmap.Metadata.Artist = chart.Metadata.Artist;
+            beatmap.Metadata.ArtistUnicode = chart.Metadata.Artist;
+            beatmap.Metadata.Author.Username = chart.Metadata.Creator;
+            beatmap.Metadata.Source = "ProjectDIVA";
+            beatmap.Metadata.Tags = $"{DivaActionEncoding.NATIVE_TAG} diva-external";
+            beatmap.Metadata.AudioFile = Path.GetFileName(chart.ResolvePrimaryAudioRelativePath() ?? string.Empty);
+            beatmap.Metadata.BackgroundFile = Path.GetFileName(chart.ResolveBackgroundRelativePath() ?? string.Empty);
+
+            foreach (DivaChartControlPoint point in chart.TimingPoints.OrderBy(p => p.TimeMs))
+            {
+                beatmap.ControlPointInfo.Add(point.TimeMs, new TimingControlPoint
+                {
+                    BeatLength = 60000.0 / (point.Bpm > 0 ? point.Bpm : 120)
+                });
+            }
+
+            if (chart.TimingPoints.Count == 0)
+            {
+                beatmap.ControlPointInfo.Add(0, new TimingControlPoint
+                {
+                    BeatLength = 60000.0 / (chart.Metadata.Bpm > 0 ? chart.Metadata.Bpm : 120)
+                });
+            }
+
+            foreach (DivaChartNote note in chart.Notes.OrderBy(n => n.StartTimeMs))
+            {
+                DivaAction action = DivaActionEncoding.ResolveAction(note);
+                Vector2 position = DivaActionEncoding.ToOsuPosition(note.GridX, note.GridY);
+
+                if (note.IsHold)
+                {
+                    beatmap.HitObjects.Add(new DivaHoldHitObject
+                    {
+                        StartTime = note.StartTimeMs,
+                        Duration = note.DurationMs,
+                        Position = position,
+                        ValidAction = action,
+                        Samples = [DivaHitSampleInfo.Sweep],
+                        ApproachPieceOriginPosition = position
+                    });
+                }
+                else
+                {
+                    beatmap.HitObjects.Add(new DivaHitObject
+                    {
+                        StartTime = note.StartTimeMs,
+                        Position = position,
+                        ValidAction = action,
+                        Samples = [DivaHitSampleInfo.Normal],
+                        ApproachPieceOriginPosition = position
+                    });
+                }
+            }
+        }
+    }
+}

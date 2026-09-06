@@ -1,3 +1,9 @@
+// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
+// See the LICENCE file in the repository root for full licence text.
+
+using System;
+using System.Collections.Generic;
+using System.Text.Json;
 using osu.Game.Configuration;
 using osu.Game.Rulesets.Configuration;
 
@@ -10,6 +16,67 @@ namespace osu.Game.Rulesets.Diva.Configuration
         {
         }
 
+        public static IReadOnlyList<string> ParseLibraryPaths(string? rawPaths, string? legacyRootPath = null)
+        {
+            var paths = new List<string>();
+
+            if (!string.IsNullOrWhiteSpace(rawPaths))
+            {
+                string trimmed = rawPaths.Trim();
+
+                try
+                {
+                    if (trimmed.StartsWith('['))
+                    {
+                        var deserialised = JsonSerializer.Deserialize<List<string>>(trimmed);
+
+                        if (deserialised != null)
+                            paths.AddRange(deserialised);
+                    }
+                    else
+                        paths.Add(trimmed);
+                }
+                catch (JsonException)
+                {
+                    paths.Add(trimmed);
+                }
+            }
+
+            if (paths.Count == 0 && !string.IsNullOrWhiteSpace(legacyRootPath))
+                paths.Add(legacyRootPath);
+
+            return normalisePaths(paths);
+        }
+
+        public static string SerialiseLibraryPaths(IEnumerable<string> paths) => JsonSerializer.Serialize(normalisePaths(paths));
+
+        public IReadOnlyList<string> GetLibraryPaths() => ParseLibraryPaths(Get<string>(DivaRulesetSettings.DivaLibraryPaths), Get<string>(DivaRulesetSettings.DivaRootPath));
+
+        public void PersistLibraryPaths(IReadOnlyList<string> paths)
+        {
+            IReadOnlyList<string> normalised = ParseLibraryPaths(SerialiseLibraryPaths(paths));
+            SetValue(DivaRulesetSettings.DivaLibraryPaths, SerialiseLibraryPaths(normalised));
+            SetValue(DivaRulesetSettings.DivaRootPath, normalised.Count > 0 ? normalised[0] : string.Empty);
+        }
+
+        public bool GetImportToRealm()
+        {
+#if NET8_0
+            return true;
+#else
+            return Get<bool>(DivaRulesetSettings.ImportToRealm);
+#endif
+        }
+
+        public void PersistImportToRealm(bool value)
+        {
+#if NET8_0
+            SetValue(DivaRulesetSettings.ImportToRealm, true);
+#else
+            SetValue(DivaRulesetSettings.ImportToRealm, value);
+#endif
+        }
+
         protected override void InitialiseDefaults()
         {
             base.InitialiseDefaults();
@@ -18,7 +85,28 @@ namespace osu.Game.Rulesets.Diva.Configuration
             SetDefault(DivaRulesetSettings.EnableVisualBursts, true);
             SetDefault(DivaRulesetSettings.NoteSize, 40.0, 24.0, 64.0, 1.0);
             SetDefault(DivaRulesetSettings.ApproachDuration, 1800.0, 1200.0, 3000.0, 50.0);
-            SetDefault(DivaRulesetSettings.HitExplosionAlpha, 1.0, 0.0, 1.0, 0.05); // 默认完全不透明，范围0-1，步进0.05
+            SetDefault(DivaRulesetSettings.HitExplosionAlpha, 1.0, 0.0, 1.0, 0.05);
+            SetDefault(DivaRulesetSettings.DivaRootPath, string.Empty);
+            SetDefault(DivaRulesetSettings.DivaLibraryPaths, "[]");
+            SetDefault(DivaRulesetSettings.ImportToRealm, true);
+        }
+
+        private static List<string> normalisePaths(IEnumerable<string> paths)
+        {
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var result = new List<string>();
+
+            foreach (string path in paths)
+            {
+                string trimmed = path.Trim();
+
+                if (string.IsNullOrEmpty(trimmed) || !seen.Add(trimmed))
+                    continue;
+
+                result.Add(trimmed);
+            }
+
+            return result;
         }
     }
 
@@ -28,6 +116,9 @@ namespace osu.Game.Rulesets.Diva.Configuration
         EnableVisualBursts,
         NoteSize,
         ApproachDuration,
-        HitExplosionAlpha, // 打击光透明度
+        HitExplosionAlpha,
+        DivaRootPath,
+        DivaLibraryPaths,
+        ImportToRealm
     }
 }
