@@ -73,6 +73,28 @@ namespace osu.Game.Rulesets.Diva.UI
             if (!judgedObject.DisplayResult)
                 return;
 
+            showJudgementVisual(judgedObject, result);
+        }
+
+        /// <summary>
+        /// ProjectDIVA strip head press: spawn hit explosion / judgement text without scoring.
+        /// Final hold score still comes from a later <see cref="DrawableHitObject.ApplyResult(HitResult)"/>.
+        /// </summary>
+        public void ShowHitFeedback(DrawableHitObject judgedObject, HitResult type)
+        {
+            if (!judgedObject.DisplayResult || type == HitResult.None)
+                return;
+
+            var feedback = new JudgementResult(judgedObject.HitObject, judgedObject.HitObject.CreateJudgement())
+            {
+                Type = type,
+            };
+
+            showJudgementVisual(judgedObject, feedback);
+        }
+
+        private void showJudgementVisual(DrawableHitObject judgedObject, JudgementResult result)
+        {
             if (!poolDictionary.TryGetValue(result.Type, out var pool))
                 return;
 

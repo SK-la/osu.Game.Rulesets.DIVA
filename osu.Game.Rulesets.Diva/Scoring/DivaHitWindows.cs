@@ -26,6 +26,9 @@ namespace osu.Game.Rulesets.Diva.Scoring
             HitResult.Great => DivaHitJudgementEvaluator.GREAT_WINDOW,
             HitResult.Good => DivaHitJudgementEvaluator.GOOD_WINDOW,
             HitResult.Ok => DivaHitJudgementEvaluator.OK_WINDOW,
+            // Align with ShouldMiss (timeOffset > OK_WINDOW). Required for JudgementResult.TimeOffset
+            // clamping and HitErrorMeter (which skips rulesets with Miss window == 0).
+            HitResult.Miss => DivaHitJudgementEvaluator.OK_WINDOW,
             // Meh/Worst is a special penalty result and should not be obtainable from timing alone.
             HitResult.Meh => 0,
             _ => 0

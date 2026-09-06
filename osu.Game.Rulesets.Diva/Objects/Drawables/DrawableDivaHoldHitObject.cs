@@ -8,6 +8,7 @@ using osu.Game.Rulesets.Diva.Audio;
 using osu.Game.Rulesets.Diva.Graphics;
 using osu.Game.Rulesets.Diva.Objects.Drawables.Pieces;
 using osu.Game.Rulesets.Diva.Scoring;
+using osu.Game.Rulesets.Diva.UI;
 using osu.Game.Rulesets.Objects.Drawables;
 using osu.Game.Rulesets.Scoring;
 using osuTK.Graphics;
@@ -29,6 +30,9 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
         [Resolved(canBeNull: true)]
         private DivaHitSamplePlayer? hitSamplePlayer { get; set; }
+
+        [Resolved(canBeNull: true)]
+        private DivaPlayfield? playfield { get; set; }
 
         public DrawableDivaHoldHitObject(DivaHoldHitObject hitObject)
             : base(hitObject)
@@ -121,6 +125,8 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
                 holding = true;
                 headResult = result;
                 hideFlyingPieces();
+                // ProjectDIVA: head press also plays AddEffectNotePress (release plays again).
+                playfield?.ShowHitFeedback(this, result);
                 return;
             }
 
