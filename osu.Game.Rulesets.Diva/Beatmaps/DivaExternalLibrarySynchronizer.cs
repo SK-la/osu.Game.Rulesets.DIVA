@@ -16,6 +16,7 @@ using osu.Game.Beatmaps.ExternalLibraries;
 using osu.Game.Database;
 using osu.Game.Models;
 using osu.Game.Rulesets.Diva.Beatmaps.DivaFormat;
+using osu.Game.Rulesets.Diva.Difficulty;
 using osu.Game.Rulesets.Diva.Localization;
 using Realms;
 
@@ -173,7 +174,8 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                         if (chartLengthMs is > 0)
                             beatmap.Length = chartLengthMs.Value;
                         beatmap.Difficulty.OverallDifficulty = Math.Clamp(meta.Hard, 1, 10);
-                        beatmap.StarRating = Math.Max(0, meta.Hard);
+                        // Persist chart Hard for sort; panel SR comes from difficulty-cache Calculate().
+                        beatmap.StarRating = DivaNativeStarRating.FromHard(meta.Hard);
                         beatmap.Difficulty.CircleSize = 4;
                         beatmap.Difficulty.DrainRate = 5;
                         beatmap.Difficulty.ApproachRate = 8;

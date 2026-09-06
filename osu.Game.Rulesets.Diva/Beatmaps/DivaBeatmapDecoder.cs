@@ -9,6 +9,7 @@ using osu.Game.Beatmaps.Formats;
 using osu.Game.IO;
 using osu.Game.Rulesets.Diva.Audio;
 using osu.Game.Rulesets.Diva.Beatmaps.DivaFormat;
+using osu.Game.Rulesets.Diva.Difficulty;
 using osu.Game.Rulesets.Diva.Objects;
 using osuTK;
 
@@ -34,8 +35,9 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
 
             beatmap.BeatmapInfo.DifficultyName = DivaChartConstants.FormatDifficultyName(chart.Metadata.Level, chart.Metadata.Hard);
             beatmap.BeatmapInfo.Difficulty.OverallDifficulty = Math.Clamp(chart.Metadata.Hard, 1, 10);
-            // Native Hard is the displayed star rating (no algorithmic SR).
-            beatmap.BeatmapInfo.StarRating = Math.Max(0, chart.Metadata.Hard);
+            // Persist chart Hard (black stars) for carousel / within-set sort.
+            // Panel digits come from difficulty-cache Calculate() (algorithmic SR), not this field.
+            beatmap.BeatmapInfo.StarRating = DivaNativeStarRating.FromHard(chart.Metadata.Hard);
             beatmap.BeatmapInfo.Difficulty.CircleSize = 4;
             beatmap.BeatmapInfo.Difficulty.DrainRate = 5;
             beatmap.BeatmapInfo.Difficulty.ApproachRate = 8;

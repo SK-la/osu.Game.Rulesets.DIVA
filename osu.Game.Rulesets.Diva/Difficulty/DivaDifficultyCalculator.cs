@@ -19,12 +19,22 @@ using osu.Game.Utils;
 
 namespace osu.Game.Rulesets.Diva.Difficulty
 {
+    /// <summary>
+    /// DIVA star rating from speed / pattern / reading / hold skills.
+    /// <para>
+    /// Returned <see cref="DifficultyAttributes.StarRating"/> is the algorithmic value used by the
+    /// song-select difficulty cache (panel digits). Realm <c>BeatmapInfo.StarRating</c> is separately
+    /// written as chart Hard (black stars) on decode / external sync for carousel sorting — see
+    /// <see cref="DivaNativeStarRating"/>.
+    /// </para>
+    /// </summary>
     public class DivaDifficultyCalculator : DifficultyCalculator
     {
         private const double event_time_epsilon = 1;
         private const double star_rating_multiplier = 0.57;
         private const double skill_compression_exponent = 0.52;
 
+        // Do not bump solely to rewrite Realm SR: that would overwrite black-star sort keys with algorithm stars.
         public override int Version => 20260907;
 
         public DivaDifficultyCalculator(IRulesetInfo ruleset, IWorkingBeatmap beatmap)
@@ -104,6 +114,7 @@ namespace osu.Game.Rulesets.Diva.Difficulty
                 + 0.60 * reading * reading
                 + 0.25 * hold * hold);
 
+            // Algorithmic SR for difficulty-cache UI / PP — not the persisted black-star sort key.
             return new DivaDifficultyAttributes
             {
                 StarRating = combined * star_rating_multiplier,
