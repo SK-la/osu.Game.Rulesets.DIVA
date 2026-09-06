@@ -105,18 +105,22 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
 
                         if (!string.IsNullOrWhiteSpace(audio))
                         {
-                            string audioRel = Path.GetFileName(audio);
-                            string audioFull = Path.Combine(contentRoot, audio.Replace('/', Path.DirectorySeparatorChar));
+                            string? resolvedAudio = DivaChartTextEncoding.ResolveExistingRelativePath(contentRoot, audio) ?? audio;
+                            string audioRel = Path.GetFileName(resolvedAudio);
+                            string audioFull = Path.Combine(contentRoot, resolvedAudio.Replace('/', Path.DirectorySeparatorChar));
                             if (File.Exists(audioFull) && destination.GetFile(audioRel) == null)
                                 destination.Files.Add(new RealmNamedFileUsage(realmFileStore.RegisterExternalHash(computeFileHash(audioFull), r), audioRel));
+                            audio = resolvedAudio;
                         }
 
                         if (!string.IsNullOrWhiteSpace(background))
                         {
-                            string bgRel = Path.GetFileName(background);
-                            string bgFull = Path.Combine(contentRoot, background.Replace('/', Path.DirectorySeparatorChar));
+                            string? resolvedBg = DivaChartTextEncoding.ResolveExistingRelativePath(contentRoot, background) ?? background;
+                            string bgRel = Path.GetFileName(resolvedBg);
+                            string bgFull = Path.Combine(contentRoot, resolvedBg.Replace('/', Path.DirectorySeparatorChar));
                             if (File.Exists(bgFull) && destination.GetFile(bgRel) == null)
                                 destination.Files.Add(new RealmNamedFileUsage(realmFileStore.RegisterExternalHash(computeFileHash(bgFull), r), bgRel));
+                            background = resolvedBg;
                         }
 
                         BeatmapInfo? beatmap = destination.Beatmaps.FirstOrDefault(b => b.ID == beatmapId);

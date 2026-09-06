@@ -81,13 +81,15 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
                     || ext.Equals(".ogg", StringComparison.OrdinalIgnoreCase)
                     || ext.Equals(".wav", StringComparison.OrdinalIgnoreCase)
                     || ext.Equals(".flac", StringComparison.OrdinalIgnoreCase))
-                    return file.Replace('\\', '/');
+                {
+                    return resolveRelative(file);
+                }
             }
 
             foreach ((_, string file) in WavFiles)
             {
                 if (!string.IsNullOrWhiteSpace(file))
-                    return file.Replace('\\', '/');
+                    return resolveRelative(file);
             }
 
             return null;
@@ -96,7 +98,11 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
         public string? ResolveBackgroundRelativePath()
         {
             if (!string.IsNullOrWhiteSpace(Metadata.OverviewPicture))
-                return Metadata.OverviewPicture.Replace('\\', '/');
+            {
+                string? overview = resolveRelative(Metadata.OverviewPicture);
+                if (overview != null)
+                    return overview;
+            }
 
             foreach ((_, string file) in ResourceFiles)
             {
@@ -105,10 +111,24 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
                     || ext.Equals(".jpeg", StringComparison.OrdinalIgnoreCase)
                     || ext.Equals(".png", StringComparison.OrdinalIgnoreCase)
                     || ext.Equals(".bmp", StringComparison.OrdinalIgnoreCase))
-                    return file.Replace('\\', '/');
+                {
+                    string? resolved = resolveRelative(file);
+                    if (resolved != null)
+                        return resolved;
+                }
             }
 
             return null;
+        }
+
+        private string? resolveRelative(string relative)
+        {
+            string normalised = relative.Replace('\\', '/');
+
+            if (string.IsNullOrWhiteSpace(Metadata.SongFolder))
+                return normalised;
+
+            return DivaChartTextEncoding.ResolveExistingRelativePath(Metadata.SongFolder, normalised) ?? normalised;
         }
     }
 

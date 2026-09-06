@@ -16,7 +16,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
     {
         public static DivaChart Parse(string path)
         {
-            using var reader = new StreamReader(path, Encoding.Default, true);
+            using var reader = DivaChartTextEncoding.OpenReader(path);
             return Parse(reader, path, Path.GetDirectoryName(path) ?? string.Empty);
         }
 
@@ -229,7 +229,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
 
         public static DivaChartMetadata ReadMetadata(string path)
         {
-            using var reader = new StreamReader(path, Encoding.Default, true);
+            using var reader = DivaChartTextEncoding.OpenReader(path);
             string editorVer = readLineRequired(reader);
             string title = readLineRequired(reader);
             string creator = readLineRequired(reader);
