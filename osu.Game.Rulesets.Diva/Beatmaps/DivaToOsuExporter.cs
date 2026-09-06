@@ -21,7 +21,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             var sb = new StringBuilder();
             string audio = Path.GetFileName(chart.ResolvePrimaryAudioRelativePath() ?? "audio.mp3");
             string? background = chart.ResolveBackgroundRelativePath();
-            string difficulty = difficultyName(chart.Metadata.Level);
+            string difficulty = DivaChartConstants.FormatDifficultyName(chart.Metadata.Level, chart.Metadata.Hard);
             double bpm = chart.Metadata.Bpm > 0 ? chart.Metadata.Bpm : 120;
             double beatLength = 60000.0 / bpm;
 
@@ -84,6 +84,14 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                     $"0,{beatLength:0.###},4,2,0,100,1,0"));
             }
 
+            if (chart.HasChanceTime)
+            {
+                sb.AppendLine(string.Create(CultureInfo.InvariantCulture,
+                    $"{chart.ChanceTimeStartMs:0.###},-100,4,2,0,100,0,1"));
+                sb.AppendLine(string.Create(CultureInfo.InvariantCulture,
+                    $"{chart.ChanceTimeEndMs:0.###},-100,4,2,0,100,0,0"));
+            }
+
             sb.AppendLine();
             sb.AppendLine("[HitObjects]");
 
@@ -108,12 +116,6 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
         {
             Directory.CreateDirectory(Path.GetDirectoryName(destinationPath)!);
             File.WriteAllText(destinationPath, ExportToString(chart), new UTF8Encoding(false));
-        }
-
-        private static string difficultyName(int level)
-        {
-            int index = Math.Clamp(level - 1, 0, DivaChartConstants.LEVEL_NAMES.Length - 1);
-            return DivaChartConstants.LEVEL_NAMES[index];
         }
     }
 }

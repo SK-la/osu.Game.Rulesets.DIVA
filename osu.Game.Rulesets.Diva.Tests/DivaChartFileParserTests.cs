@@ -13,8 +13,17 @@ namespace osu.Game.Rulesets.Diva.Tests
     [TestFixture]
     public class DivaChartFileParserTests
     {
+        [TestCase(1, 0, "Easy")]
+        [TestCase(2, 8, "★8 Normal")]
+        [TestCase(5, 12, "★12 Extreme")]
+        [TestCase(3, -1, "Hard")]
+        public void FormatDifficultyName_matches_bms_style_black_stars(int level, int hard, string expected)
+        {
+            Assert.That(DivaChartConstants.FormatDifficultyName(level, hard), Is.EqualTo(expected));
+        }
+
         [Test]
-        public void Exporter_embeds_action_sample_names()
+        public void Exporter_embeds_action_sample_names_and_black_star_version()
         {
             string chartText = """
                                1.0.4.8
@@ -49,6 +58,7 @@ namespace osu.Game.Rulesets.Diva.Tests
             Assert.That(osu, Does.Contain(DivaActionEncoding.NATIVE_TAG));
             Assert.That(osu, Does.Contain("diva-action-1")); // Triangle (UNIT/key 3)
             Assert.That(osu, Does.Contain("AudioFilename: audio.ogg"));
+            Assert.That(osu, Does.Contain("Version:★3 Easy"));
         }
 
         [Test]
@@ -95,6 +105,52 @@ namespace osu.Game.Rulesets.Diva.Tests
             Assert.That(parsed.WavFiles[0], Is.EqualTo("song.mp3"));
             Assert.That(DivaActionEncoding.ResolveAction(parsed.Notes[0]), Is.EqualTo(DivaAction.Circle));
             Assert.That(DivaActionEncoding.ResolveAction(parsed.Notes[1]), Is.EqualTo(DivaAction.Square));
+            Assert.That(parsed.HasChanceTime, Is.False);
+        }
+
+        [Test]
+        public void Parses_chance_time_frame_range_to_ms()
+        {
+            // 1 period = 192 frames; Chance Time frames 48..95 inclusive → exclusive end frame 96.
+            string chart = """
+                           1.0.4.8
+                           Chance Song
+                           Mapper
+                           Artist
+                           Style
+                           bg.png
+                           3
+                           7
+                           120
+                           1
+                           0 120
+                           -1
+                           -1
+                           -1
+                           0 0 8 8 0 0 0
+                           -1
+                           0 audio.ogg
+                           -1
+                           0 bg.png
+                           -1
+                           48 95
+                           """;
+
+            using var reader = new StringReader(chart);
+            DivaChart parsed = DivaChartFileParser.Parse(reader, "chance.diva", @"C:\songs\chance");
+
+            Assert.That(parsed.ChanceTimeStart, Is.EqualTo(48));
+            Assert.That(parsed.ChanceTimeEnd, Is.EqualTo(95));
+            Assert.That(parsed.HasChanceTime, Is.True);
+
+            double msPerFrame = DivaChartConstants.MsPerFrame(120);
+            Assert.That(parsed.ChanceTimeStartMs, Is.EqualTo(48 * msPerFrame).Within(0.01));
+            Assert.That(parsed.ChanceTimeEndMs, Is.EqualTo(96 * msPerFrame).Within(0.01));
+
+            string osu = DivaToOsuExporter.ExportToString(parsed);
+            Assert.That(osu, Does.Contain("Version:★7 Hard"));
+            Assert.That(osu, Does.Contain(",0,1")); // kiai on
+            Assert.That(osu, Does.Contain(",0,0")); // kiai off
         }
 
         [Test]

@@ -52,8 +52,22 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
         public IReadOnlyList<DivaChartNote> Notes { get; init; } = [];
         public IReadOnlyDictionary<int, string> WavFiles { get; init; } = new Dictionary<int, string>();
         public IReadOnlyDictionary<int, string> ResourceFiles { get; init; } = new Dictionary<int, string>();
+        /// <summary>Frame index; -1 if unset.</summary>
         public int ChanceTimeStart { get; init; } = -1;
+
+        /// <summary>Frame index; -1 if unset.</summary>
         public int ChanceTimeEnd { get; init; } = -1;
+
+        /// <summary>Start time in ms for Chance Time / Kiai; negative if unset.</summary>
+        public double ChanceTimeStartMs { get; init; } = -1;
+
+        /// <summary>
+        /// Exclusive end time in ms (frame <c>ChanceTimeEnd + 1</c>), matching ProjectDIVA.
+        /// Negative if unset.
+        /// </summary>
+        public double ChanceTimeEndMs { get; init; } = -1;
+
+        public bool HasChanceTime => ChanceTimeStartMs >= 0 && ChanceTimeEndMs > ChanceTimeStartMs;
 
         public string? ResolvePrimaryAudioRelativePath()
         {
@@ -117,6 +131,22 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
             "Extra",
             "Extreme"
         ];
+
+        public static string LevelName(int level)
+        {
+            int index = Math.Clamp(level - 1, 0, LEVEL_NAMES.Length - 1);
+            return LEVEL_NAMES[index];
+        }
+
+        /// <summary>
+        /// Formats panel difficulty name like BMS black stars: <c>★{hard} {Level}</c>.
+        /// When <paramref name="hard"/> is not positive, returns the level name only.
+        /// </summary>
+        public static string FormatDifficultyName(int level, int hard)
+        {
+            string label = LevelName(level);
+            return hard > 0 ? $"★{hard} {label}" : label;
+        }
 
         public static double MsPerFrame(double bpm)
         {

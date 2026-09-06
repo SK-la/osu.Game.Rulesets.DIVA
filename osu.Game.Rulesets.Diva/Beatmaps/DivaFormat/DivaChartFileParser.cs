@@ -179,6 +179,25 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
                 });
             }
 
+            double chanceStartMs = -1;
+            double chanceEndMs = -1;
+
+            if (chanceStart >= 0 && frameTimes.Length > 0)
+            {
+                chanceStartMs = frameTimes[Math.Clamp(chanceStart, 0, frameTimes.Length - 1)];
+
+                // ProjectDIVA ends Chance Time when notePos == _chanceTimeEnd + 1 (exclusive end).
+                int endFrame = chanceEnd >= 0 ? chanceEnd + 1 : chanceStart + 1;
+                if (endFrame < frameTimes.Length)
+                    chanceEndMs = frameTimes[endFrame];
+                else
+                {
+                    double last = frameTimes[^1];
+                    double bpm = headerBpm > 0 ? headerBpm : 120;
+                    chanceEndMs = last + DivaChartConstants.MsPerFrame(bpm);
+                }
+            }
+
             return new DivaChart
             {
                 Metadata = new DivaChartMetadata
@@ -202,7 +221,9 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
                 WavFiles = wav,
                 ResourceFiles = resources,
                 ChanceTimeStart = chanceStart,
-                ChanceTimeEnd = chanceEnd
+                ChanceTimeEnd = chanceEnd,
+                ChanceTimeStartMs = chanceStartMs,
+                ChanceTimeEndMs = chanceEndMs
             };
         }
 

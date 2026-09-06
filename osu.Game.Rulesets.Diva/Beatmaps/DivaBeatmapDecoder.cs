@@ -37,8 +37,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             using var reader = new StringReader(sb.ToString());
             DivaChart chart = DivaChartFileParser.Parse(reader, string.Empty, string.Empty);
 
-            beatmap.BeatmapInfo.DifficultyName = DivaChartConstants.LEVEL_NAMES[
-                Math.Clamp(chart.Metadata.Level - 1, 0, DivaChartConstants.LEVEL_NAMES.Length - 1)];
+            beatmap.BeatmapInfo.DifficultyName = DivaChartConstants.FormatDifficultyName(chart.Metadata.Level, chart.Metadata.Hard);
             beatmap.BeatmapInfo.Difficulty.OverallDifficulty = Math.Clamp(chart.Metadata.Hard, 1, 10);
             beatmap.BeatmapInfo.Difficulty.CircleSize = 4;
             beatmap.BeatmapInfo.Difficulty.DrainRate = 5;
@@ -68,6 +67,12 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                 {
                     BeatLength = 60000.0 / (chart.Metadata.Bpm > 0 ? chart.Metadata.Bpm : 120)
                 });
+            }
+
+            if (chart.HasChanceTime)
+            {
+                beatmap.ControlPointInfo.Add(chart.ChanceTimeStartMs, new EffectControlPoint { KiaiMode = true });
+                beatmap.ControlPointInfo.Add(chart.ChanceTimeEndMs, new EffectControlPoint { KiaiMode = false });
             }
 
             foreach (DivaChartNote note in chart.Notes.OrderBy(n => n.StartTimeMs))

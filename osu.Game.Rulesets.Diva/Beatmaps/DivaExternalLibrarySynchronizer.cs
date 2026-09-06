@@ -130,7 +130,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                             destination.Beatmaps.Add(beatmap);
                         }
 
-                        beatmap.DifficultyName = DivaChartConstants.LEVEL_NAMES[Math.Clamp(meta.Level - 1, 0, 4)];
+                        beatmap.DifficultyName = DivaChartConstants.FormatDifficultyName(meta.Level, meta.Hard);
                         beatmap.Ruleset = managedRuleset;
                         beatmap.Hash = file.Hash;
                         beatmap.MD5Hash = fileHash;
