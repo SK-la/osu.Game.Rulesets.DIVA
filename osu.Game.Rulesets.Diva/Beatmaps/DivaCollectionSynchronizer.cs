@@ -33,10 +33,10 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
 
         public static string CollectionNameForPath(string path)
         {
-            string collectionName = Path.GetFileName(path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
-
-            if (string.IsNullOrEmpty(collectionName))
-                collectionName = Path.GetFileName(path);
+            // Library paths may be Windows-style even when tests/CI run on Linux.
+            string trimmed = path.TrimEnd('\\', '/');
+            int lastSep = Math.Max(trimmed.LastIndexOf('\\'), trimmed.LastIndexOf('/'));
+            string collectionName = lastSep >= 0 ? trimmed[(lastSep + 1)..] : trimmed;
 
             return string.IsNullOrEmpty(collectionName) ? DEFAULT_COLLECTION_NAME : collectionName;
         }
