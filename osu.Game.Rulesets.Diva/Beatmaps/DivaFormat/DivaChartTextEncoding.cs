@@ -67,6 +67,51 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
         public static TextReader OpenReader(string path) => new StringReader(DecodeFile(path));
 
         /// <summary>
+        /// Detects the best encoding for a .diva file (same scoring as <see cref="DecodeFile"/>).
+        /// </summary>
+        public static Encoding DetectBestEncoding(string path)
+        {
+            ensureCodePages();
+
+            byte[] bytes = File.ReadAllBytes(path);
+            string songFolder = Path.GetDirectoryName(path) ?? string.Empty;
+
+            Encoding? best = null;
+            int bestScore = int.MinValue;
+
+            foreach (Encoding encoding in getCandidates(bytes))
+            {
+                string text;
+
+                try
+                {
+                    text = encoding.GetString(bytes);
+                }
+                catch
+                {
+                    continue;
+                }
+
+                int score = scoreDecodedText(text, songFolder, bytes, encoding);
+
+                if (score <= bestScore)
+                    continue;
+
+                bestScore = score;
+                best = encoding;
+            }
+
+            return best ?? Encoding.UTF8;
+        }
+
+        public static void WriteFile(string path, string text, Encoding encoding)
+        {
+            ensureCodePages();
+            byte[] bytes = encoding.GetBytes(text);
+            File.WriteAllBytes(path, bytes);
+        }
+
+        /// <summary>
         /// Resolves a chart-relative path against <paramref name="contentRoot"/>, tolerating
         /// separator differences and falling back to a unique same-extension filename match.
         /// </summary>

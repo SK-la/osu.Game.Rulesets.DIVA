@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
@@ -12,6 +13,7 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Cursor;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Localisation;
+using osu.Framework.Logging;
 using osu.Framework.Screens;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Containers;
@@ -19,7 +21,9 @@ using osu.Game.Graphics.Sprites;
 using osu.Game.Graphics.UserInterfaceV2;
 using osu.Game.Overlays;
 using osu.Game.Overlays.Dialog;
+using osu.Game.Overlays.Notifications;
 using osu.Game.Overlays.Settings;
+using osu.Game.Rulesets.Diva.Beatmaps.DivaFormat;
 using osu.Game.Rulesets.Diva.Configuration;
 using osu.Game.Screens;
 using osuTK;
@@ -41,6 +45,11 @@ namespace osu.Game.Rulesets.Diva.UI
 
         [Resolved(canBeNull: true)]
         private IDialogOverlay? dialogOverlay { get; set; }
+
+        [Resolved(canBeNull: true)]
+        private INotificationOverlay? notifications { get; set; }
+
+        private bool separateAudioRunning;
 
         public DivaDirectorySelectScreen(DivaRulesetConfigManager config, Action<IReadOnlyList<string>, bool>? applyAction = null)
         {
@@ -216,15 +225,21 @@ namespace osu.Game.Rulesets.Diva.UI
                                     {
                                         new RoundedButton
                                         {
-                                            Width = 200,
+                                            Width = 160,
                                             Text = "Close",
                                             Action = this.Exit
                                         },
                                         new RoundedButton
                                         {
-                                            Width = 200,
+                                            Width = 160,
                                             Text = "Apply",
                                             Action = applyPaths
+                                        },
+                                        new RoundedButton
+                                        {
+                                            Width = 180,
+                                            Text = "分离音轨",
+                                            Action = requestSeparateAudio
                                         }
                                     }
                                 }
@@ -256,6 +271,53 @@ namespace osu.Game.Rulesets.Diva.UI
             config.PersistLibraryPaths(stagedPaths);
             config.PersistImportToRealm(importToRealm.Value);
             applyAction?.Invoke(stagedPaths.ToArray(), importToRealm.Value);
+        }
+
+        private void requestSeparateAudio()
+        {
+            if (separateAudioRunning)
+                return;
+
+            if (stagedPaths.Count == 0)
+            {
+                notifications?.Post(new SimpleNotification
+                {
+                    Text = "Add at least one library path before separating audio tracks."
+                });
+                return;
+            }
+
+            dialogOverlay?.Push(new SeparateAudioDialog(runSeparateAudio));
+        }
+
+        private async void runSeparateAudio()
+        {
+            if (separateAudioRunning)
+                return;
+
+            separateAudioRunning = true;
+
+            try
+            {
+                string[] roots = stagedPaths.ToArray();
+
+                DivaAudioTrackSeparator.SeparationResult result = await Task.Run(() => DivaAudioTrackSeparator.Separate(roots))
+                                                                           .ConfigureAwait(true);
+
+                notifications?.Post(new SimpleNotification { Text = $"[DIVA] {result.Summary}" });
+
+                // Refresh Realm / import so Metadata.AudioFile picks up WAV associations.
+                applyPaths();
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, "[DIVA] Separate audio failed.");
+                notifications?.Post(new SimpleNotification { Text = $"[DIVA] Separate audio failed: {ex.Message}" });
+            }
+            finally
+            {
+                separateAudioRunning = false;
+            }
         }
 
         private void refreshPathList()
@@ -341,6 +403,18 @@ namespace osu.Game.Rulesets.Diva.UI
             {
                 HeaderText = "Remove library path?";
                 BodyText = path;
+                DangerousAction = onConfirm;
+            }
+        }
+
+        private partial class SeparateAudioDialog : DangerousActionDialog
+        {
+            public SeparateAudioDialog(Action onConfirm)
+            {
+                HeaderText = "分离音轨并修改谱面？";
+                BodyText =
+                    "将扫描当前库路径下的歌曲：若 WAV 文件夹没有音频，会尝试用 ffmpeg 从 RES 视频抽出音轨写入 WAV，"
+                    + "并修改该歌曲下所有 .diva 的 wav 关联。此操作会改磁盘上的谱面文件，请先备份。完成后会自动 Apply。";
                 DangerousAction = onConfirm;
             }
         }

@@ -71,19 +71,34 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
 
         public string? ResolvePrimaryAudioRelativePath()
         {
+            // Prefer dedicated audio streams (wav table BGM).
             foreach ((_, string file) in WavFiles)
             {
                 if (string.IsNullOrWhiteSpace(file))
                     continue;
 
-                string ext = Path.GetExtension(file);
-                if (ext.Equals(".mp3", StringComparison.OrdinalIgnoreCase)
-                    || ext.Equals(".ogg", StringComparison.OrdinalIgnoreCase)
-                    || ext.Equals(".wav", StringComparison.OrdinalIgnoreCase)
-                    || ext.Equals(".flac", StringComparison.OrdinalIgnoreCase))
-                {
+                if (DivaVideoAudioExtractor.IsAudioExtension(file))
                     return resolveRelative(file);
-                }
+            }
+
+            // Some charts put the only media entry in wav as a video container.
+            foreach ((_, string file) in WavFiles)
+            {
+                if (string.IsNullOrWhiteSpace(file))
+                    continue;
+
+                if (DivaVideoAudioExtractor.IsVideoExtension(file))
+                    return resolveRelative(file);
+            }
+
+            // ProjectDIVA plays resource videos with DirectShow (A/V together) when there is no separate BGM.
+            foreach ((_, string file) in ResourceFiles)
+            {
+                if (string.IsNullOrWhiteSpace(file))
+                    continue;
+
+                if (DivaVideoAudioExtractor.IsVideoExtension(file))
+                    return resolveRelative(file);
             }
 
             foreach ((_, string file) in WavFiles)
