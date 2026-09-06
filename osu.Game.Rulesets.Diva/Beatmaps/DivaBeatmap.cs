@@ -7,11 +7,18 @@ using System.Linq;
 using osu.Game.Beatmaps;
 using osu.Game.Localisation;
 using osu.Game.Rulesets.Diva.Objects;
+using osu.Game.Rulesets.Diva.UI;
+using osuTK;
 
 namespace osu.Game.Rulesets.Diva.Beatmaps
 {
     public class DivaBeatmap : Beatmap<DivaHitObject>
     {
+        /// <summary>
+        ///     Logical note-field size used for playfield fitting (content-derived; at least ProjectDIVA 480×272).
+        /// </summary>
+        public Vector2 LogicalPlayfieldSize { get; set; } = DivaPlayfieldSize.DefaultNativeSize;
+
         public override IEnumerable<BeatmapStatistic> GetStatistics()
         {
             int holdNotes = HitObjects.Count(h => h is DivaHoldHitObject);

@@ -5,7 +5,6 @@ using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
-using osu.Game.Rulesets.Diva.Beatmaps.DivaFormat;
 using osu.Game.Rulesets.Diva.Configuration;
 using osu.Game.Rulesets.UI;
 using osuTK;
@@ -13,33 +12,38 @@ using osuTK;
 namespace osu.Game.Rulesets.Diva.UI
 {
     /// <summary>
-    ///     Scales the ProjectDIVA 480×272 logical playfield to fit the drawable ruleset area.
+    ///     Fits the beatmap's logical note field into the drawable ruleset area (contain),
+    ///     then applies the user scale as a fraction of that fitted size. Aspect follows content, not a fixed screen.
     /// </summary>
     public partial class DivaPlayfieldAdjustmentContainer : PlayfieldAdjustmentContainer
     {
-        public static readonly Vector2 BASE_SIZE = new Vector2(DivaChartConstants.WIDTH, DivaChartConstants.HEIGHT);
-
         private const double default_playfield_scale = 0.92;
 
         protected override Container<Drawable> Content => content;
-        private readonly ScalingContainer content;
 
+        private readonly Vector2 logicalSize;
+        private readonly ScalingContainer content;
+        private readonly Container scaledFit;
         private readonly BindableDouble playfieldScale = new BindableDouble(default_playfield_scale);
 
-        public DivaPlayfieldAdjustmentContainer()
+        public DivaPlayfieldAdjustmentContainer(Vector2 logicalSize)
         {
+            this.logicalSize = logicalSize.X > 0 && logicalSize.Y > 0
+                ? logicalSize
+                : DivaPlayfieldSize.DefaultNativeSize;
+
             Anchor = Anchor.Centre;
             Origin = Anchor.Centre;
-            Size = new Vector2((float)default_playfield_scale);
 
-            InternalChild = new Container
+            InternalChild = scaledFit = new Container
             {
                 Anchor = Anchor.Centre,
                 Origin = Anchor.Centre,
                 RelativeSizeAxes = Axes.Both,
+                Size = new Vector2((float)default_playfield_scale),
                 FillMode = FillMode.Fit,
-                FillAspectRatio = BASE_SIZE.X / BASE_SIZE.Y,
-                Child = content = new ScalingContainer { RelativeSizeAxes = Axes.Both }
+                FillAspectRatio = this.logicalSize.X / this.logicalSize.Y,
+                Child = content = new ScalingContainer(this.logicalSize) { RelativeSizeAxes = Axes.Both }
             };
         }
 
@@ -47,16 +51,24 @@ namespace osu.Game.Rulesets.Diva.UI
         private void load(DivaRulesetConfigManager? config)
         {
             config?.BindWith(DivaRulesetSettings.PlayfieldScale, playfieldScale);
-            playfieldScale.BindValueChanged(v => Size = new Vector2((float)v.NewValue), true);
+            playfieldScale.BindValueChanged(v => scaledFit.Size = new Vector2((float)v.NewValue), true);
         }
 
         private partial class ScalingContainer : Container
         {
+            private readonly Vector2 baseSize;
+
+            public ScalingContainer(Vector2 baseSize)
+            {
+                this.baseSize = baseSize;
+            }
+
             protected override void Update()
             {
                 base.Update();
 
-                Scale = new Vector2(Parent!.ChildSize.X / BASE_SIZE.X);
+                // FillMode.Fit already picked the limiting axis; width-based uniform scale matches that box.
+                Scale = new Vector2(Parent!.ChildSize.X / baseSize.X);
                 Size = Vector2.Divide(Vector2.One, Scale);
             }
         }

@@ -8,6 +8,7 @@ using osu.Framework.Input;
 using osu.Game.Beatmaps;
 using osu.Game.Input.Handlers;
 using osu.Game.Replays;
+using osu.Game.Rulesets.Diva.Beatmaps;
 using osu.Game.Rulesets.Diva.Objects;
 using osu.Game.Rulesets.Diva.Objects.Drawables;
 using osu.Game.Rulesets.Diva.Replays;
@@ -15,6 +16,7 @@ using osu.Game.Rulesets.Mods;
 using osu.Game.Rulesets.Objects;
 using osu.Game.Rulesets.Objects.Drawables;
 using osu.Game.Rulesets.UI;
+using osuTK;
 
 namespace osu.Game.Rulesets.Diva.UI
 {
@@ -67,7 +69,16 @@ namespace osu.Game.Rulesets.Diva.UI
             return intervals;
         }
 
-        public override PlayfieldAdjustmentContainer CreatePlayfieldAdjustmentContainer() => new DivaPlayfieldAdjustmentContainer();
+        public override PlayfieldAdjustmentContainer CreatePlayfieldAdjustmentContainer()
+            => new DivaPlayfieldAdjustmentContainer(resolveLogicalPlayfieldSize());
+
+        private Vector2 resolveLogicalPlayfieldSize()
+        {
+            if (Beatmap is DivaBeatmap divaBeatmap)
+                return divaBeatmap.LogicalPlayfieldSize;
+
+            return DivaPlayfieldSize.Compute(Beatmap.HitObjects.OfType<DivaHitObject>());
+        }
 
         protected override Playfield CreatePlayfield() => new DivaPlayfield();
 

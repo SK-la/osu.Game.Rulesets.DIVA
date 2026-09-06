@@ -8,6 +8,7 @@ using osu.Game.Beatmaps;
 using osu.Game.Rulesets.Diva.Audio;
 using osu.Game.Rulesets.Diva.Beatmaps.DivaFormat;
 using osu.Game.Rulesets.Diva.Objects;
+using osu.Game.Rulesets.Diva.UI;
 using osu.Game.Rulesets.Objects;
 using osu.Game.Rulesets.Objects.Types;
 using osuTK;
@@ -43,6 +44,13 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
         public override bool CanConvert() => Beatmap.HitObjects.All(h => h is IHasPosition || h is DivaHitObject);
 
         protected override Beatmap<DivaHitObject> CreateBeatmap() => new DivaBeatmap();
+
+        protected override Beatmap<DivaHitObject> ConvertBeatmap(IBeatmap original, CancellationToken cancellationToken)
+        {
+            var beatmap = (DivaBeatmap)base.ConvertBeatmap(original, cancellationToken);
+            beatmap.LogicalPlayfieldSize = DivaPlayfieldSize.Compute(beatmap.HitObjects);
+            return beatmap;
+        }
 
         protected override IEnumerable<DivaHitObject> ConvertHitObject(HitObject original, IBeatmap beatmap, CancellationToken cancellationToken)
         {

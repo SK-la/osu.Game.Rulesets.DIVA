@@ -67,8 +67,8 @@ namespace osu.Game.Rulesets.Diva.Localization
             new DivaLocalizationManager.DivaLocalisableString("游玩区域缩放", "Playfield scale");
 
         public static readonly LocalisableString SETTINGS_PLAYFIELD_SCALE_TOOLTIP = new DivaLocalizationManager.DivaLocalisableString(
-            "音符活动区域相对屏幕的缩放（保持 480×272 宽高比）。1.0 为铺满可用区域且不超出屏幕。",
-            "Scales the note activity area relative to the screen (keeps 480×272 aspect). 1.0 fills the available area without going off-screen.");
+            "按本谱逻辑活动区域等比塞进可用屏幕后再缩放（随谱面/屏幕比例自适应）。1.0 为最大可贴合且不超出屏幕。",
+            "Contain-fits this chart's logical note field into the available area, then scales (adapts to chart/screen aspect). 1.0 = maximum fit without going off-screen.");
 
         public static readonly LocalisableString SETTINGS_APPROACH_PREEMPT_SCALE =
             new DivaLocalizationManager.DivaLocalisableString("接近预判缩放", "Approach preempt scale");
