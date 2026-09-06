@@ -112,6 +112,12 @@ namespace osu.Game.Rulesets.Diva.UI
                 },
                 new SettingsCheckbox
                 {
+                    LabelText = "Enable built-in hit sounds",
+                    TooltipText = "Play the ruleset-embedded ProjectDIVA hit SE on key presses. Does not affect end-of-song grade VO.",
+                    Current = divaConfig.GetBindable<bool>(DivaRulesetSettings.EnableBuiltinHitSounds)
+                },
+                new SettingsCheckbox
+                {
                     LabelText = "Judgement lock",
                     TooltipText = "ProjectDIVA Strict/Standard: when enabled, a wrong key within the timing window consumes the note (WRONG). When disabled, wrong keys are ignored.",
                     Current = divaConfig.GetBindable<bool>(DivaRulesetSettings.JudgementLock)

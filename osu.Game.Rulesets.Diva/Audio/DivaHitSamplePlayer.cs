@@ -11,6 +11,7 @@ using osu.Framework.Input.Bindings;
 using osu.Framework.Input.Events;
 using osu.Framework.Logging;
 using osu.Game.Audio;
+using osu.Game.Rulesets.Diva.Configuration;
 using osu.Game.Screens.Play;
 
 namespace osu.Game.Rulesets.Diva.Audio
@@ -32,6 +33,7 @@ namespace osu.Game.Rulesets.Diva.Audio
         private int frameHitCount;
 
         private readonly IBindable<bool> samplePlaybackDisabled = new BindableBool();
+        private readonly BindableBool enableBuiltinHitSounds = new BindableBool(true);
 
         public DivaHitSamplePlayer()
         {
@@ -39,7 +41,7 @@ namespace osu.Game.Rulesets.Diva.Audio
         }
 
         [BackgroundDependencyLoader(true)]
-        private void load(ISampleStore samples, ISamplePlaybackDisabler? samplePlaybackDisabler)
+        private void load(ISampleStore samples, ISamplePlaybackDisabler? samplePlaybackDisabler, DivaRulesetConfigManager? config)
         {
             // DrawableRulesetDependencies namespaces ruleset Resources/Samples; must request .ogg explicitly.
             string name = DivaHitSampleInfo.ToSampleStoreName(DivaHitSampleInfo.NORMAL_LOOKUP);
@@ -50,6 +52,8 @@ namespace osu.Game.Rulesets.Diva.Audio
 
             if (samplePlaybackDisabler != null)
                 samplePlaybackDisabled.BindTo(samplePlaybackDisabler.SamplePlaybackDisabled);
+
+            config?.BindWith(DivaRulesetSettings.EnableBuiltinHitSounds, enableBuiltinHitSounds);
         }
 
         public bool OnPressed(KeyBindingPressEvent<DivaAction> e)
@@ -72,6 +76,9 @@ namespace osu.Game.Rulesets.Diva.Audio
         public void PlayHit(float factor)
         {
             if ((Clock as IGameplayClock)?.IsRewinding == true)
+                return;
+
+            if (!enableBuiltinHitSounds.Value)
                 return;
 
             if (samplePlaybackDisabled.Value)

@@ -83,7 +83,8 @@ namespace osu.Game.Rulesets.Diva.Configuration
 
             SetDefault(DivaRulesetSettings.UseXBoxButtons, false);
             SetDefault(DivaRulesetSettings.EnableVisualBursts, true);
-            SetDefault(DivaRulesetSettings.NoteSize, 40.0, 24.0, 64.0, 1.0);
+            SetDefault(DivaRulesetSettings.EnableBuiltinHitSounds, true);
+            SetDefault(DivaRulesetSettings.NoteSize, 40.0, 10.0, 64.0, 1.0);
             // Multiplier on PD note_standing×MsPerFrame(BPM); 1.0 = ProjectDIVA baseline.
             SetDefault(DivaRulesetSettings.ApproachPreemptScale, 1.0, 0.75, 1.25, 0.05);
             SetDefault(DivaRulesetSettings.HitExplosionAlpha, 1.0, 0.0, 1.0, 0.05);
@@ -118,6 +119,7 @@ namespace osu.Game.Rulesets.Diva.Configuration
     {
         UseXBoxButtons,
         EnableVisualBursts,
+        EnableBuiltinHitSounds,
         NoteSize,
         ApproachPreemptScale,
         HitExplosionAlpha,
