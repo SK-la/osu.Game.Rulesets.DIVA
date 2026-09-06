@@ -42,11 +42,12 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             beatmap.BeatmapInfo.BPM = chart.Metadata.Bpm;
             beatmap.Metadata.Title = chart.Metadata.Title;
             beatmap.Metadata.TitleUnicode = chart.Metadata.Title;
-            beatmap.Metadata.Artist = chart.Metadata.Artist;
-            beatmap.Metadata.ArtistUnicode = chart.Metadata.Artist;
+            string artist = chart.Metadata.ResolveDisplayArtist();
+            beatmap.Metadata.Artist = artist;
+            beatmap.Metadata.ArtistUnicode = artist;
             beatmap.Metadata.Author.Username = chart.Metadata.Creator;
             beatmap.Metadata.Source = "ProjectDIVA";
-            beatmap.Metadata.Tags = $"{DivaActionEncoding.NATIVE_TAG} diva-external";
+            beatmap.Metadata.Tags = $"{DivaActionEncoding.NATIVE_TAG} diva-external {chart.Metadata.Style}".Trim();
             beatmap.Metadata.AudioFile = timeline.AudioRelativePath ?? string.Empty;
             beatmap.Metadata.BackgroundFile = chart.ResolveBackgroundRelativePath() ?? string.Empty;
 

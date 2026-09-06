@@ -49,8 +49,9 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             sb.AppendLine("[Metadata]");
             sb.AppendLine($"Title:{chart.Metadata.Title}");
             sb.AppendLine($"TitleUnicode:{chart.Metadata.Title}");
-            sb.AppendLine($"Artist:{chart.Metadata.Artist}");
-            sb.AppendLine($"ArtistUnicode:{chart.Metadata.Artist}");
+            string artist = chart.Metadata.ResolveDisplayArtist();
+            sb.AppendLine($"Artist:{artist}");
+            sb.AppendLine($"ArtistUnicode:{artist}");
             sb.AppendLine($"Creator:{chart.Metadata.Creator}");
             sb.AppendLine($"Version:{difficulty}");
             sb.AppendLine("Source:ProjectDIVA");

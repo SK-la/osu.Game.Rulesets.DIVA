@@ -178,11 +178,12 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                         beatmap.Difficulty.ApproachRate = 8;
                         beatmap.Metadata.Title = meta.Title;
                         beatmap.Metadata.TitleUnicode = meta.Title;
-                        beatmap.Metadata.Artist = meta.Artist;
-                        beatmap.Metadata.ArtistUnicode = meta.Artist;
+                        string artist = meta.ResolveDisplayArtist();
+                        beatmap.Metadata.Artist = artist;
+                        beatmap.Metadata.ArtistUnicode = artist;
                         beatmap.Metadata.Author.Username = meta.Creator;
                         beatmap.Metadata.Source = "ProjectDIVA";
-                        beatmap.Metadata.Tags = $"{DivaActionEncoding.NATIVE_TAG} diva-external";
+                        beatmap.Metadata.Tags = $"{DivaActionEncoding.NATIVE_TAG} diva-external {meta.Style}".Trim();
                         beatmap.Metadata.AudioFile = string.IsNullOrWhiteSpace(audio) ? string.Empty : audio;
                         beatmap.Metadata.BackgroundFile = string.IsNullOrWhiteSpace(background) ? string.Empty : background;
                         beatmap.HasVideo = hasVideoFile;

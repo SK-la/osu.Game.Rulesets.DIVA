@@ -11,15 +11,46 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
     {
         public string EditorVersion { get; init; } = string.Empty;
         public string Title { get; init; } = string.Empty;
+
+        /// <summary>ProjectDIVA <c>_noterName</c> / song-select "Noter" (谱师).</summary>
         public string Creator { get; init; } = string.Empty;
+
+        /// <summary>ProjectDIVA <c>_authorName</c> / song-select "Author" (音乐家/作曲).</summary>
         public string Artist { get; init; } = string.Empty;
+
+        /// <summary>
+        /// ProjectDIVA <c>_musicStyle</c>, loaded as <c>SongInfo.singer</c> (歌手 / Vocaloid cast).
+        /// Variable name in PD source is misleading.
+        /// </summary>
         public string Style { get; init; } = string.Empty;
+
         public string OverviewPicture { get; init; } = string.Empty;
         public int Level { get; init; }
         public int Hard { get; init; }
         public double Bpm { get; init; }
         public string SourcePath { get; init; } = string.Empty;
         public string SongFolder { get; init; } = string.Empty;
+
+        /// <summary>
+        /// Artist string for osu metadata: musician when set, otherwise singer.
+        /// Charts often leave musician empty while filling the singer line.
+        /// </summary>
+        public string ResolveDisplayArtist()
+        {
+            bool hasMusician = !string.IsNullOrWhiteSpace(Artist);
+            bool hasSinger = !string.IsNullOrWhiteSpace(Style);
+
+            if (hasMusician && hasSinger && !string.Equals(Artist.Trim(), Style.Trim(), StringComparison.OrdinalIgnoreCase))
+                return $"{Artist.Trim()} / {Style.Trim()}";
+
+            if (hasMusician)
+                return Artist.Trim();
+
+            if (hasSinger)
+                return Style.Trim();
+
+            return string.Empty;
+        }
     }
 
     public sealed class DivaChartNote

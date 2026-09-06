@@ -497,6 +497,7 @@ namespace osu.Game.Rulesets.Diva.Tests
 
             Assert.That(parsed.Metadata.Title, Is.EqualTo("Test Song"));
             Assert.That(parsed.Metadata.Artist, Is.EqualTo("Artist Name"));
+            Assert.That(parsed.Metadata.ResolveDisplayArtist(), Is.EqualTo("Artist Name / Pop"));
             Assert.That(parsed.Metadata.Level, Is.EqualTo(2));
             Assert.That(parsed.Metadata.Hard, Is.EqualTo(5));
             Assert.That(parsed.Metadata.Bpm, Is.EqualTo(120));
@@ -514,6 +515,15 @@ namespace osu.Game.Rulesets.Diva.Tests
 
             Vector2 approach = DivaActionEncoding.ComputeApproachOrigin(parsed.Notes[0], 120);
             Assert.That(approach.Length, Is.EqualTo(DivaChartConstants.DISTANCE).Within(0.5f));
+        }
+
+        [Test]
+        public void ResolveDisplayArtist_falls_back_to_singer_when_musician_empty()
+        {
+            Assert.That(new DivaChartMetadata { Artist = "", Style = "初音ミク" }.ResolveDisplayArtist(), Is.EqualTo("初音ミク"));
+            Assert.That(new DivaChartMetadata { Artist = "kz", Style = "" }.ResolveDisplayArtist(), Is.EqualTo("kz"));
+            Assert.That(new DivaChartMetadata { Artist = "kz", Style = "初音ミク" }.ResolveDisplayArtist(), Is.EqualTo("kz / 初音ミク"));
+            Assert.That(new DivaChartMetadata { Artist = "Same", Style = "Same" }.ResolveDisplayArtist(), Is.EqualTo("Same"));
         }
 
         [Test]
