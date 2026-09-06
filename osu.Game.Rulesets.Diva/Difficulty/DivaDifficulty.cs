@@ -3,18 +3,15 @@
 
 using osu.Game.Beatmaps;
 using osu.Game.Rulesets.Difficulty;
-using osu.Game.Rulesets.Osu;
-using osu.Game.Rulesets.Osu.Difficulty;
 
 namespace osu.Game.Rulesets.Diva.Difficulty
 {
     /// <summary>
-    /// Star rating uses osu!standard difficulty skills on DIVA objects projected to hit circles.
-    /// Baseline PP uses the same projection via <see cref="DivaPerformanceCalculator"/>.
+    /// Factory for DIVA difficulty calculation (speed / pattern / reading / hold — not osu!aim).
     /// </summary>
     public static class DivaDifficulty
     {
         public static DifficultyCalculator CreateCalculator(IWorkingBeatmap beatmap)
-            => new OsuDifficultyCalculator(new OsuRuleset().RulesetInfo, new DivaOsuDifficultyWorkingBeatmap(beatmap));
+            => new DivaDifficultyCalculator(new DivaRuleset().RulesetInfo, beatmap);
     }
 }
