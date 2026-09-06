@@ -25,6 +25,7 @@ using osu.Game.Overlays.Notifications;
 using osu.Game.Overlays.Settings;
 using osu.Game.Rulesets.Diva.Beatmaps.DivaFormat;
 using osu.Game.Rulesets.Diva.Configuration;
+using osu.Game.Rulesets.Diva.Localization;
 using osu.Game.Screens;
 using osuTK;
 
@@ -113,23 +114,23 @@ namespace osu.Game.Rulesets.Diva.UI
                                     {
                                         new TooltipTextFlowContainer
                                         {
-                                            Text = "DIVA beatmap library paths",
+                                            Text = DivaStrings.PATH_WIZARD_TITLE,
                                             TextAnchor = Anchor.TopCentre,
                                             RelativeSizeAxes = Axes.X,
                                             AutoSizeAxes = Axes.Y,
-                                            TooltipText = "Select folders that contain ProjectDIVA song packages (folders with .diva files)."
+                                            TooltipText = DivaStrings.PATH_WIZARD_TITLE_TOOLTIP
                                         },
                                         new TooltipTextFlowContainer
                                         {
-                                            Text = "Add one or more song library roots, then Apply. Import mode converts charts into the osu! library.",
+                                            Text = DivaStrings.PATH_WIZARD_INTRO,
                                             RelativeSizeAxes = Axes.X,
                                             AutoSizeAxes = Axes.Y,
-                                            TooltipText = "Ez2Lazer can disable Import to mount folders externally without copying files."
+                                            TooltipText = DivaStrings.PATH_WIZARD_INTRO_TOOLTIP
                                         },
                                         new SettingsCheckbox
                                         {
-                                            LabelText = "Import charts into Realm",
-                                            TooltipText = "On: convert .diva → .osu and import. Off (Ez2Lazer only): external folder mount.",
+                                            LabelText = DivaStrings.SETTINGS_IMPORT_TO_REALM,
+                                            TooltipText = DivaStrings.PATH_WIZARD_IMPORT_TOOLTIP,
                                             Current = importToRealm
                                         }
                                     }
@@ -174,13 +175,13 @@ namespace osu.Game.Rulesets.Diva.UI
                                                             new RoundedButton
                                                             {
                                                                 Width = 180,
-                                                                Text = "Add current path",
+                                                                Text = DivaStrings.PATH_WIZARD_ADD_CURRENT_PATH,
                                                                 Action = addSelectedPath
                                                             },
                                                             new RoundedButton
                                                             {
                                                                 Width = 140,
-                                                                Text = "Clear list",
+                                                                Text = DivaStrings.PATH_WIZARD_CLEAR_LIST,
                                                                 Action = () =>
                                                                 {
                                                                     stagedPaths.Clear();
@@ -191,7 +192,7 @@ namespace osu.Game.Rulesets.Diva.UI
                                                     },
                                                     new OsuTextFlowContainer(cp => cp.Font = OsuFont.Default.With(size: 16))
                                                     {
-                                                        Text = "Added paths",
+                                                        Text = DivaStrings.PATH_WIZARD_ADDED_PATHS,
                                                         RelativeSizeAxes = Axes.X,
                                                         AutoSizeAxes = Axes.Y
                                                     },
@@ -226,19 +227,19 @@ namespace osu.Game.Rulesets.Diva.UI
                                         new RoundedButton
                                         {
                                             Width = 160,
-                                            Text = "Close",
+                                            Text = DivaStrings.PATH_WIZARD_CLOSE,
                                             Action = this.Exit
                                         },
                                         new RoundedButton
                                         {
                                             Width = 160,
-                                            Text = "Apply",
+                                            Text = DivaStrings.PATH_WIZARD_APPLY,
                                             Action = applyPaths
                                         },
                                         new RoundedButton
                                         {
                                             Width = 180,
-                                            Text = "分离音轨",
+                                            Text = DivaStrings.PATH_WIZARD_SEPARATE_AUDIO,
                                             Action = requestSeparateAudio
                                         }
                                     }
@@ -282,7 +283,7 @@ namespace osu.Game.Rulesets.Diva.UI
             {
                 notifications?.Post(new SimpleNotification
                 {
-                    Text = "Add at least one library path before separating audio tracks."
+                    Text = DivaStrings.PATH_WIZARD_SEPARATE_AUDIO_NEED_PATH
                 });
                 return;
             }
@@ -304,7 +305,7 @@ namespace osu.Game.Rulesets.Diva.UI
                 DivaAudioTrackSeparator.SeparationResult result = await Task.Run(() => DivaAudioTrackSeparator.Separate(roots))
                                                                            .ConfigureAwait(true);
 
-                notifications?.Post(new SimpleNotification { Text = $"[DIVA] {result.Summary}" });
+                notifications?.Post(new SimpleNotification { Text = DivaStrings.PathWizard_SeparateAudioSummary(result.Summary) });
 
                 // Refresh Realm / import so Metadata.AudioFile picks up WAV associations.
                 applyPaths();
@@ -312,7 +313,7 @@ namespace osu.Game.Rulesets.Diva.UI
             catch (Exception ex)
             {
                 Logger.Error(ex, "[DIVA] Separate audio failed.");
-                notifications?.Post(new SimpleNotification { Text = $"[DIVA] Separate audio failed: {ex.Message}" });
+                notifications?.Post(new SimpleNotification { Text = DivaStrings.PathWizard_SeparateAudioFailed(ex.Message) });
             }
             finally
             {
@@ -328,7 +329,7 @@ namespace osu.Game.Rulesets.Diva.UI
             {
                 pathList.Add(new OsuTextFlowContainer(cp => cp.Font = OsuFont.Default.With(size: 14))
                 {
-                    Text = "No paths added yet.",
+                    Text = DivaStrings.PATH_WIZARD_NO_PATHS_YET,
                     RelativeSizeAxes = Axes.X,
                     AutoSizeAxes = Axes.Y
                 });
@@ -377,7 +378,7 @@ namespace osu.Game.Rulesets.Diva.UI
                                         Height = 24,
                                         Anchor = Anchor.CentreRight,
                                         Origin = Anchor.CentreRight,
-                                        Text = "Remove",
+                                        Text = DivaStrings.PATH_WIZARD_REMOVE,
                                         Action = () => requestRemovePath(path)
                                     }
                                 }
@@ -401,7 +402,7 @@ namespace osu.Game.Rulesets.Diva.UI
         {
             public RemovePathDialog(string path, Action onConfirm)
             {
-                HeaderText = "Remove library path?";
+                HeaderText = DivaStrings.PATH_WIZARD_REMOVE_DIALOG_HEADER;
                 BodyText = path;
                 DangerousAction = onConfirm;
             }
@@ -411,10 +412,8 @@ namespace osu.Game.Rulesets.Diva.UI
         {
             public SeparateAudioDialog(Action onConfirm)
             {
-                HeaderText = "分离音轨并修改谱面？";
-                BodyText =
-                    "将扫描当前库路径下的歌曲：若 WAV 文件夹没有音频，会尝试用 ffmpeg 从 RES 视频抽出音轨写入 WAV，"
-                    + "并修改该歌曲下所有 .diva 的 wav 关联。此操作会改磁盘上的谱面文件，请先备份。完成后会自动 Apply。";
+                HeaderText = DivaStrings.PATH_WIZARD_SEPARATE_AUDIO_DIALOG_HEADER;
+                BodyText = DivaStrings.PATH_WIZARD_SEPARATE_AUDIO_DIALOG_BODY;
                 DangerousAction = onConfirm;
             }
         }

@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using osu.Framework.Logging;
+using osu.Game.Rulesets.Diva.Localization;
 
 namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
 {
@@ -42,11 +43,11 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
             int rewritten = 0;
             int skipped = 0;
 
-            reportStatus?.Invoke($"Scanning {songs.Count} song folders…");
+            reportStatus?.Invoke(DivaStrings.Separate_Scanning(songs.Count));
 
             foreach (DivaSongFolder song in songs)
             {
-                reportStatus?.Invoke($"Processing {Path.GetFileName(song.FolderPath)}…");
+                reportStatus?.Invoke(DivaStrings.Separate_Processing(Path.GetFileName(song.FolderPath)));
 
                 try
                 {
@@ -85,7 +86,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
                 }
             }
 
-            string summary = $"Scanned {songs.Count} songs; updated {updated}; rewrote {rewritten} charts; skipped {skipped}.";
+            string summary = DivaStrings.Separate_Summary(songs.Count, updated, rewritten, skipped);
             Logger.Log($"[DIVA] {summary}");
             reportStatus?.Invoke(summary);
 
@@ -126,7 +127,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
             }
 
             return files
-                   .Where(f => DivaVideoAudioExtractor.IsAudioExtension(f))
+                   .Where(DivaVideoAudioExtractor.IsAudioExtension)
                    .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
                    .FirstOrDefault();
         }
@@ -141,7 +142,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
             try
             {
                 files = Directory.GetFiles(resDir)
-                                .Where(f => DivaVideoAudioExtractor.IsVideoExtension(f))
+                                .Where(DivaVideoAudioExtractor.IsVideoExtension)
                                 .ToArray();
             }
             catch
@@ -376,6 +377,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
             string? line = reader.ReadLine();
             if (line == null)
                 throw new InvalidDataException("Unexpected end of .diva file.");
+
             return line;
         }
 

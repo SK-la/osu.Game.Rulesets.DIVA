@@ -8,6 +8,7 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Colour;
 using osu.Game.Configuration;
 using osu.Game.Rulesets.Diva.Judgements;
+using osu.Game.Rulesets.Diva.Localization;
 using osu.Game.Rulesets.Judgements;
 using osu.Game.Rulesets.Objects.Drawables;
 using osu.Game.Rulesets.Scoring;
@@ -137,21 +138,21 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
         private static string getResultLabel(HitResult result) => result switch
         {
-            HitResult.Perfect => "cool",
-            HitResult.Great => "fine",
-            HitResult.Good => "safe",
-            HitResult.Ok => "sad",
-            HitResult.Meh => "wrong",
-            HitResult.Miss => "worst",
-            _ => result.ToString().ToLowerInvariant()
+            HitResult.Perfect => DivaStrings.JUDGEMENT_COOL,
+            HitResult.Great => DivaStrings.JUDGEMENT_FINE,
+            HitResult.Good => DivaStrings.JUDGEMENT_SAFE,
+            HitResult.Ok => DivaStrings.JUDGEMENT_SAD,
+            HitResult.Meh => DivaStrings.JUDGEMENT_WRONG,
+            HitResult.Miss => DivaStrings.JUDGEMENT_WORST,
+            _ => result.ToString().ToUpperInvariant()
         };
 
         private static string getMehSuffix(DivaJudgementResult.DivaMehSource source) => source switch
         {
-            DivaJudgementResult.DivaMehSource.PerfectWindowWrongPress => "fine",
-            DivaJudgementResult.DivaMehSource.GreatWindowWrongPress => "safe",
-            DivaJudgementResult.DivaMehSource.GoodWindowWrongPress => "sad",
-            DivaJudgementResult.DivaMehSource.OkWindowWrongPress => "wrong",
+            DivaJudgementResult.DivaMehSource.PerfectWindowWrongPress => DivaStrings.JUDGEMENT_FINE,
+            DivaJudgementResult.DivaMehSource.GreatWindowWrongPress => DivaStrings.JUDGEMENT_SAFE,
+            DivaJudgementResult.DivaMehSource.GoodWindowWrongPress => DivaStrings.JUDGEMENT_SAD,
+            DivaJudgementResult.DivaMehSource.OkWindowWrongPress => DivaStrings.JUDGEMENT_WRONG,
             _ => string.Empty
         };
 

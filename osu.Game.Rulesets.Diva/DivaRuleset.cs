@@ -19,6 +19,7 @@ using osu.Game.Rulesets.Difficulty;
 using osu.Game.Rulesets.Diva.Beatmaps;
 using osu.Game.Rulesets.Diva.Configuration;
 using osu.Game.Rulesets.Diva.Difficulty;
+using osu.Game.Rulesets.Diva.Localization;
 using osu.Game.Rulesets.Diva.Mods;
 using osu.Game.Rulesets.Diva.Scoring;
 using osu.Game.Rulesets.Diva.UI;
@@ -178,15 +179,14 @@ namespace osu.Game.Rulesets.Diva
 
         public override LocalisableString GetDisplayNameForHitResult(HitResult result)
         {
-            // 获取对应 HitMode 的显示名称
             return result switch
             {
-                HitResult.Perfect => "COOL",
-                HitResult.Great => "FINE",
-                HitResult.Good => "SAFE",
-                HitResult.Ok => "SAD",
-                HitResult.Meh => "WRONG",
-                HitResult.Miss => "WORST",
+                HitResult.Perfect => DivaStrings.JUDGEMENT_COOL,
+                HitResult.Great => DivaStrings.JUDGEMENT_FINE,
+                HitResult.Good => DivaStrings.JUDGEMENT_SAFE,
+                HitResult.Ok => DivaStrings.JUDGEMENT_SAD,
+                HitResult.Meh => DivaStrings.JUDGEMENT_WRONG,
+                HitResult.Miss => DivaStrings.JUDGEMENT_WORST,
                 _ => base.GetDisplayNameForHitResult(result)
             };
         }

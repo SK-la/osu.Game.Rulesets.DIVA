@@ -11,6 +11,7 @@ using osu.Framework.Logging;
 using osu.Framework.Platform;
 using osu.Game.Beatmaps;
 using osu.Game.Database;
+using osu.Game.Rulesets.Diva.Localization;
 
 namespace osu.Game.Rulesets.Diva.Beatmaps
 {
@@ -52,7 +53,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             Action<ImportProgress>? reportProgress = null,
             CancellationToken cancellationToken = default)
         {
-            reportProgress?.Invoke(new ImportProgress(0, "Scanning DIVA song folders…"));
+            reportProgress?.Invoke(new ImportProgress(0, DivaStrings.Import_ScanningFolders()));
 
             var hashesByPath = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
             int imported = 0;
@@ -82,26 +83,23 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                         cancellationToken.ThrowIfCancellationRequested();
                         DivaSongFolder song = songs[i];
                         double progress = songCount == 0 ? 0 : (double)(imported + failed) / Math.Max(songCount, 1);
-                        reportProgress?.Invoke(new ImportProgress(progress, $"Packaging {Path.GetFileName(song.FolderPath)}…"));
+                        reportProgress?.Invoke(new ImportProgress(progress, DivaStrings.Import_Packaging(Path.GetFileName(song.FolderPath))));
 
                         try
                         {
                             string packaged = DivaSongSetPackager.PackageSong(song, stagingRoot);
-                            reportProgress?.Invoke(new ImportProgress(progress + 0.01, $"Importing {Path.GetFileName(song.FolderPath)}…"));
+                            reportProgress?.Invoke(new ImportProgress(progress + 0.01, DivaStrings.Import_Importing(Path.GetFileName(song.FolderPath))));
 
                             Live<BeatmapSetInfo>? live = await beatmapManager.Import(new ImportTask(packaged), cancellationToken: cancellationToken).ConfigureAwait(false);
 
-                            if (live != null)
+                            live?.PerformRead(set =>
                             {
-                                live.PerformRead(set =>
+                                foreach (BeatmapInfo beatmap in set.Beatmaps)
                                 {
-                                    foreach (BeatmapInfo beatmap in set.Beatmaps)
-                                    {
-                                        if (!string.IsNullOrEmpty(beatmap.MD5Hash))
-                                            hashesByPath[normalisedRoot].Add(beatmap.MD5Hash);
-                                    }
-                                });
-                            }
+                                    if (!string.IsNullOrEmpty(beatmap.MD5Hash))
+                                        hashesByPath[normalisedRoot].Add(beatmap.MD5Hash);
+                                }
+                            });
 
                             imported++;
                         }
@@ -128,11 +126,11 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
 
             if (songCount == 0)
             {
-                reportProgress?.Invoke(new ImportProgress(1, "No .diva song folders found."));
+                reportProgress?.Invoke(new ImportProgress(1, DivaStrings.Import_NoSongFolders()));
                 return new ImportResult(0, 0, 0);
             }
 
-            reportProgress?.Invoke(new ImportProgress(1, $"Imported {imported}/{songCount} song sets."));
+            reportProgress?.Invoke(new ImportProgress(1, DivaStrings.Import_Imported(imported, songCount)));
             return new ImportResult(
                 songCount,
                 imported,
@@ -153,7 +151,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             Action<ImportProgress>? reportProgress = null,
             CancellationToken cancellationToken = default)
         {
-            reportProgress?.Invoke(new ImportProgress(0, "Scanning DIVA song folders…"));
+            reportProgress?.Invoke(new ImportProgress(0, DivaStrings.Import_ScanningFolders()));
             IReadOnlyList<DivaSongFolder> songs = DivaLibraryScanner.Scan(paths);
             await Task.Run(
                 () => DivaExternalLibrarySynchronizer.Synchronize(realm, storage, workingBeatmapCache, divaRulesetInfo, songs, reportProgress, cancellationToken),

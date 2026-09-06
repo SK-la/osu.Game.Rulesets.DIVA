@@ -11,6 +11,7 @@ using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Localisation;
 using osu.Framework.Logging;
 using osu.Framework.Platform;
 using osu.Framework.Screens;
@@ -21,6 +22,7 @@ using osu.Game.Overlays.Notifications;
 using osu.Game.Overlays.Settings;
 using osu.Game.Rulesets.Diva.Beatmaps;
 using osu.Game.Rulesets.Diva.Configuration;
+using osu.Game.Rulesets.Diva.Localization;
 using osu.Game.Screens;
 using osu.Game.Screens.Menu;
 using OsuSongSelect = osu.Game.Screens.Select.SongSelect;
@@ -30,7 +32,7 @@ namespace osu.Game.Rulesets.Diva.UI
     public partial class DivaSettingsSubsection : RulesetSettingsSubsection
     {
 #if NET8_0
-        protected override osu.Framework.Localisation.LocalisableString Header => new osu.Framework.Localisation.LocalisableString("osu!DIVA");
+        protected override LocalisableString Header => DivaStrings.SETTINGS_HEADER;
 #endif
 
         private readonly Ruleset ruleset;
@@ -81,7 +83,7 @@ namespace osu.Game.Rulesets.Diva.UI
             {
                 new SettingsButtonV2
                 {
-                    Text = "Open beatmap library path wizard",
+                    Text = DivaStrings.SETTINGS_OPEN_PATH_WIZARD,
                     Action = selectPath
                 },
                 new Container
@@ -96,52 +98,52 @@ namespace osu.Game.Rulesets.Diva.UI
                 },
                 new SettingsCheckbox
                 {
-                    LabelText = "Import charts into Realm",
-                    TooltipText = "When enabled, .diva charts are converted to .osu and imported into the osu! library. On Ez2Lazer, disable to mount folders externally instead.",
+                    LabelText = DivaStrings.SETTINGS_IMPORT_TO_REALM,
+                    TooltipText = DivaStrings.SETTINGS_IMPORT_TO_REALM_TOOLTIP,
                     Current = importBindable
                 },
                 new SettingsCheckbox
                 {
-                    LabelText = "Use XBox Button Icons",
+                    LabelText = DivaStrings.SETTINGS_USE_XBOX_BUTTON_ICONS,
                     Current = divaConfig.GetBindable<bool>(DivaRulesetSettings.UseXBoxButtons)
                 },
                 new SettingsCheckbox
                 {
-                    LabelText = "Enable visual bursts",
+                    LabelText = DivaStrings.SETTINGS_ENABLE_VISUAL_BURSTS,
                     Current = divaConfig.GetBindable<bool>(DivaRulesetSettings.EnableVisualBursts)
                 },
                 new SettingsCheckbox
                 {
-                    LabelText = "Enable built-in hit sounds",
-                    TooltipText = "Play the ruleset-embedded ProjectDIVA hit SE on key presses. Does not affect end-of-song grade VO.",
+                    LabelText = DivaStrings.SETTINGS_ENABLE_BUILTIN_HIT_SOUNDS,
+                    TooltipText = DivaStrings.SETTINGS_ENABLE_BUILTIN_HIT_SOUNDS_TOOLTIP,
                     Current = divaConfig.GetBindable<bool>(DivaRulesetSettings.EnableBuiltinHitSounds)
                 },
                 new SettingsCheckbox
                 {
-                    LabelText = "Judgement lock",
-                    TooltipText = "ProjectDIVA Strict/Standard: when enabled, a wrong key within the timing window consumes the note (WRONG). When disabled, wrong keys are ignored.",
+                    LabelText = DivaStrings.SETTINGS_JUDGEMENT_LOCK,
+                    TooltipText = DivaStrings.SETTINGS_JUDGEMENT_LOCK_TOOLTIP,
                     Current = divaConfig.GetBindable<bool>(DivaRulesetSettings.JudgementLock)
                 },
                 new SettingsSlider<double>
                 {
-                    LabelText = "Input offset (ms)",
-                    TooltipText = "Adjusts hit timing used for judgement (like Offset Plus). Does not change audio/clock sync. Range ±200ms.",
+                    LabelText = DivaStrings.SETTINGS_INPUT_OFFSET,
+                    TooltipText = DivaStrings.SETTINGS_INPUT_OFFSET_TOOLTIP,
                     Current = divaConfig.GetBindable<double>(DivaRulesetSettings.InputOffset)
                 },
                 new SettingsSlider<double>
                 {
-                    LabelText = "Note size",
+                    LabelText = DivaStrings.SETTINGS_NOTE_SIZE,
                     Current = divaConfig.GetBindable<double>(DivaRulesetSettings.NoteSize)
                 },
                 new SettingsSlider<double>
                 {
-                    LabelText = "Approach preempt scale",
-                    TooltipText = "Multiplier on ProjectDIVA note_standing×BPM (1.0 = PD default). Lower = notes appear later.",
+                    LabelText = DivaStrings.SETTINGS_APPROACH_PREEMPT_SCALE,
+                    TooltipText = DivaStrings.SETTINGS_APPROACH_PREEMPT_SCALE_TOOLTIP,
                     Current = divaConfig.GetBindable<double>(DivaRulesetSettings.ApproachPreemptScale)
                 },
                 new SettingsSlider<double>
                 {
-                    LabelText = "Hit Explosion alpha",
+                    LabelText = DivaStrings.SETTINGS_HIT_EXPLOSION_ALPHA,
                     Current = divaConfig.GetBindable<double>(DivaRulesetSettings.HitExplosionAlpha)
                 }
             };
@@ -155,7 +157,7 @@ namespace osu.Game.Rulesets.Diva.UI
 
             if (runner == null)
             {
-                notificationOverlay?.Post(new SimpleErrorNotification { Text = "Cannot open path wizard from this screen." });
+                notificationOverlay?.Post(new SimpleErrorNotification { Text = DivaStrings.SETTINGS_CANNOT_OPEN_WIZARD });
                 return;
             }
 
@@ -174,7 +176,7 @@ namespace osu.Game.Rulesets.Diva.UI
         {
             if (paths.Count > 0 && !paths.Any(Directory.Exists))
             {
-                notificationOverlay?.Post(new SimpleErrorNotification { Text = "Add at least one valid folder path first." });
+                notificationOverlay?.Post(new SimpleErrorNotification { Text = DivaStrings.SETTINGS_ADD_VALID_PATH_FIRST });
                 return;
             }
 
@@ -183,18 +185,18 @@ namespace osu.Game.Rulesets.Diva.UI
             CancellationToken token = importCts.Token;
 
             bool clearing = paths.Count == 0;
-            string title = clearing
-                ? "Clearing DIVA library paths…"
+            LocalisableString title = clearing
+                ? DivaStrings.SETTINGS_CLEARING_LIBRARY
                 : importToRealm
-                    ? "Importing DIVA charts…"
-                    : "Linking DIVA external library…";
+                    ? DivaStrings.SETTINGS_IMPORTING_LIBRARY
+                    : DivaStrings.SETTINGS_LINKING_LIBRARY;
 
             if (IsLoaded) cacheStatusNote.Current.Value = new SettingsNote.Data(title, SettingsNote.Type.Informational);
 
             var notification = new ProgressNotification
             {
                 Text = title,
-                CompletionText = clearing ? "DIVA library paths cleared." : "DIVA library update complete.",
+                CompletionText = clearing ? DivaStrings.SETTINGS_LIBRARY_CLEARED : DivaStrings.SETTINGS_LIBRARY_UPDATE_COMPLETE,
                 State = ProgressNotificationState.Active,
                 Progress = 0
             };
@@ -217,7 +219,7 @@ namespace osu.Game.Rulesets.Diva.UI
                     DivaCollectionSynchronizer.SyncResult? collectionSync = null;
 
                     if (clearing)
-                        report(new DivaLibraryImportPipeline.ImportProgress(1, "Paths cleared."));
+                        report(new DivaLibraryImportPipeline.ImportProgress(1, DivaStrings.SETTINGS_PATHS_CLEARED_PROGRESS.ToString()));
                     else if (importToRealm)
                     {
                         DivaLibraryImportPipeline.ImportResult importResult =
@@ -234,14 +236,16 @@ namespace osu.Game.Rulesets.Diva.UI
 #endif
                     }
 
-                    string completion = clearing ? "DIVA library paths cleared." : "DIVA library update complete.";
+                    string completion = clearing
+                        ? DivaStrings.SETTINGS_LIBRARY_CLEARED.ToString()
+                        : DivaStrings.SETTINGS_LIBRARY_UPDATE_COMPLETE.ToString();
 
                     if (collectionSync is { CollectionCount: > 0 } sync)
                     {
-                        completion += $" Synced {sync.CollectionCount} path collection(s), {sync.ChartCount} chart(s).";
+                        completion += DivaStrings.Settings_CollectionsSynced(sync.CollectionCount, sync.ChartCount);
                         notificationOverlay?.Post(new SimpleNotification
                         {
-                            Text = $"Synced {sync.CollectionCount} DIVA path collection(s), {sync.ChartCount} chart(s)."
+                            Text = DivaStrings.Settings_CollectionsSyncedDiva(sync.CollectionCount, sync.ChartCount)
                         });
                     }
 
@@ -261,7 +265,7 @@ namespace osu.Game.Rulesets.Diva.UI
                     Logger.Error(ex, "[DIVA] Library update failed");
                     notificationOverlay?.Post(new SimpleErrorNotification
                     {
-                        Text = $"DIVA library update failed: {ex.GetType().Name}: {ex.Message}"
+                        Text = DivaStrings.Settings_LibraryUpdateFailed(ex.GetType().Name, ex.Message)
                     });
                 }
             }, token);
@@ -273,7 +277,7 @@ namespace osu.Game.Rulesets.Diva.UI
 
             if (paths.Count == 0)
             {
-                cacheStatusNote.Current.Value = new SettingsNote.Data("未配置曲库路径。", SettingsNote.Type.Informational);
+                cacheStatusNote.Current.Value = new SettingsNote.Data(DivaStrings.SETTINGS_NO_PATHS_CONFIGURED, SettingsNote.Type.Informational);
                 return;
             }
 
@@ -281,7 +285,7 @@ namespace osu.Game.Rulesets.Diva.UI
             int difficultyCount = songs.Sum(s => s.ChartPaths.Count);
 
             cacheStatusNote.Current.Value = new SettingsNote.Data(
-                $"路径数 {paths.Count}，总歌曲数 {songs.Count}，总难度数 {difficultyCount}",
+                DivaStrings.Settings_PathStatus(paths.Count, songs.Count, difficultyCount),
                 SettingsNote.Type.Informational);
         }
     }

@@ -16,6 +16,7 @@ using osu.Game.Beatmaps.ExternalLibraries;
 using osu.Game.Database;
 using osu.Game.Models;
 using osu.Game.Rulesets.Diva.Beatmaps.DivaFormat;
+using osu.Game.Rulesets.Diva.Localization;
 using Realms;
 
 namespace osu.Game.Rulesets.Diva.Beatmaps
@@ -61,7 +62,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                 {
                     cancellationToken.ThrowIfCancellationRequested();
                     DivaSongFolder song = songs[i];
-                    reportProgress?.Invoke(new DivaLibraryImportPipeline.ImportProgress((double)i / Math.Max(songs.Count, 1), $"Linking {Path.GetFileName(song.FolderPath)}…"));
+                    reportProgress?.Invoke(new DivaLibraryImportPipeline.ImportProgress((double)i / Math.Max(songs.Count, 1), DivaStrings.Import_Linking(Path.GetFileName(song.FolderPath))));
 
                     string contentRoot = Path.GetFullPath(song.FolderPath);
                     string setHash = ExternalBeatmapPathEncoding.Encode(contentRoot);
@@ -204,7 +205,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                 }
             });
 
-            reportProgress?.Invoke(new DivaLibraryImportPipeline.ImportProgress(1, $"Linked {songs.Count} external song sets."));
+            reportProgress?.Invoke(new DivaLibraryImportPipeline.ImportProgress(1, DivaStrings.Import_Linked(songs.Count)));
             Logger.Log($"[DIVA] External library sync finished: {songs.Count} song folders.");
         }
 

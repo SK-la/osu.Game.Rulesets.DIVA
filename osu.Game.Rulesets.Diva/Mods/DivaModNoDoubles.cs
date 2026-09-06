@@ -4,6 +4,7 @@
 using osu.Framework.Localisation;
 using osu.Game.Beatmaps;
 using osu.Game.Rulesets.Diva.Beatmaps;
+using osu.Game.Rulesets.Diva.Localization;
 using osu.Game.Rulesets.Mods;
 
 namespace osu.Game.Rulesets.Diva.Mods
@@ -12,7 +13,7 @@ namespace osu.Game.Rulesets.Diva.Mods
     {
         public override string Name => "No Doubles";
         public override string Acronym => "ND";
-        public override LocalisableString Description => @"Only one button at a time.";
+        public override LocalisableString Description => DivaStrings.MOD_NO_DOUBLES_DESCRIPTION;
         public override ModType Type => ModType.Conversion;
         public override bool UserPlayable => true;
 

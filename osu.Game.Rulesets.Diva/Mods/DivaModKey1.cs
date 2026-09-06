@@ -2,6 +2,7 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using osu.Framework.Localisation;
+using osu.Game.Rulesets.Diva.Localization;
 
 namespace osu.Game.Rulesets.Diva.Mods
 {
@@ -10,6 +11,6 @@ namespace osu.Game.Rulesets.Diva.Mods
         public override int KeyCount => 1;
         public override string Name => "One Button";
         public override string Acronym => "1B";
-        public override LocalisableString Description => @"Play with one button.";
+        public override LocalisableString Description => DivaStrings.MOD_KEY1_DESCRIPTION;
     }
 }
