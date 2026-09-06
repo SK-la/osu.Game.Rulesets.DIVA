@@ -267,6 +267,12 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
             };
         }
 
+        /// <summary>
+        /// Builds absolute ms timestamps for each chart frame, matching ProjectDIVA
+        /// <c>notemap.cpp</c> once a BPM event has been applied.
+        /// Differs from PD only before the first BPM event: PD uses <c>singleTime=1</c>
+        /// until then; we use header BPM (charts almost always have <c>0 bpm</c>).
+        /// </summary>
         private static double[] buildFrameTimes(double[] frameBpms, double headerBpm, int frameCount)
         {
             double[] times = new double[Math.Max(frameCount, 0)];

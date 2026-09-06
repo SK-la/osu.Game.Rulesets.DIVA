@@ -195,5 +195,11 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
 
             return 60.0 * SECOND / (bpm * (NOTE_PER_PERIOD / (double)TIME_PER_PERIOD));
         }
+
+        /// <summary>
+        /// ProjectDIVA <c>note_standing * singleTime</c>: how long a note approaches before hit.
+        /// At 120 BPM this is 2000ms; at 150 BPM, 1600ms.
+        /// </summary>
+        public static double StandingPreemptMs(double bpm) => NOTE_PER_PERIOD * MsPerFrame(bpm);
     }
 }

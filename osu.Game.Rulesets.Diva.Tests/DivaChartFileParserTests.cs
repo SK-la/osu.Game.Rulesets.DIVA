@@ -103,6 +103,97 @@ namespace osu.Game.Rulesets.Diva.Tests
         }
 
         [Test]
+        public void StandingPreemptMs_matches_project_diva_note_standing()
+        {
+            Assert.That(DivaChartConstants.StandingPreemptMs(120), Is.EqualTo(2000).Within(0.01));
+            Assert.That(DivaChartConstants.StandingPreemptMs(150), Is.EqualTo(1600).Within(0.01));
+            Assert.That(DivaChartConstants.StandingPreemptMs(100), Is.EqualTo(2400).Within(0.01));
+        }
+
+        [Test]
+        public void Frame_timeline_is_linear_at_constant_120_bpm()
+        {
+            string chart = """
+                           1.0.4.8
+                           Timeline Song
+                           Mapper
+                           Artist
+                           Style
+                           bg.png
+                           1
+                           1
+                           120
+                           1
+                           0 120
+                           -1
+                           -1
+                           -1
+                           0 0 8 8 0 0 0
+                           48 1 8 8 0 0 1
+                           96 2 8 8 0 0 2
+                           -1
+                           0 audio.ogg
+                           -1
+                           0 bg.png
+                           -1
+                           -1 -1
+                           """;
+
+            using var reader = new StringReader(chart);
+            DivaChart parsed = DivaChartFileParser.Parse(reader, "timeline.diva", @"C:\songs\timeline");
+
+            double ms = DivaChartConstants.MsPerFrame(120);
+            Assert.That(parsed.Notes[0].StartTimeMs, Is.EqualTo(0).Within(0.01));
+            Assert.That(parsed.Notes[1].StartTimeMs, Is.EqualTo(48 * ms).Within(0.01));
+            Assert.That(parsed.Notes[2].StartTimeMs, Is.EqualTo(96 * ms).Within(0.01));
+        }
+
+        [Test]
+        public void Frame_timeline_respects_mid_chart_bpm_change()
+        {
+            // Frames 0..47 at 120 BPM, then BPM 240 from frame 48; note at frame 96.
+            // After frame 48, each frame is half as long → frames 48..96 span 48 * MsPerFrame(240).
+            string chart = """
+                           1.0.4.8
+                           Bpm Change Song
+                           Mapper
+                           Artist
+                           Style
+                           bg.png
+                           1
+                           1
+                           120
+                           1
+                           0 120
+                           48 240
+                           -1
+                           -1
+                           -1
+                           0 0 8 8 0 0 0
+                           96 1 8 8 0 0 1
+                           -1
+                           0 audio.ogg
+                           -1
+                           0 bg.png
+                           -1
+                           -1 -1
+                           """;
+
+            using var reader = new StringReader(chart);
+            DivaChart parsed = DivaChartFileParser.Parse(reader, "bpm.diva", @"C:\songs\bpm");
+
+            double expected =
+                48 * DivaChartConstants.MsPerFrame(120)
+                + 48 * DivaChartConstants.MsPerFrame(240);
+
+            Assert.That(parsed.Notes[0].StartTimeMs, Is.EqualTo(0).Within(0.01));
+            Assert.That(parsed.Notes[1].StartTimeMs, Is.EqualTo(expected).Within(0.01));
+            Assert.That(parsed.TimingPoints.Count, Is.EqualTo(2));
+            Assert.That(parsed.TimingPoints[1].Bpm, Is.EqualTo(240));
+            Assert.That(parsed.TimingPoints[1].TimeMs, Is.EqualTo(48 * DivaChartConstants.MsPerFrame(120)).Within(0.01));
+        }
+
+        [Test]
         public void Parses_metadata_notes_and_timing()
         {
             string chart = """

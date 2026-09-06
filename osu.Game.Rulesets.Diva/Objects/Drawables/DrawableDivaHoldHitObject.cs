@@ -25,13 +25,13 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         private void load()
         {
             Color4 colour = DivaProjectDivaAtlas.GetUnitColor(ValidAction);
-            strip = new HoldStripPiece(HitObject.ApproachPieceOriginPosition, colour, holdDuration, ApproachDuration.Value)
+            strip = new HoldStripPiece(HitObject.ApproachPieceOriginPosition, colour, holdDuration, TimePreempt)
             {
                 Depth = 4,
             };
             AddInternal(strip);
 
-            ApproachDuration.BindValueChanged(v => strip?.SetApproachDuration(v.NewValue), true);
+            ApproachPreemptScale.BindValueChanged(_ => strip?.SetApproachDuration(TimePreempt), true);
         }
 
         protected override void OnApproachUpdate(float blend)

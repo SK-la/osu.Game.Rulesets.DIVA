@@ -84,7 +84,8 @@ namespace osu.Game.Rulesets.Diva.Configuration
             SetDefault(DivaRulesetSettings.UseXBoxButtons, false);
             SetDefault(DivaRulesetSettings.EnableVisualBursts, true);
             SetDefault(DivaRulesetSettings.NoteSize, 40.0, 24.0, 64.0, 1.0);
-            SetDefault(DivaRulesetSettings.ApproachDuration, 1800.0, 1200.0, 3000.0, 50.0);
+            // Multiplier on PD note_standing×MsPerFrame(BPM); 1.0 = ProjectDIVA baseline.
+            SetDefault(DivaRulesetSettings.ApproachPreemptScale, 1.0, 0.75, 1.25, 0.05);
             SetDefault(DivaRulesetSettings.HitExplosionAlpha, 1.0, 0.0, 1.0, 0.05);
             SetDefault(DivaRulesetSettings.DivaRootPath, string.Empty);
             SetDefault(DivaRulesetSettings.DivaLibraryPaths, "[]");
@@ -115,7 +116,7 @@ namespace osu.Game.Rulesets.Diva.Configuration
         UseXBoxButtons,
         EnableVisualBursts,
         NoteSize,
-        ApproachDuration,
+        ApproachPreemptScale,
         HitExplosionAlpha,
         DivaRootPath,
         DivaLibraryPaths,

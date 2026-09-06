@@ -117,8 +117,9 @@ namespace osu.Game.Rulesets.Diva.UI
                 },
                 new SettingsSlider<double>
                 {
-                    LabelText = "Approach duration (ms)",
-                    Current = divaConfig.GetBindable<double>(DivaRulesetSettings.ApproachDuration)
+                    LabelText = "Approach preempt scale",
+                    TooltipText = "Multiplier on ProjectDIVA note_standing×BPM (1.0 = PD default). Lower = notes appear later.",
+                    Current = divaConfig.GetBindable<double>(DivaRulesetSettings.ApproachPreemptScale)
                 },
                 new SettingsSlider<double>
                 {

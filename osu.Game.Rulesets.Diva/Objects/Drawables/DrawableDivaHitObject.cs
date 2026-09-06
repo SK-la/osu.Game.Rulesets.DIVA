@@ -11,7 +11,9 @@ using osu.Framework.Graphics.Textures;
 using osu.Framework.Input.Bindings;
 using osu.Framework.Input.Events;
 using osu.Game.Audio;
+using osu.Game.Beatmaps;
 using osu.Game.Rulesets.Diva.Audio;
+using osu.Game.Rulesets.Diva.Beatmaps.DivaFormat;
 using osu.Game.Rulesets.Diva.Configuration;
 using osu.Game.Rulesets.Diva.Graphics;
 using osu.Game.Rulesets.Diva.Judgements;
@@ -45,10 +47,31 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         protected BindableBool UseXb = new BindableBool(false);
         internal BindableBool EnableVisualBursts { get; } = new BindableBool(true);
         protected BindableDouble NoteSize = new BindableDouble(BASE_SIZE);
-        protected BindableDouble ApproachDuration = new BindableDouble(1250);
+        /// <summary>Multiplier on PD <c>note_standing × MsPerFrame(BPM)</c> (default 1.0).</summary>
+        protected BindableDouble ApproachPreemptScale = new BindableDouble(1.0);
 
-        private double timePreempt => ApproachDuration.Value;
-        private double timeFadein => ApproachDuration.Value * fade_in_ratio;
+        [Resolved(canBeNull: true)]
+        private IBeatmap? beatmap { get; set; }
+
+        /// <summary>Approach window in ms, matching ProjectDIVA standing time × user scale.</summary>
+        protected double TimePreempt
+        {
+            get
+            {
+                double bpm = DivaChartConstants.BASE_BPM;
+
+                if (beatmap != null)
+                {
+                    double timingBpm = beatmap.ControlPointInfo.TimingPointAt(HitObject.StartTime).BPM;
+                    if (timingBpm > 0)
+                        bpm = timingBpm;
+                }
+
+                return DivaChartConstants.StandingPreemptMs(bpm) * ApproachPreemptScale.Value;
+            }
+        }
+
+        private double timeFadein => TimePreempt * fade_in_ratio;
 
         protected override JudgementResult CreateResult(Judgement judgement)
         {
@@ -100,7 +123,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             config?.BindWith(DivaRulesetSettings.UseXBoxButtons, UseXb);
             config?.BindWith(DivaRulesetSettings.EnableVisualBursts, EnableVisualBursts);
             config?.BindWith(DivaRulesetSettings.NoteSize, NoteSize);
-            config?.BindWith(DivaRulesetSettings.ApproachDuration, ApproachDuration);
+            config?.BindWith(DivaRulesetSettings.ApproachPreemptScale, ApproachPreemptScale);
 
             NoteSize.BindValueChanged(v => Size = new Vector2((float)v.NewValue), true);
 
@@ -191,14 +214,14 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
                 applyPressResult(result, validPress);
         }
 
-        protected override double InitialLifetimeOffset => timePreempt;
+        protected override double InitialLifetimeOffset => TimePreempt;
 
         protected override void UpdateInitialTransforms()
         {
             this.FadeInFromZero(timeFadein);
             ApproachHand.ScaleTo(2, timeFadein, Easing.In);
 
-            ApproachHand.RotateTo(360, timePreempt, Easing.In);
+            ApproachHand.RotateTo(360, TimePreempt, Easing.In);
         }
 
         protected override void UpdateHitStateTransforms(ArmedState state)
@@ -221,7 +244,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
         protected override void Update()
         {
-            var b = (float)((Time.Current - LifetimeStart) / timePreempt);
+            var b = (float)((Time.Current - LifetimeStart) / TimePreempt);
             if (b < 1f)
             {
                 ApproachPiece.UpdatePos(b);
