@@ -43,6 +43,35 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
         public double Bpm { get; init; }
     }
 
+    public sealed class DivaBgmEvent
+    {
+        public int Sequence { get; init; }
+        public int FrameIndex { get; init; }
+        public double TimeMs { get; init; }
+        public int Slot { get; init; }
+        public int WavId { get; init; }
+
+        /// <summary>
+        /// Source seek declared by a negative BGS position, in milliseconds.
+        /// ProjectDIVA stores the final value globally per WAV id.
+        /// </summary>
+        public double? DeclaredSourceOffsetMs { get; init; }
+    }
+
+    public sealed class DivaResourceEvent
+    {
+        public int Sequence { get; init; }
+        public int FrameIndex { get; init; }
+        public double TimeMs { get; init; }
+        public int ResourceId { get; init; }
+
+        /// <summary>
+        /// Source seek declared by a negative Resource position, in milliseconds.
+        /// ProjectDIVA stores only the final declared value in <c>videoEngine.m_pTime</c>.
+        /// </summary>
+        public double? DeclaredSourceOffsetMs { get; init; }
+    }
+
     public sealed class DivaChart
     {
         public DivaChartMetadata Metadata { get; init; } = new DivaChartMetadata();
@@ -52,6 +81,8 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
         public IReadOnlyList<DivaChartNote> Notes { get; init; } = [];
         public IReadOnlyDictionary<int, string> WavFiles { get; init; } = new Dictionary<int, string>();
         public IReadOnlyDictionary<int, string> ResourceFiles { get; init; } = new Dictionary<int, string>();
+        public IReadOnlyList<DivaBgmEvent> BgmEvents { get; init; } = [];
+        public IReadOnlyList<DivaResourceEvent> ResourceEvents { get; init; } = [];
         /// <summary>Frame index; -1 if unset.</summary>
         public int ChanceTimeStart { get; init; } = -1;
 
@@ -67,54 +98,15 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
         /// </summary>
         public double ChanceTimeEndMs { get; init; } = -1;
 
-        public bool HasChanceTime => ChanceTimeStartMs >= 0 && ChanceTimeEndMs > ChanceTimeStartMs;
+        public bool HasChanceTime => ChanceTimeStart >= 0 && ChanceTimeEnd >= ChanceTimeStart;
 
-        public string? ResolvePrimaryAudioRelativePath()
-        {
-            // Prefer dedicated audio streams (wav table BGM).
-            foreach ((_, string file) in WavFiles)
-            {
-                if (string.IsNullOrWhiteSpace(file))
-                    continue;
-
-                if (DivaVideoAudioExtractor.IsAudioExtension(file))
-                    return resolveRelative(file);
-            }
-
-            // Some charts put the only media entry in wav as a video container.
-            foreach ((_, string file) in WavFiles)
-            {
-                if (string.IsNullOrWhiteSpace(file))
-                    continue;
-
-                if (DivaVideoAudioExtractor.IsVideoExtension(file))
-                    return resolveRelative(file);
-            }
-
-            // ProjectDIVA plays resource videos with DirectShow (A/V together) when there is no separate BGM.
-            foreach ((_, string file) in ResourceFiles)
-            {
-                if (string.IsNullOrWhiteSpace(file))
-                    continue;
-
-                if (DivaVideoAudioExtractor.IsVideoExtension(file))
-                    return resolveRelative(file);
-            }
-
-            foreach ((_, string file) in WavFiles)
-            {
-                if (!string.IsNullOrWhiteSpace(file))
-                    return resolveRelative(file);
-            }
-
-            return null;
-        }
+        public string? ResolvePrimaryAudioRelativePath() => DivaPlaybackTimeline.Create(this).AudioRelativePath;
 
         public string? ResolveBackgroundRelativePath()
         {
             if (!string.IsNullOrWhiteSpace(Metadata.OverviewPicture))
             {
-                string? overview = resolveRelative(Metadata.OverviewPicture);
+                string? overview = ResolveRelativePath(Metadata.OverviewPicture);
                 if (overview != null)
                     return overview;
             }
@@ -127,7 +119,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
                     || ext.Equals(".png", StringComparison.OrdinalIgnoreCase)
                     || ext.Equals(".bmp", StringComparison.OrdinalIgnoreCase))
                 {
-                    string? resolved = resolveRelative(file);
+                    string? resolved = ResolveRelativePath(file);
                     if (resolved != null)
                         return resolved;
                 }
@@ -136,7 +128,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
             return null;
         }
 
-        private string? resolveRelative(string relative)
+        internal string? ResolveRelativePath(string relative)
         {
             string normalised = relative.Replace('\\', '/');
 

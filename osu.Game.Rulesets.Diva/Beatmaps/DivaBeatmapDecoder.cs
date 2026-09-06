@@ -8,6 +8,7 @@ using System.Text;
 using osu.Game.Beatmaps;
 using osu.Game.Beatmaps.ControlPoints;
 using osu.Game.Beatmaps.Formats;
+using osu.Framework.Logging;
 using osu.Game.IO;
 using osu.Game.Rulesets.Diva.Audio;
 using osu.Game.Rulesets.Diva.Beatmaps.DivaFormat;
@@ -36,6 +37,9 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
 
             using var reader = new StringReader(sb.ToString());
             DivaChart chart = DivaChartFileParser.Parse(reader, string.Empty, string.Empty);
+            DivaPlaybackTimeline timeline = DivaPlaybackTimeline.Create(chart);
+
+            logTimeline(chart, timeline);
 
             beatmap.BeatmapInfo.DifficultyName = DivaChartConstants.FormatDifficultyName(chart.Metadata.Level, chart.Metadata.Hard);
             beatmap.BeatmapInfo.Difficulty.OverallDifficulty = Math.Clamp(chart.Metadata.Hard, 1, 10);
@@ -52,12 +56,12 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             beatmap.Metadata.Author.Username = chart.Metadata.Creator;
             beatmap.Metadata.Source = "ProjectDIVA";
             beatmap.Metadata.Tags = $"{DivaActionEncoding.NATIVE_TAG} diva-external";
-            beatmap.Metadata.AudioFile = chart.ResolvePrimaryAudioRelativePath() ?? string.Empty;
+            beatmap.Metadata.AudioFile = timeline.AudioRelativePath ?? string.Empty;
             beatmap.Metadata.BackgroundFile = chart.ResolveBackgroundRelativePath() ?? string.Empty;
 
             foreach (DivaChartControlPoint point in chart.TimingPoints.OrderBy(p => p.TimeMs))
             {
-                beatmap.ControlPointInfo.Add(point.TimeMs, new TimingControlPoint
+                beatmap.ControlPointInfo.Add(timeline.ToPlaybackTime(point.TimeMs), new TimingControlPoint
                 {
                     BeatLength = 60000.0 / (point.Bpm > 0 ? point.Bpm : 120)
                 });
@@ -65,7 +69,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
 
             if (chart.TimingPoints.Count == 0)
             {
-                beatmap.ControlPointInfo.Add(0, new TimingControlPoint
+                beatmap.ControlPointInfo.Add(timeline.ToPlaybackTime(0), new TimingControlPoint
                 {
                     BeatLength = 60000.0 / (chart.Metadata.Bpm > 0 ? chart.Metadata.Bpm : 120)
                 });
@@ -73,8 +77,8 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
 
             if (chart.HasChanceTime)
             {
-                beatmap.ControlPointInfo.Add(chart.ChanceTimeStartMs, new EffectControlPoint { KiaiMode = true });
-                beatmap.ControlPointInfo.Add(chart.ChanceTimeEndMs, new EffectControlPoint { KiaiMode = false });
+                beatmap.ControlPointInfo.Add(timeline.ToPlaybackTime(chart.ChanceTimeStartMs), new EffectControlPoint { KiaiMode = true });
+                beatmap.ControlPointInfo.Add(timeline.ToPlaybackTime(chart.ChanceTimeEndMs), new EffectControlPoint { KiaiMode = false });
             }
 
             double headerBpm = chart.Metadata.Bpm > 0 ? chart.Metadata.Bpm : DivaChartConstants.BASE_BPM;
@@ -90,7 +94,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                 {
                     beatmap.HitObjects.Add(new DivaHoldHitObject
                     {
-                        StartTime = note.StartTimeMs,
+                        StartTime = timeline.ToPlaybackTime(note.StartTimeMs),
                         Duration = note.DurationMs,
                         Position = position,
                         ValidAction = action,
@@ -102,7 +106,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                 {
                     beatmap.HitObjects.Add(new DivaHitObject
                     {
-                        StartTime = note.StartTimeMs,
+                        StartTime = timeline.ToPlaybackTime(note.StartTimeMs),
                         Position = position,
                         ValidAction = action,
                         Samples = [DivaHitSampleInfo.Normal],
@@ -110,6 +114,20 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                     });
                 }
             }
+        }
+
+        private static void logTimeline(DivaChart chart, DivaPlaybackTimeline timeline)
+        {
+            string source = timeline.BgmWavId is int wavId
+                ? $"BGM id={wavId}"
+                : timeline.ResourceId is int resourceId
+                    ? $"Resource id={resourceId}"
+                    : "fallback";
+
+            Logger.Log($"[DIVA] Timeline '{chart.Metadata.Title}': {source}, frame={timeline.EventFrameIndex}, event={timeline.EventTimeMs:0.###}ms, source seek={timeline.SourceOffsetMs:0.###}ms, offset={timeline.OffsetMs:0.###}ms.");
+
+            if (timeline.HasAdditionalAudioSegments)
+                Logger.Log($"[DIVA] '{chart.Metadata.Title}' has multiple media segments; lazer can only use the first main segment as one Track.", level: LogLevel.Important);
         }
 
         private static double resolveBpmAt(DivaChart chart, double timeMs, double fallback)

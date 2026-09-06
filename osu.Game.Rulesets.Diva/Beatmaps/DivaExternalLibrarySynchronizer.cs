@@ -28,6 +28,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
         public static void Synchronize(
             RealmAccess realm,
             Storage storage,
+            IWorkingBeatmapCache workingBeatmapCache,
             RulesetInfo divaRulesetInfo,
             IReadOnlyList<DivaSongFolder> songs,
             Action<DivaLibraryImportPipeline.ImportProgress>? reportProgress = null,
@@ -50,7 +51,10 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                         continue;
 
                     if (!desiredHashes.Contains(existing.Hash))
+                    {
+                        workingBeatmapCache.Invalidate(existing);
                         removeSet(r, existing);
+                    }
                 }
 
                 for (int i = 0; i < songs.Count; i++)
@@ -83,10 +87,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
 
                         string relative = computeRelative(chartPath, contentRoot);
                         string fileHash = computeFileHash(chartPath);
-                        RealmFile file = realmFileStore.RegisterExternalHash(fileHash, r);
-
-                        if (destination.GetFile(relative) == null)
-                            destination.Files.Add(new RealmNamedFileUsage(file, relative));
+                        RealmFile file = replaceNamedFileMapping(destination, relative, fileHash, realmFileStore, r);
 
                         string? audio = null;
                         string background = meta.OverviewPicture;
@@ -96,9 +97,21 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                         {
                             // Prefer full parse for audio/background when cheap enough.
                             DivaChart chart = DivaChartFileParser.Parse(chartPath);
-                            audio = chart.ResolvePrimaryAudioRelativePath();
+                            DivaPlaybackTimeline timeline = DivaPlaybackTimeline.Create(chart);
+                            audio = timeline.AudioRelativePath;
                             background = chart.ResolveBackgroundRelativePath() ?? background;
-                            chartLengthMs = computeChartLengthMs(chart);
+                            chartLengthMs = computeChartLengthMs(chart, timeline);
+
+                            string source = timeline.BgmWavId is int wavId
+                                ? $"BGM id={wavId}"
+                                : timeline.ResourceId is int resourceId
+                                    ? $"Resource id={resourceId}"
+                                    : "fallback";
+
+                            Logger.Log($"[DIVA] Timeline '{chartPath}': {source}, frame={timeline.EventFrameIndex}, event={timeline.EventTimeMs:0.###}ms, source seek={timeline.SourceOffsetMs:0.###}ms, offset={timeline.OffsetMs:0.###}ms.");
+
+                            if (timeline.HasAdditionalAudioSegments)
+                                Logger.Log($"[DIVA] '{chartPath}' has multiple media segments; external playback uses the first main segment.", level: LogLevel.Important);
                         }
                         catch
                         {
@@ -110,8 +123,8 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                             string? resolvedAudio = DivaChartTextEncoding.ResolveExistingRelativePath(contentRoot, audio) ?? audio;
                             string audioRel = resolvedAudio.Replace('\\', '/');
                             string audioFull = Path.Combine(contentRoot, audioRel.Replace('/', Path.DirectorySeparatorChar));
-                            if (File.Exists(audioFull) && destination.GetFile(audioRel) == null)
-                                destination.Files.Add(new RealmNamedFileUsage(realmFileStore.RegisterExternalHash(computeFileHash(audioFull), r), audioRel));
+                            if (File.Exists(audioFull))
+                                replaceNamedFileMapping(destination, audioRel, computeFileHash(audioFull), realmFileStore, r);
                             audio = audioRel;
                         }
 
@@ -120,8 +133,8 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                             string? resolvedBg = DivaChartTextEncoding.ResolveExistingRelativePath(contentRoot, background) ?? background;
                             string bgRel = resolvedBg.Replace('\\', '/');
                             string bgFull = Path.Combine(contentRoot, bgRel.Replace('/', Path.DirectorySeparatorChar));
-                            if (File.Exists(bgFull) && destination.GetFile(bgRel) == null)
-                                destination.Files.Add(new RealmNamedFileUsage(realmFileStore.RegisterExternalHash(computeFileHash(bgFull), r), bgRel));
+                            if (File.Exists(bgFull))
+                                replaceNamedFileMapping(destination, bgRel, computeFileHash(bgFull), realmFileStore, r);
                             background = bgRel;
                         }
 
@@ -170,6 +183,8 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
 
                     if (existingSet == null)
                         r.Add(destination, update: true);
+
+                    workingBeatmapCache.Invalidate(destination);
                 }
             });
 
@@ -188,14 +203,14 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             realm.Remove(set);
         }
 
-        private static double? computeChartLengthMs(DivaChart chart)
+        private static double? computeChartLengthMs(DivaChart chart, DivaPlaybackTimeline timeline)
         {
             if (chart.Notes.Count == 0)
                 return null;
 
             double end = 0;
             foreach (DivaChartNote note in chart.Notes)
-                end = Math.Max(end, note.StartTimeMs + note.DurationMs);
+                end = Math.Max(end, timeline.ToPlaybackTime(note.StartTimeMs) + note.DurationMs);
 
             return end > 0 ? end : null;
         }
@@ -210,8 +225,28 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
 
         private static string computeFileHash(string path)
         {
-            string normalised = Path.GetFullPath(path).Replace('\\', '/').ToLowerInvariant();
-            return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(normalised))).ToLowerInvariant();
+            using FileStream stream = File.OpenRead(path);
+            return Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant();
+        }
+
+        private static RealmFile replaceNamedFileMapping(
+            BeatmapSetInfo destination,
+            string relative,
+            string fileHash,
+            RealmFileStore realmFileStore,
+            Realm realm)
+        {
+            RealmFile file = realmFileStore.RegisterExternalHash(fileHash, realm);
+            RealmNamedFileUsage? existing = destination.GetFile(relative);
+
+            if (existing?.File.Hash == fileHash)
+                return file;
+
+            if (existing != null)
+                destination.Files.Remove(existing);
+
+            destination.Files.Add(new RealmNamedFileUsage(file, relative));
+            return file;
         }
 
         private static Guid stableGuid(string seed)

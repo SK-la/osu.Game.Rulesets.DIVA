@@ -52,7 +52,9 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
                     frameBpms[pos] = bpm;
             }
 
-            // Resource events (ignored for gameplay import, but must be consumed).
+            // Resource events: negative pos = video seek (ms); frame forced to 0 (PD m_pTime).
+            var rawResourceEvents = new List<(int FrameIndex, int ResourceId, double? SeekMs)>();
+
             while (true)
             {
                 if (!tryReadIntToken(reader, out int pos))
@@ -60,10 +62,22 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
                 if (pos == -1)
                     break;
 
-                _ = readIntToken(reader);
+                int resourceId = readIntToken(reader);
+                double? seekMs = null;
+                int frame = pos;
+
+                if (pos < 0)
+                {
+                    seekMs = -pos;
+                    frame = 0;
+                }
+
+                rawResourceEvents.Add((frame, resourceId, seekMs));
             }
 
-            // BGS events.
+            // BGS events: negative pos = playOffset (ms); frame forced to 0.
+            var rawBgsEvents = new List<(int FrameIndex, int Slot, int WavId, double? PlayOffsetMs)>();
+
             while (true)
             {
                 if (!tryReadIntToken(reader, out int pos))
@@ -71,8 +85,18 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
                 if (pos == -1)
                     break;
 
-                _ = readIntToken(reader);
-                _ = readIntToken(reader);
+                int slot = readIntToken(reader);
+                int wavId = readIntToken(reader);
+                double? playOffsetMs = null;
+                int frame = pos;
+
+                if (pos < 0)
+                {
+                    playOffsetMs = -pos;
+                    frame = 0;
+                }
+
+                rawBgsEvents.Add((frame, slot, wavId, playOffsetMs));
             }
 
             var notes = new List<DivaChartNote>();
@@ -135,6 +159,35 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
             }
 
             double[] frameTimes = buildFrameTimes(frameBpms, headerBpm, frameCount);
+            var resourceEvents = new List<DivaResourceEvent>(rawResourceEvents.Count);
+            var bgsEvents = new List<DivaBgmEvent>(rawBgsEvents.Count);
+
+            for (int i = 0; i < rawResourceEvents.Count; i++)
+            {
+                (int frameIndex, int resourceId, double? seekMs) = rawResourceEvents[i];
+                resourceEvents.Add(new DivaResourceEvent
+                {
+                    Sequence = i,
+                    FrameIndex = frameIndex,
+                    TimeMs = frameTimeAt(frameTimes, frameIndex),
+                    ResourceId = resourceId,
+                    DeclaredSourceOffsetMs = seekMs
+                });
+            }
+
+            for (int i = 0; i < rawBgsEvents.Count; i++)
+            {
+                (int frameIndex, int slot, int wavId, double? playOffsetMs) = rawBgsEvents[i];
+                bgsEvents.Add(new DivaBgmEvent
+                {
+                    Sequence = i,
+                    FrameIndex = frameIndex,
+                    TimeMs = frameTimeAt(frameTimes, frameIndex),
+                    Slot = slot,
+                    WavId = wavId,
+                    DeclaredSourceOffsetMs = playOffsetMs
+                });
+            }
 
             var timingPoints = new List<DivaChartControlPoint>();
 
@@ -231,6 +284,8 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
                 Notes = notes,
                 WavFiles = wav,
                 ResourceFiles = resources,
+                BgmEvents = bgsEvents,
+                ResourceEvents = resourceEvents,
                 ChanceTimeStart = chanceStart,
                 ChanceTimeEnd = chanceEnd,
                 ChanceTimeStartMs = chanceStartMs,
@@ -296,6 +351,14 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
             }
 
             return times;
+        }
+
+        private static double frameTimeAt(double[] frameTimes, int frameIndex)
+        {
+            if (frameTimes.Length == 0)
+                return 0;
+
+            return frameTimes[Math.Clamp(frameIndex, 0, frameTimes.Length - 1)];
         }
 
         /// <summary>Active BPM at each frame index (propagates last timing change).</summary>

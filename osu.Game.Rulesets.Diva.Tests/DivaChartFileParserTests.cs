@@ -4,7 +4,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using NUnit.Framework;
+using osu.Game.IO;
 using osu.Game.Rulesets.Diva.Beatmaps;
 using osu.Game.Rulesets.Diva.Beatmaps.DivaFormat;
 using osuTK;
@@ -191,6 +193,226 @@ namespace osu.Game.Rulesets.Diva.Tests
             Assert.That(parsed.TimingPoints.Count, Is.EqualTo(2));
             Assert.That(parsed.TimingPoints[1].Bpm, Is.EqualTo(240));
             Assert.That(parsed.TimingPoints[1].TimeMs, Is.EqualTo(48 * DivaChartConstants.MsPerFrame(120)).Within(0.01));
+        }
+
+        [Test]
+        public void PlaybackTimeline_maps_qianchen_bgs_frame_to_audio_clock()
+        {
+            string chart = """
+                           1.0.4.8
+                           前尘如梦
+                           Mapper
+                           Artist
+                           Style
+                           bg.png
+                           4
+                           8
+                           115
+                           4
+                           0 115
+                           -1
+                           -1
+                           230 0 1
+                           -1
+                           576 0 8 8 0 0 0
+                           -1
+                           0 decoy.mp3
+                           1 WAV\前尘如梦 00_00_00-00_04_03.mp3
+                           -1
+                           0 bg.png
+                           -1
+                           500 600
+                           """;
+
+            using var reader = new StringReader(chart);
+            DivaChart parsed = DivaChartFileParser.Parse(reader, "前尘如梦.diva", @"C:\songs\前尘如梦");
+            DivaPlaybackTimeline timeline = DivaPlaybackTimeline.Create(parsed);
+
+            double rawNoteTime = 576 * DivaChartConstants.MsPerFrame(115);
+            double mappedNoteTime = rawNoteTime - 2500;
+
+            Assert.That(parsed.BgmEvents.Single().FrameIndex, Is.EqualTo(230));
+            Assert.That(parsed.BgmEvents.Single().TimeMs, Is.EqualTo(2500).Within(0.01));
+            Assert.That(parsed.Notes.Single().StartTimeMs, Is.EqualTo(rawNoteTime).Within(0.01), "Parser must retain raw DIVA time.");
+            Assert.That(timeline.BgmWavId, Is.EqualTo(1));
+            Assert.That(timeline.AudioRelativePath, Is.EqualTo("WAV/前尘如梦 00_00_00-00_04_03.mp3"));
+            Assert.That(timeline.OffsetMs, Is.EqualTo(-2500).Within(0.01));
+            Assert.That(timeline.ToPlaybackTime(parsed.Notes.Single().StartTimeMs), Is.EqualTo(mappedNoteTime).Within(0.01));
+            Assert.That(mappedNoteTime - DivaChartConstants.StandingPreemptMs(115), Is.EqualTo(1673.91).Within(0.02));
+
+            string osu = DivaToOsuExporter.ExportToString(parsed);
+            Assert.That(osu, Does.Contain("AudioFilename: 前尘如梦 00_00_00-00_04_03.mp3"));
+            Assert.That(osu, Does.Contain("-2500,521.739"));
+            Assert.That(osu, Does.Match(@"(?m)^\d+,\d+,3761,1,0,"));
+
+            using var stream = new MemoryStream(Encoding.UTF8.GetBytes(chart));
+            using var lineReader = new LineBufferedReader(stream);
+            var decoded = new DivaBeatmapDecoder().Decode(lineReader);
+            Assert.That(decoded.HitObjects.Single().StartTime, Is.EqualTo(mappedNoteTime).Within(0.01));
+            Assert.That(decoded.ControlPointInfo.TimingPoints.First().Time, Is.EqualTo(-2500).Within(0.01));
+            Assert.That(decoded.ControlPointInfo.EffectPoints[0].Time,
+                Is.EqualTo(timeline.ToPlaybackTime(parsed.ChanceTimeStartMs)).Within(0.01));
+            Assert.That(decoded.ControlPointInfo.EffectPoints[1].Time,
+                Is.EqualTo(timeline.ToPlaybackTime(parsed.ChanceTimeEndMs)).Within(0.01));
+        }
+
+        [Test]
+        public void PlaybackTimeline_negative_bgs_position_seeks_source()
+        {
+            string chart = """
+                           1.0.4.8
+                           Skip Song
+                           Mapper
+                           Artist
+                           Style
+                           bg.png
+                           1
+                           1
+                           120
+                           1
+                           0 120
+                           -1
+                           -1
+                           -1000 0 0
+                           -1
+                           0 0 8 8 0 0 0
+                           -1
+                           0 audio.ogg
+                           -1
+                           0 bg.png
+                           -1
+                           -1 -1
+                           """;
+
+            using var reader = new StringReader(chart);
+            DivaChart parsed = DivaChartFileParser.Parse(reader, "skip.diva", @"C:\songs\skip");
+            DivaPlaybackTimeline timeline = DivaPlaybackTimeline.Create(parsed);
+
+            Assert.That(parsed.BgmEvents.Single().DeclaredSourceOffsetMs, Is.EqualTo(1000));
+            Assert.That(parsed.Notes[0].StartTimeMs, Is.EqualTo(0));
+            Assert.That(timeline.SourceOffsetMs, Is.EqualTo(1000));
+            Assert.That(timeline.OffsetMs, Is.EqualTo(1000));
+            Assert.That(timeline.ToPlaybackTime(parsed.Notes[0].StartTimeMs), Is.EqualTo(1000).Within(0.01));
+        }
+
+        [TestCase(104)]
+        [TestCase(243)]
+        public void PlaybackTimeline_resource_only_uses_first_video_event(int videoStartFrame)
+        {
+            string chart = $"""
+                           1.0.4.8
+                           Resource Song
+                           Mapper
+                           Artist
+                           Style
+                           bg.png
+                           1
+                           1
+                           120
+                           2
+                           0 120
+                           -1
+                           0 5
+                           {videoStartFrame} 7
+                           -1
+                           -1
+                           {videoStartFrame + 48} 0 8 8 0 0 0
+                           -1
+                           -1
+                           0 bg.png
+                           5 splash.png
+                           7 movie.avi
+                           -1
+                           -1 -1
+                           """;
+
+            using var reader = new StringReader(chart);
+            DivaChart parsed = DivaChartFileParser.Parse(reader, "resource.diva", @"C:\songs\resource");
+            DivaPlaybackTimeline timeline = DivaPlaybackTimeline.Create(parsed);
+
+            double eventTime = videoStartFrame * DivaChartConstants.MsPerFrame(120);
+            Assert.That(timeline.ResourceId, Is.EqualTo(7));
+            Assert.That(timeline.AudioRelativePath, Is.EqualTo("movie.avi"));
+            Assert.That(timeline.EventTimeMs, Is.EqualTo(eventTime).Within(0.01));
+            Assert.That(timeline.OffsetMs, Is.EqualTo(-eventTime).Within(0.01));
+            Assert.That(timeline.ToPlaybackTime(parsed.Notes.Single().StartTimeMs),
+                Is.EqualTo(48 * DivaChartConstants.MsPerFrame(120)).Within(0.01));
+        }
+
+        [Test]
+        public void PlaybackTimeline_zero_when_no_media_event()
+        {
+            string chart = """
+                           1.0.4.8
+                           Plain Song
+                           Mapper
+                           Artist
+                           Style
+                           bg.png
+                           1
+                           1
+                           120
+                           1
+                           0 120
+                           -1
+                           -1
+                           -1
+                           0 0 8 8 0 0 0
+                           -1
+                           0 audio.ogg
+                           -1
+                           0 bg.png
+                           -1
+                           -1 -1
+                           """;
+
+            using var reader = new StringReader(chart);
+            DivaChart parsed = DivaChartFileParser.Parse(reader, "plain.diva", @"C:\songs\plain");
+            DivaPlaybackTimeline timeline = DivaPlaybackTimeline.Create(parsed);
+
+            Assert.That(timeline.AudioRelativePath, Is.EqualTo("audio.ogg"));
+            Assert.That(timeline.OffsetMs, Is.EqualTo(0));
+            Assert.That(parsed.Notes[0].StartTimeMs, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void PlaybackTimeline_reports_additional_bgm_segments()
+        {
+            string chart = """
+                           1.0.4.8
+                           Multi BGM Song
+                           Mapper
+                           Artist
+                           Style
+                           bg.png
+                           2
+                           1
+                           120
+                           1
+                           0 120
+                           -1
+                           -1
+                           48 0 1
+                           96 0 2
+                           -1
+                           144 0 8 8 0 0 0
+                           -1
+                           0 decoy.ogg
+                           1 main.ogg
+                           2 second.ogg
+                           -1
+                           0 bg.png
+                           -1
+                           -1 -1
+                           """;
+
+            using var reader = new StringReader(chart);
+            DivaChart parsed = DivaChartFileParser.Parse(reader, "multi.diva", @"C:\songs\multi");
+            DivaPlaybackTimeline timeline = DivaPlaybackTimeline.Create(parsed);
+
+            Assert.That(timeline.BgmWavId, Is.EqualTo(1), "The event's WAV id, not dictionary order, selects the track.");
+            Assert.That(timeline.AudioRelativePath, Is.EqualTo("main.ogg"));
+            Assert.That(timeline.HasAdditionalAudioSegments, Is.True);
         }
 
         [Test]

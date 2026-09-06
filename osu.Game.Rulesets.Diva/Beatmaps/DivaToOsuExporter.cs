@@ -19,7 +19,8 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
         public static string ExportToString(DivaChart chart)
         {
             var sb = new StringBuilder();
-            string audio = Path.GetFileName(chart.ResolvePrimaryAudioRelativePath() ?? "audio.mp3");
+            DivaPlaybackTimeline timeline = DivaPlaybackTimeline.Create(chart);
+            string audio = Path.GetFileName(timeline.AudioRelativePath ?? "audio.mp3");
             string? background = chart.ResolveBackgroundRelativePath();
             string difficulty = DivaChartConstants.FormatDifficultyName(chart.Metadata.Level, chart.Metadata.Hard);
             double bpm = chart.Metadata.Bpm > 0 ? chart.Metadata.Bpm : 120;
@@ -75,21 +76,21 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             {
                 double bl = 60000.0 / (point.Bpm > 0 ? point.Bpm : bpm);
                 sb.AppendLine(string.Create(CultureInfo.InvariantCulture,
-                    $"{point.TimeMs:0.###},{bl:0.###},4,2,0,100,1,0"));
+                    $"{timeline.ToPlaybackTime(point.TimeMs):0.###},{bl:0.###},4,2,0,100,1,0"));
             }
 
             if (chart.TimingPoints.Count == 0)
             {
                 sb.AppendLine(string.Create(CultureInfo.InvariantCulture,
-                    $"0,{beatLength:0.###},4,2,0,100,1,0"));
+                    $"{timeline.ToPlaybackTime(0):0.###},{beatLength:0.###},4,2,0,100,1,0"));
             }
 
             if (chart.HasChanceTime)
             {
                 sb.AppendLine(string.Create(CultureInfo.InvariantCulture,
-                    $"{chart.ChanceTimeStartMs:0.###},-100,4,2,0,100,0,1"));
+                    $"{timeline.ToPlaybackTime(chart.ChanceTimeStartMs):0.###},-100,4,2,0,100,0,1"));
                 sb.AppendLine(string.Create(CultureInfo.InvariantCulture,
-                    $"{chart.ChanceTimeEndMs:0.###},-100,4,2,0,100,0,0"));
+                    $"{timeline.ToPlaybackTime(chart.ChanceTimeEndMs):0.###},-100,4,2,0,100,0,0"));
             }
 
             sb.AppendLine();
@@ -104,7 +105,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                 string sample = DivaActionEncoding.EncodeSampleFileName(action, note.IsHold, note.DurationMs, approach);
                 int x = (int)Math.Round(pos.X);
                 int y = (int)Math.Round(pos.Y);
-                int time = (int)Math.Round(note.StartTimeMs);
+                int time = (int)Math.Round(timeline.ToPlaybackTime(note.StartTimeMs));
 
                 // type 1 = circle
                 sb.AppendLine(string.Create(CultureInfo.InvariantCulture,

@@ -17,11 +17,6 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
         public const string WAV_FOLDER = "WAV";
         public const string RES_FOLDER = "RES";
 
-        /// <summary>
-        /// Bumped when extract flags change so stale WAV caches (wrong timeline) are discarded.
-        /// </summary>
-        public const int EXTRACT_VERSION = 1;
-
         private static readonly string[] video_extensions =
         [
             ".mp4", ".avi", ".wmv", ".mpg", ".mpeg", ".mov", ".m4v", ".flv", ".mkv", ".webm"
@@ -106,13 +101,16 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
 
             string fileName = baseName + ".ogg";
             string outputFull = Path.Combine(wavDir, fileName);
-            string markerFull = outputFull + ".divaver";
             string relative = $"{WAV_FOLDER}\\{fileName}";
 
             try
             {
-                if (isCacheValid(outputFull, markerFull, videoFullPath))
+                if (File.Exists(outputFull)
+                    && File.GetLastWriteTimeUtc(outputFull) >= File.GetLastWriteTimeUtc(videoFullPath)
+                    && new FileInfo(outputFull).Length > 0)
+                {
                     return relative;
+                }
 
                 string tempOut = outputFull + ".tmp";
                 if (File.Exists(tempOut))
@@ -126,9 +124,6 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
                         "-y",
                         "-i", videoFullPath,
                         "-vn",
-                        // Align audio timeline to t=0 (strip priming / negative TS vs chart frame 0).
-                        "-af", "asetpts=PTS-STARTPTS",
-                        "-avoid_negative_ts", "make_zero",
                         "-c:a", "libvorbis",
                         "-q:a", "5",
                         tempOut
@@ -167,36 +162,13 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
                     File.Delete(outputFull);
 
                 File.Move(tempOut, outputFull);
-                File.WriteAllText(markerFull, EXTRACT_VERSION.ToString());
-                Logger.Log($"[DIVA] Extracted video BGM → {relative} (extract v{EXTRACT_VERSION})");
+                Logger.Log($"[DIVA] Extracted video BGM → {relative}");
                 return relative;
             }
             catch (Exception ex)
             {
                 Logger.Log($"[DIVA] Failed extracting audio from '{videoFullPath}': {ex.Message}", level: LogLevel.Important);
                 return null;
-            }
-        }
-
-        private static bool isCacheValid(string outputFull, string markerFull, string videoFullPath)
-        {
-            if (!File.Exists(outputFull) || new FileInfo(outputFull).Length == 0)
-                return false;
-
-            if (File.GetLastWriteTimeUtc(outputFull) < File.GetLastWriteTimeUtc(videoFullPath))
-                return false;
-
-            if (!File.Exists(markerFull))
-                return false;
-
-            try
-            {
-                string text = File.ReadAllText(markerFull).Trim();
-                return text == EXTRACT_VERSION.ToString();
-            }
-            catch
-            {
-                return false;
             }
         }
 

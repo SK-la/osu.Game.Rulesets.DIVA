@@ -147,6 +147,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
         public static async Task SynchronizeExternalAsync(
             RealmAccess realm,
             Storage storage,
+            IWorkingBeatmapCache workingBeatmapCache,
             RulesetInfo divaRulesetInfo,
             IReadOnlyList<string> paths,
             Action<ImportProgress>? reportProgress = null,
@@ -155,7 +156,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             reportProgress?.Invoke(new ImportProgress(0, "Scanning DIVA song folders…"));
             IReadOnlyList<DivaSongFolder> songs = DivaLibraryScanner.Scan(paths);
             await Task.Run(
-                () => DivaExternalLibrarySynchronizer.Synchronize(realm, storage, divaRulesetInfo, songs, reportProgress, cancellationToken),
+                () => DivaExternalLibrarySynchronizer.Synchronize(realm, storage, workingBeatmapCache, divaRulesetInfo, songs, reportProgress, cancellationToken),
                 cancellationToken).ConfigureAwait(false);
         }
 #endif

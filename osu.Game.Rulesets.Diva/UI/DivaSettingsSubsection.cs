@@ -209,7 +209,7 @@ namespace osu.Game.Rulesets.Diva.UI
                     else
                     {
 #if NET10_0
-                        await DivaLibraryImportPipeline.SynchronizeExternalAsync(realm, storage, ruleset.RulesetInfo, paths, report, token).ConfigureAwait(false);
+                        await DivaLibraryImportPipeline.SynchronizeExternalAsync(realm, storage, beatmapManager, ruleset.RulesetInfo, paths, report, token).ConfigureAwait(false);
                         collectionSync = DivaCollectionSynchronizer.SyncFromLibraryPaths(realm, paths);
 #else
                         throw new NotSupportedException("External library linking requires Ez2Lazer (net10).");
