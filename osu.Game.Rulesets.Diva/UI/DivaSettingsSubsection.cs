@@ -243,19 +243,7 @@ namespace osu.Game.Rulesets.Diva.UI
                     notification.State = ProgressNotificationState.Completed;
 
                     if (IsLoaded)
-                    {
-                        Schedule(() =>
-                        {
-                            updatePathStatus();
-
-                            if (collectionSync is { CollectionCount: > 0 } syncStatus)
-                            {
-                                cacheStatusNote.Current.Value = new SettingsNote.Data(
-                                    $"{paths.Count} path(s) ready. Collections: {syncStatus.CollectionCount} ({syncStatus.ChartCount} charts).",
-                                    SettingsNote.Type.Informational);
-                            }
-                        });
-                    }
+                        Schedule(updatePathStatus);
                 }
                 catch (OperationCanceledException)
                 {
@@ -276,12 +264,19 @@ namespace osu.Game.Rulesets.Diva.UI
         private void updatePathStatus()
         {
             IReadOnlyList<string> paths = divaConfig.GetLibraryPaths();
-            string mode = divaConfig.GetImportToRealm() ? "import" : "external";
-            string text = paths.Count == 0
-                ? "No library paths configured."
-                : $"{paths.Count} path(s), mode={mode}: {paths[0]}" + (paths.Count > 1 ? "…" : string.Empty);
 
-            cacheStatusNote.Current.Value = new SettingsNote.Data(text, SettingsNote.Type.Informational);
+            if (paths.Count == 0)
+            {
+                cacheStatusNote.Current.Value = new SettingsNote.Data("未配置曲库路径。", SettingsNote.Type.Informational);
+                return;
+            }
+
+            IReadOnlyList<DivaSongFolder> songs = DivaLibraryScanner.Scan(paths);
+            int difficultyCount = songs.Sum(s => s.ChartPaths.Count);
+
+            cacheStatusNote.Current.Value = new SettingsNote.Data(
+                $"路径数 {paths.Count}，总歌曲数 {songs.Count}，总难度数 {difficultyCount}",
+                SettingsNote.Type.Informational);
         }
     }
 }
