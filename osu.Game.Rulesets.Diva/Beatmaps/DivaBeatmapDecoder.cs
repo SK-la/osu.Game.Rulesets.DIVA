@@ -52,8 +52,8 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             beatmap.Metadata.Author.Username = chart.Metadata.Creator;
             beatmap.Metadata.Source = "ProjectDIVA";
             beatmap.Metadata.Tags = $"{DivaActionEncoding.NATIVE_TAG} diva-external";
-            beatmap.Metadata.AudioFile = Path.GetFileName(chart.ResolvePrimaryAudioRelativePath() ?? string.Empty);
-            beatmap.Metadata.BackgroundFile = Path.GetFileName(chart.ResolveBackgroundRelativePath() ?? string.Empty);
+            beatmap.Metadata.AudioFile = chart.ResolvePrimaryAudioRelativePath() ?? string.Empty;
+            beatmap.Metadata.BackgroundFile = chart.ResolveBackgroundRelativePath() ?? string.Empty;
 
             foreach (DivaChartControlPoint point in chart.TimingPoints.OrderBy(p => p.TimeMs))
             {

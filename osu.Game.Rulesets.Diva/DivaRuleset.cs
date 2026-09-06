@@ -52,7 +52,7 @@ namespace osu.Game.Rulesets.Diva
 
         public override IBeatmapConverter CreateBeatmapConverter(IBeatmap beatmap) => new DivaBeatmapConverter(beatmap, this);
 
-        public override DifficultyCalculator CreateDifficultyCalculator(IWorkingBeatmap beatmap) => new DivaDifficultyCalculator(RulesetInfo, beatmap);
+        public override DifficultyCalculator CreateDifficultyCalculator(IWorkingBeatmap beatmap) => DivaDifficulty.CreateCalculator(beatmap);
 
         public override RulesetSettingsSubsection CreateSettings() => new DivaSettingsSubsection(this);
 

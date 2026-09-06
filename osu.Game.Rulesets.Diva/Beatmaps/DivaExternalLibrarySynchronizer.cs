@@ -106,21 +106,21 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                         if (!string.IsNullOrWhiteSpace(audio))
                         {
                             string? resolvedAudio = DivaChartTextEncoding.ResolveExistingRelativePath(contentRoot, audio) ?? audio;
-                            string audioRel = Path.GetFileName(resolvedAudio);
-                            string audioFull = Path.Combine(contentRoot, resolvedAudio.Replace('/', Path.DirectorySeparatorChar));
+                            string audioRel = resolvedAudio.Replace('\\', '/');
+                            string audioFull = Path.Combine(contentRoot, audioRel.Replace('/', Path.DirectorySeparatorChar));
                             if (File.Exists(audioFull) && destination.GetFile(audioRel) == null)
                                 destination.Files.Add(new RealmNamedFileUsage(realmFileStore.RegisterExternalHash(computeFileHash(audioFull), r), audioRel));
-                            audio = resolvedAudio;
+                            audio = audioRel;
                         }
 
                         if (!string.IsNullOrWhiteSpace(background))
                         {
                             string? resolvedBg = DivaChartTextEncoding.ResolveExistingRelativePath(contentRoot, background) ?? background;
-                            string bgRel = Path.GetFileName(resolvedBg);
-                            string bgFull = Path.Combine(contentRoot, resolvedBg.Replace('/', Path.DirectorySeparatorChar));
+                            string bgRel = resolvedBg.Replace('\\', '/');
+                            string bgFull = Path.Combine(contentRoot, bgRel.Replace('/', Path.DirectorySeparatorChar));
                             if (File.Exists(bgFull) && destination.GetFile(bgRel) == null)
                                 destination.Files.Add(new RealmNamedFileUsage(realmFileStore.RegisterExternalHash(computeFileHash(bgFull), r), bgRel));
-                            background = resolvedBg;
+                            background = bgRel;
                         }
 
                         BeatmapInfo? beatmap = destination.Beatmaps.FirstOrDefault(b => b.ID == beatmapId);
@@ -154,8 +154,8 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                         beatmap.Metadata.Author.Username = meta.Creator;
                         beatmap.Metadata.Source = "ProjectDIVA";
                         beatmap.Metadata.Tags = $"{DivaActionEncoding.NATIVE_TAG} diva-external";
-                        beatmap.Metadata.AudioFile = string.IsNullOrWhiteSpace(audio) ? string.Empty : Path.GetFileName(audio);
-                        beatmap.Metadata.BackgroundFile = string.IsNullOrWhiteSpace(background) ? string.Empty : Path.GetFileName(background);
+                        beatmap.Metadata.AudioFile = string.IsNullOrWhiteSpace(audio) ? string.Empty : audio;
+                        beatmap.Metadata.BackgroundFile = string.IsNullOrWhiteSpace(background) ? string.Empty : background;
                     }
 
                     foreach (var obsolete in destination.Beatmaps.Where(b => !keepBeatmapIds.Contains(b.ID)).ToList())
