@@ -78,6 +78,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                     destination.Status = BeatmapOnlineStatus.LocallyModified;
 
                     var keepBeatmapIds = new HashSet<Guid>();
+                    bool setDirty = existingSet == null;
 
                     foreach (string chartPath in song.ChartPaths)
                     {
@@ -87,7 +88,8 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
 
                         string relative = computeRelative(chartPath, contentRoot);
                         string fileHash = computeFileHash(chartPath);
-                        RealmFile file = replaceNamedFileMapping(destination, relative, fileHash, realmFileStore, r);
+                        (RealmFile file, bool chartMappingChanged) = replaceNamedFileMapping(destination, relative, fileHash, realmFileStore, r);
+                        setDirty |= chartMappingChanged;
 
                         string? audio = null;
                         string background = meta.OverviewPicture;
@@ -101,17 +103,6 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                             audio = timeline.AudioRelativePath;
                             background = chart.ResolveBackgroundRelativePath() ?? background;
                             chartLengthMs = computeChartLengthMs(chart, timeline);
-
-                            string source = timeline.BgmWavId is int wavId
-                                ? $"BGM id={wavId}"
-                                : timeline.ResourceId is int resourceId
-                                    ? $"Resource id={resourceId}"
-                                    : "fallback";
-
-                            Logger.Log($"[DIVA] Timeline '{chartPath}': {source}, frame={timeline.EventFrameIndex}, event={timeline.EventTimeMs:0.###}ms, source seek={timeline.SourceOffsetMs:0.###}ms, offset={timeline.OffsetMs:0.###}ms.");
-
-                            if (timeline.HasAdditionalAudioSegments)
-                                Logger.Log($"[DIVA] '{chartPath}' has multiple media segments; external playback uses the first main segment.", level: LogLevel.Important);
                         }
                         catch
                         {
@@ -124,7 +115,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                             string audioRel = resolvedAudio.Replace('\\', '/');
                             string audioFull = Path.Combine(contentRoot, audioRel.Replace('/', Path.DirectorySeparatorChar));
                             if (File.Exists(audioFull))
-                                replaceNamedFileMapping(destination, audioRel, computeFileHash(audioFull), realmFileStore, r);
+                                setDirty |= replaceNamedFileMapping(destination, audioRel, computeFileHash(audioFull), realmFileStore, r).Changed;
                             audio = audioRel;
                         }
 
@@ -134,7 +125,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                             string bgRel = resolvedBg.Replace('\\', '/');
                             string bgFull = Path.Combine(contentRoot, bgRel.Replace('/', Path.DirectorySeparatorChar));
                             if (File.Exists(bgFull))
-                                replaceNamedFileMapping(destination, bgRel, computeFileHash(bgFull), realmFileStore, r);
+                                setDirty |= replaceNamedFileMapping(destination, bgRel, computeFileHash(bgFull), realmFileStore, r).Changed;
                             background = bgRel;
                         }
 
@@ -148,6 +139,11 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                                 BeatmapSet = destination,
                             };
                             destination.Beatmaps.Add(beatmap);
+                            setDirty = true;
+                        }
+                        else if (beatmap.Hash != file.Hash || beatmap.MD5Hash != fileHash)
+                        {
+                            setDirty = true;
                         }
 
                         beatmap.DifficultyName = DivaChartConstants.FormatDifficultyName(meta.Level, meta.Hard);
@@ -179,12 +175,14 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                     {
                         r.Remove(obsolete.Metadata);
                         r.Remove(obsolete);
+                        setDirty = true;
                     }
 
                     if (existingSet == null)
                         r.Add(destination, update: true);
 
-                    workingBeatmapCache.Invalidate(destination);
+                    if (setDirty)
+                        workingBeatmapCache.Invalidate(destination);
                 }
             });
 
@@ -229,7 +227,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             return Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant();
         }
 
-        private static RealmFile replaceNamedFileMapping(
+        private static (RealmFile File, bool Changed) replaceNamedFileMapping(
             BeatmapSetInfo destination,
             string relative,
             string fileHash,
@@ -240,13 +238,13 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             RealmNamedFileUsage? existing = destination.GetFile(relative);
 
             if (existing?.File.Hash == fileHash)
-                return file;
+                return (file, false);
 
             if (existing != null)
                 destination.Files.Remove(existing);
 
             destination.Files.Add(new RealmNamedFileUsage(file, relative));
-            return file;
+            return (file, true);
         }
 
         private static Guid stableGuid(string seed)

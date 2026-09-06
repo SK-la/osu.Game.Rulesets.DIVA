@@ -8,7 +8,6 @@ using System.Text;
 using osu.Game.Beatmaps;
 using osu.Game.Beatmaps.ControlPoints;
 using osu.Game.Beatmaps.Formats;
-using osu.Framework.Logging;
 using osu.Game.IO;
 using osu.Game.Rulesets.Diva.Audio;
 using osu.Game.Rulesets.Diva.Beatmaps.DivaFormat;
@@ -38,8 +37,6 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             using var reader = new StringReader(sb.ToString());
             DivaChart chart = DivaChartFileParser.Parse(reader, string.Empty, string.Empty);
             DivaPlaybackTimeline timeline = DivaPlaybackTimeline.Create(chart);
-
-            logTimeline(chart, timeline);
 
             beatmap.BeatmapInfo.DifficultyName = DivaChartConstants.FormatDifficultyName(chart.Metadata.Level, chart.Metadata.Hard);
             beatmap.BeatmapInfo.Difficulty.OverallDifficulty = Math.Clamp(chart.Metadata.Hard, 1, 10);
@@ -114,20 +111,6 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                     });
                 }
             }
-        }
-
-        private static void logTimeline(DivaChart chart, DivaPlaybackTimeline timeline)
-        {
-            string source = timeline.BgmWavId is int wavId
-                ? $"BGM id={wavId}"
-                : timeline.ResourceId is int resourceId
-                    ? $"Resource id={resourceId}"
-                    : "fallback";
-
-            Logger.Log($"[DIVA] Timeline '{chart.Metadata.Title}': {source}, frame={timeline.EventFrameIndex}, event={timeline.EventTimeMs:0.###}ms, source seek={timeline.SourceOffsetMs:0.###}ms, offset={timeline.OffsetMs:0.###}ms.");
-
-            if (timeline.HasAdditionalAudioSegments)
-                Logger.Log($"[DIVA] '{chart.Metadata.Title}' has multiple media segments; lazer can only use the first main segment as one Track.", level: LogLevel.Important);
         }
 
         private static double resolveBpmAt(DivaChart chart, double timeMs, double fallback)
