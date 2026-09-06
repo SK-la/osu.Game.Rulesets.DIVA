@@ -1,6 +1,7 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Game.Rulesets.Diva.Graphics;
@@ -49,10 +50,18 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
         protected override void UpdateHitStateTransforms(ArmedState state)
         {
-            // Keep strip visible after head hit so the remaining body can finish.
             if (state == ArmedState.Hit)
             {
-                this.Delay(holdDuration).FadeOut(120).Expire();
+                // ProjectDIVA: after head press, hide the flying rhythm piece immediately.
+                // Keep the fixed target + shrinking strip until EndTime, then clear.
+                // Lifetime is anchored to EndTime (not HitTime + Duration) so a late head
+                // press cannot leave the note stuck on the target after the strip finishes.
+                ApproachPiece.FadeOut(60);
+                ApproachHand.FadeOut(60);
+                ApproachTrail?.FadeOut(60);
+
+                double remainingToEnd = Math.Max(0, ((DivaHoldHitObject)HitObject).EndTime - Time.Current);
+                this.Delay(remainingToEnd).FadeOut(80).Expire();
                 return;
             }
 
