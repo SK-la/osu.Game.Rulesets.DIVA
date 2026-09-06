@@ -15,16 +15,26 @@ jobs:
 
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: |
+            8.0.x
+            10.0.x
 
       - name: Build with dependencies for verification
         run: dotnet build -p:RulesetVerifyBuild=true
 
-      - name: Verify ruleset assembly loads
+      - name: Verify ruleset assembly loads (net8)
         run: pwsh .github/scripts/Verify-RulesetAssembly.ps1 -AssemblyPath osu.Game.Rulesets.Diva/bin/Debug/net8.0/osu.Game.Rulesets.Diva.dll
 
-      - name: Publish single-DLL ruleset artifact
-        run: dotnet publish osu.Game.Rulesets.Diva/osu.Game.Rulesets.Diva.csproj -c Debug --no-build
+      - name: Verify ruleset assembly loads (net10)
+        run: pwsh .github/scripts/Verify-RulesetAssembly.ps1 -AssemblyPath osu.Game.Rulesets.Diva/bin/Debug/net10.0/osu.Game.Rulesets.Diva.dll
+
+      - name: Publish single-DLL ruleset artifacts
+        run: |
+          dotnet publish osu.Game.Rulesets.Diva/osu.Game.Rulesets.Diva.csproj -c Debug -f net8.0 --no-build
+          dotnet publish osu.Game.Rulesets.Diva/osu.Game.Rulesets.Diva.csproj -c Debug -f net10.0 --no-build
+          mkdir -p artifacts
+          cp osu.Game.Rulesets.Diva/bin/Debug/net8.0/publish/osu.Game.Rulesets.Diva.dll artifacts/osu.Game.Rulesets.Diva.net8.0.dll
+          cp osu.Game.Rulesets.Diva/bin/Debug/net10.0/publish/osu.Game.Rulesets.Diva.dll artifacts/osu.Game.Rulesets.Diva.net10.0.dll
 
       - name: Unit tests
         run: dotnet test --no-build
@@ -34,4 +44,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: release
-          path: osu.Game.Rulesets.Diva/bin/Debug/net8.0/publish/osu.Game.Rulesets.Diva.dll
+          path: |
+            artifacts/osu.Game.Rulesets.Diva.net8.0.dll
+            artifacts/osu.Game.Rulesets.Diva.net10.0.dll

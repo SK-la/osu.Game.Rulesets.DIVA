@@ -1,5 +1,5 @@
-# Dependabot：每日检查 NuGet；仅两种 PR（互不混入）。
-# ppy-osu 组可只更其中一个包，也可两个同 PR。
+# Dependabot：每日检查 NuGet；三组 PR（互不混入）。
+# ppy-osu / ez2lazer-game / other-nuget；CI 通过后自动合并。
 version: 2
 updates:
   - package-ecosystem: "nuget"
@@ -13,9 +13,13 @@ updates:
         patterns:
           - "ppy.osu.Game"
           - "ppy.osu.Game.Rulesets.Osu"
+      ez2lazer-game:
+        patterns:
+          - "ez2lazer.Game"
       other-nuget:
         patterns:
           - "*"
         exclude-patterns:
           - "ppy.osu.Game"
           - "ppy.osu.Game.Rulesets.Osu"
+          - "ez2lazer.Game"

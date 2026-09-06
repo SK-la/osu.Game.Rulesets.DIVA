@@ -11,7 +11,10 @@ namespace osu.Game.Rulesets.Diva.UI
 {
     public partial class DivaSettingsSubsection : RulesetSettingsSubsection
     {
+        // net10 / Ez2Lazer：RulesetSettingsSubsection.Header 已 sealed（标题由规则集名提供）
+#if NET8_0
         protected override LocalisableString Header => new LocalisableString("osu!DIVA");
+#endif
 
         public DivaSettingsSubsection(Ruleset ruleset)
             : base(ruleset)

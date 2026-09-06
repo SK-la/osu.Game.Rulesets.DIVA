@@ -1,4 +1,5 @@
 # 发布 tag 格式：yyyy.mdd.0（与 osu! lazer 一致，例如 2026.524.0）
+# 同一 Release 同时上传 net8（官方 lazer）与 net10（Ez2Lazer）DLL。
 name: Release DIVA ruleset
 
 on:
@@ -24,7 +25,9 @@ jobs:
 
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: |
+            8.0.x
+            10.0.x
 
       - name: Resolve release version
         id: version
@@ -49,20 +52,36 @@ jobs:
           &&
           pwsh .github/scripts/Verify-RulesetAssembly.ps1
           -AssemblyPath osu.Game.Rulesets.Diva/bin/Release/net8.0/osu.Game.Rulesets.Diva.dll
+          &&
+          pwsh .github/scripts/Verify-RulesetAssembly.ps1
+          -AssemblyPath osu.Game.Rulesets.Diva/bin/Release/net10.0/osu.Game.Rulesets.Diva.dll
 
-      - name: Publish ruleset
-        run: >
-          dotnet publish osu.Game.Rulesets.Diva/osu.Game.Rulesets.Diva.csproj
-          -c Release
-          -p:OfficialRelease=true
-          -p:ReleaseVersion=${{ steps.version.outputs.value }}
+      - name: Publish ruleset (net8 + net10)
+        shell: pwsh
+        run: |
+          $ver = '${{ steps.version.outputs.value }}'
+          foreach ($tfm in @('net8.0', 'net10.0')) {
+            dotnet publish osu.Game.Rulesets.Diva/osu.Game.Rulesets.Diva.csproj `
+              -c Release `
+              -f $tfm `
+              -p:OfficialRelease=true `
+              -p:ReleaseVersion=$ver
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+          Copy-Item osu.Game.Rulesets.Diva/bin/Release/net8.0/publish/osu.Game.Rulesets.Diva.dll `
+            artifacts/osu.Game.Rulesets.Diva.net8.0.dll -Force
+          Copy-Item osu.Game.Rulesets.Diva/bin/Release/net10.0/publish/osu.Game.Rulesets.Diva.dll `
+            artifacts/osu.Game.Rulesets.Diva.net10.0.dll -Force
 
       - name: Upload release asset (tag push)
         if: github.event_name == 'push'
         uses: softprops/action-gh-release@v2
         with:
           name: Release ${{ steps.version.outputs.value }}
-          files: osu.Game.Rulesets.Diva/bin/Release/net8.0/publish/osu.Game.Rulesets.Diva.dll
+          files: |
+            artifacts/osu.Game.Rulesets.Diva.net8.0.dll
+            artifacts/osu.Game.Rulesets.Diva.net10.0.dll
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -73,6 +92,8 @@ jobs:
           tag_name: ${{ steps.version.outputs.value }}
           name: Release ${{ steps.version.outputs.value }}
           generate_release_notes: true
-          files: osu.Game.Rulesets.Diva/bin/Release/net8.0/publish/osu.Game.Rulesets.Diva.dll
+          files: |
+            artifacts/osu.Game.Rulesets.Diva.net8.0.dll
+            artifacts/osu.Game.Rulesets.Diva.net10.0.dll
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

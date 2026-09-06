@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup Label="Project">
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
     <AssemblyTitle>osu.Game.Rulesets.DIVA</AssemblyTitle>
     <OutputType>Library</OutputType>
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -11,8 +11,17 @@
     <EmbeddedResource Include="Resources\**" />
   </ItemGroup>
   <ItemGroup Label="Package References">
-    <PackageReference Include="ppy.osu.Game" />
+    <!-- 官方 lazer：ppy.osu.Game (net8) -->
+    <PackageReference Include="ppy.osu.Game" Condition="'$(TargetFramework)' == 'net8.0'" />
+    <!-- Ez2Lazer：ez2lazer.Game (net10)；AssemblyName 仍为 osu.Game -->
+    <PackageReference Include="ez2lazer.Game" Condition="'$(TargetFramework)' == 'net10.0'" />
+    <!-- Rulesets.Osu 仅官方包；两 TFM 共用 -->
     <PackageReference Include="ppy.osu.Game.Rulesets.Osu" />
+    <!-- net10：压掉 Rulesets.Osu 传递的 ppy.osu.Game，避免与 ez2lazer.Game 抢 osu.Game -->
+    <PackageReference Include="ppy.osu.Game" Condition="'$(TargetFramework)' == 'net10.0'">
+      <ExcludeAssets>all</ExcludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="ppy.osu.Framework.SourceGeneration">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
