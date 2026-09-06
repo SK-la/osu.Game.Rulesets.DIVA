@@ -137,6 +137,12 @@ namespace osu.Game.Rulesets.Diva.UI
                 },
                 new SettingsSlider<double>
                 {
+                    LabelText = DivaStrings.SETTINGS_PLAYFIELD_SCALE,
+                    TooltipText = DivaStrings.SETTINGS_PLAYFIELD_SCALE_TOOLTIP,
+                    Current = divaConfig.GetBindable<double>(DivaRulesetSettings.PlayfieldScale)
+                },
+                new SettingsSlider<double>
+                {
                     LabelText = DivaStrings.SETTINGS_APPROACH_PREEMPT_SCALE,
                     TooltipText = DivaStrings.SETTINGS_APPROACH_PREEMPT_SCALE_TOOLTIP,
                     Current = divaConfig.GetBindable<double>(DivaRulesetSettings.ApproachPreemptScale)

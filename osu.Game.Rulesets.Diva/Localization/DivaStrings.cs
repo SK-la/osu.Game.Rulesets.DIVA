@@ -63,6 +63,13 @@ namespace osu.Game.Rulesets.Diva.Localization
         public static readonly LocalisableString SETTINGS_NOTE_SIZE =
             new DivaLocalizationManager.DivaLocalisableString("音符大小", "Note size");
 
+        public static readonly LocalisableString SETTINGS_PLAYFIELD_SCALE =
+            new DivaLocalizationManager.DivaLocalisableString("游玩区域缩放", "Playfield scale");
+
+        public static readonly LocalisableString SETTINGS_PLAYFIELD_SCALE_TOOLTIP = new DivaLocalizationManager.DivaLocalisableString(
+            "音符活动区域相对屏幕的缩放（保持 480×272 宽高比）。1.0 为铺满可用区域且不超出屏幕。",
+            "Scales the note activity area relative to the screen (keeps 480×272 aspect). 1.0 fills the available area without going off-screen.");
+
         public static readonly LocalisableString SETTINGS_APPROACH_PREEMPT_SCALE =
             new DivaLocalizationManager.DivaLocalisableString("接近预判缩放", "Approach preempt scale");
 

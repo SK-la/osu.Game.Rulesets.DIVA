@@ -85,6 +85,8 @@ namespace osu.Game.Rulesets.Diva.Configuration
             SetDefault(DivaRulesetSettings.EnableVisualBursts, true);
             SetDefault(DivaRulesetSettings.EnableBuiltinHitSounds, true);
             SetDefault(DivaRulesetSettings.NoteSize, 40.0, 10.0, 64.0, 1.0);
+            // Relative size of the 480×272 note field inside the drawable ruleset area (aspect preserved; ≤1 keeps content on-screen).
+            SetDefault(DivaRulesetSettings.PlayfieldScale, 0.92, 0.5, 1.0, 0.01);
             // Multiplier on PD note_standing×MsPerFrame(BPM); 1.0 = ProjectDIVA baseline.
             SetDefault(DivaRulesetSettings.ApproachPreemptScale, 1.0, 0.75, 1.25, 0.05);
             SetDefault(DivaRulesetSettings.HitExplosionAlpha, 1.0, 0.0, 1.0, 0.05);
@@ -121,6 +123,7 @@ namespace osu.Game.Rulesets.Diva.Configuration
         EnableVisualBursts,
         EnableBuiltinHitSounds,
         NoteSize,
+        PlayfieldScale,
         ApproachPreemptScale,
         HitExplosionAlpha,
         JudgementLock,
