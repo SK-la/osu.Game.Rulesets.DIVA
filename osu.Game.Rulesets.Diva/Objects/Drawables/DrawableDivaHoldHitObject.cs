@@ -40,6 +40,13 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             strip?.UpdateStrip(blend, offset);
         }
 
+        protected override void CheckForResult(bool userTriggered, double timeOffset)
+        {
+            // Framework passes Time.Current - GetEndTime() for IHasDuration objects.
+            // DIVA holds are scored at the head (StartTime), same as taps — convert back.
+            base.CheckForResult(userTriggered, timeOffset + holdDuration);
+        }
+
         protected override void UpdateHitStateTransforms(ArmedState state)
         {
             // Keep strip visible after head hit so the remaining body can finish.

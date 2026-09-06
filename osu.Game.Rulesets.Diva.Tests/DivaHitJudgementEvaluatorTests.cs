@@ -76,5 +76,19 @@ namespace osu.Game.Rulesets.Diva.Tests
             Assert.That(DivaHitJudgementEvaluator.ShouldMiss(timeOffset), Is.EqualTo(expected));
             Assert.That(DivaHitJudgementEvaluator.ShouldMiss(-timeOffset), Is.False);
         }
+
+        [Test]
+        public void Hold_head_press_must_use_start_relative_offset()
+        {
+            // Framework feeds Time.Current - EndTime into CheckForResult for IHasDuration.
+            // A perfect head press therefore arrives as -Duration and must be remapped.
+            const double duration = 500;
+            const double frameworkOffsetAtHead = -duration;
+
+            Assert.That(DivaHitJudgementEvaluator.GetPressResult(true, frameworkOffsetAtHead), Is.EqualTo(HitResult.None),
+                "Raw EndTime offset would ignore a correct head press and later Miss.");
+            Assert.That(DivaHitJudgementEvaluator.GetPressResult(true, frameworkOffsetAtHead + duration), Is.EqualTo(HitResult.Perfect));
+            Assert.That(DivaHitJudgementEvaluator.ShouldMiss(frameworkOffsetAtHead + duration + 120.01), Is.True);
+        }
     }
 }
