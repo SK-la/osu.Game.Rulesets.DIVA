@@ -65,7 +65,8 @@ namespace osu.Game.Rulesets.Diva.Tests
             Assert.That(hitWindows.WindowFor(HitResult.Meh), Is.EqualTo(0));
             Assert.That(hitWindows.IsHitResultAllowed(HitResult.Meh), Is.True);
             Assert.That(hitWindows.IsHitResultAllowed(HitResult.Miss), Is.True);
-            Assert.That(hitWindows.WindowFor(HitResult.Miss), Is.EqualTo(0));
+            // Miss uses OK_WINDOW so JudgementResult.TimeOffset / HitErrorMeter work (Miss==0 is skipped by HUD).
+            Assert.That(hitWindows.WindowFor(HitResult.Miss), Is.EqualTo(DivaHitJudgementEvaluator.OK_WINDOW));
         }
 
         [TestCase(120.0, false)]
