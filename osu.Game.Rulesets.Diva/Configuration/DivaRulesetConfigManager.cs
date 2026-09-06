@@ -87,6 +87,9 @@ namespace osu.Game.Rulesets.Diva.Configuration
             // Multiplier on PD note_standing×MsPerFrame(BPM); 1.0 = ProjectDIVA baseline.
             SetDefault(DivaRulesetSettings.ApproachPreemptScale, 1.0, 0.75, 1.25, 0.05);
             SetDefault(DivaRulesetSettings.HitExplosionAlpha, 1.0, 0.0, 1.0, 0.05);
+            // PD Strict (on): wrong key within window consumes the note; Standard (off): ignore wrong key.
+            SetDefault(DivaRulesetSettings.JudgementLock, true);
+            SetDefault(DivaRulesetSettings.InputOffset, 0.0, -200.0, 200.0, 1.0);
             SetDefault(DivaRulesetSettings.DivaRootPath, string.Empty);
             SetDefault(DivaRulesetSettings.DivaLibraryPaths, "[]");
             SetDefault(DivaRulesetSettings.ImportToRealm, true);
@@ -118,6 +121,8 @@ namespace osu.Game.Rulesets.Diva.Configuration
         NoteSize,
         ApproachPreemptScale,
         HitExplosionAlpha,
+        JudgementLock,
+        InputOffset,
         DivaRootPath,
         DivaLibraryPaths,
         ImportToRealm

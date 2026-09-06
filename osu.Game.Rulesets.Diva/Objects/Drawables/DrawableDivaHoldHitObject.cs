@@ -59,7 +59,11 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             if (!AcceptsInput(e.Action))
                 return false;
 
-            pendingHeadPressValid = ComputeValidPress(e.Action);
+            // PD strips do not participate in wrong-key cancel; ignore mismatched head presses.
+            if (!ComputeValidPress(e.Action))
+                return false;
+
+            pendingHeadPressValid = true;
             pendingRelease = false;
             UpdateResult(true);
             return holding || Judged;
@@ -79,7 +83,9 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
         protected override void CheckForResult(bool userTriggered, double timeOffset)
         {
-            // Framework: timeOffset = Time.Current - EndTime.
+            timeOffset += InputOffset.Value;
+
+            // Framework: timeOffset = Time.Current - EndTime (+ InputOffset).
             double startOffset = timeOffset + holdDuration;
             double endOffset = timeOffset;
 
@@ -104,12 +110,9 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
                 if (result == HitResult.None)
                     return;
 
+                // Wrong-key Meh path retained for safety; OnPressed already filters invalid presses.
                 if (!validPress)
-                {
-                    PendingMehSource = DivaHitJudgementEvaluator.GetMehSourceFor(result);
-                    ApplyResult((r, _) => r.Type = HitResult.Meh);
                     return;
-                }
 
                 holding = true;
                 headResult = result;

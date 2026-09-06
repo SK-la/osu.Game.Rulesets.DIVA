@@ -3,7 +3,6 @@
 
 using System;
 using System.IO;
-using System.Linq;
 using System.Text;
 using osu.Game.Beatmaps.Formats;
 using osu.Game.IO;

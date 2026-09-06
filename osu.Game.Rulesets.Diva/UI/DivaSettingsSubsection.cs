@@ -110,6 +110,18 @@ namespace osu.Game.Rulesets.Diva.UI
                     LabelText = "Enable visual bursts",
                     Current = divaConfig.GetBindable<bool>(DivaRulesetSettings.EnableVisualBursts)
                 },
+                new SettingsCheckbox
+                {
+                    LabelText = "Judgement lock",
+                    TooltipText = "ProjectDIVA Strict/Standard: when enabled, a wrong key within the timing window consumes the note (WRONG). When disabled, wrong keys are ignored.",
+                    Current = divaConfig.GetBindable<bool>(DivaRulesetSettings.JudgementLock)
+                },
+                new SettingsSlider<double>
+                {
+                    LabelText = "Input offset (ms)",
+                    TooltipText = "Adjusts hit timing used for judgement (like Offset Plus). Does not change audio/clock sync. Range ±200ms.",
+                    Current = divaConfig.GetBindable<double>(DivaRulesetSettings.InputOffset)
+                },
                 new SettingsSlider<double>
                 {
                     LabelText = "Note size",

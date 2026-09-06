@@ -51,6 +51,12 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         /// <summary>Multiplier on PD <c>note_standing × MsPerFrame(BPM)</c> (default 1.0).</summary>
         protected BindableDouble ApproachPreemptScale = new BindableDouble(1.0);
 
+        /// <summary>PD Strict when true: wrong key within window consumes the note.</summary>
+        protected BindableBool JudgementLock = new BindableBool(true);
+
+        /// <summary>Ruleset-specific input offset added to judgement <c>timeOffset</c> (ms).</summary>
+        protected BindableDouble InputOffset = new BindableDouble(0);
+
         [Resolved(canBeNull: true)]
         private IBeatmap? beatmap { get; set; }
 
@@ -125,6 +131,8 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             config?.BindWith(DivaRulesetSettings.EnableVisualBursts, EnableVisualBursts);
             config?.BindWith(DivaRulesetSettings.NoteSize, NoteSize);
             config?.BindWith(DivaRulesetSettings.ApproachPreemptScale, ApproachPreemptScale);
+            config?.BindWith(DivaRulesetSettings.JudgementLock, JudgementLock);
+            config?.BindWith(DivaRulesetSettings.InputOffset, InputOffset);
 
             NoteSize.BindValueChanged(v => Size = new Vector2((float)v.NewValue), true);
 
@@ -195,6 +203,8 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
         protected override void CheckForResult(bool userTriggered, double timeOffset)
         {
+            timeOffset += InputOffset.Value;
+
             if (!userTriggered)
             {
                 if (DivaHitJudgementEvaluator.ShouldMiss(timeOffset))
@@ -268,7 +278,13 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             if (!AcceptsInput(e.Action))
                 return false;
 
-            pendingValidPress = ComputeValidPress(e.Action);
+            bool validPress = ComputeValidPress(e.Action);
+
+            // Standard mode (lock off): wrong keys do not consume the note.
+            if (!validPress && !JudgementLock.Value)
+                return false;
+
+            pendingValidPress = validPress;
             return UpdateResult(true);
         }
 
