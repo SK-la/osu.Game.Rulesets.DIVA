@@ -14,7 +14,7 @@
     <PackageVersion Include="ppy.osu.Game.Rulesets.Osu" Version="2026.730.0" />
     <PackageVersion Include="ez2lazer.Game" Version="2026.906.1-ez2lazer" />
     <PackageVersion Include="ppy.osu.Framework.SourceGeneration" Version="2025.1121.1" />
-    <PackageVersion Include="System.Text.Encoding.CodePages" Version="9.0.0" />
+    <PackageVersion Include="System.Text.Encoding.CodePages" Version="10.0.11" />
 
     <PackageVersion Include="Appveyor.TestLogger" Version="2.0.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.9.0" />
