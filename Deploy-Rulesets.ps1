@@ -1,11 +1,10 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-  Release-build DIVA ruleset for net8 + net10 and copy DLLs into local clients.
+  Release-build the DIVA ruleset for net10 (Ez2Lazer) and copy the DLL into the local client.
 
 .DESCRIPTION
   - net10 → F:\MUG OSU\EZ2OSU-lazer\rulesets\osu.Game.Rulesets.Diva.dll
-  - net8  → F:\MUG OSU\osu-lazer\rulesets\osu.Game.Rulesets.Diva.dll
   Existing files are overwritten. Only the ruleset DLL is copied (not Game/Framework deps).
   If the destination DLL is locked, processes launched from that client folder are stopped, then copy is retried.
 #>
@@ -21,12 +20,6 @@ $targets = @(
         DestinationDir = 'F:\MUG OSU\EZ2OSU-lazer\rulesets'
         ClientRoot     = 'F:\MUG OSU\EZ2OSU-lazer'
         Label          = 'Ez2Lazer'
-    },
-    @{
-        Framework      = 'net8.0'
-        DestinationDir = 'F:\MUG OSU\osu-lazer\rulesets'
-        ClientRoot     = 'F:\MUG OSU\osu-lazer'
-        Label          = 'osu!lazer'
     }
 )
 
@@ -132,7 +125,7 @@ try {
     }
 
     Write-Host ""
-    Write-Host "Done. Start the client(s) again to load the updated ruleset." -ForegroundColor Green
+    Write-Host "Done. Start the client again to load the updated ruleset." -ForegroundColor Green
 }
 finally {
     Pop-Location

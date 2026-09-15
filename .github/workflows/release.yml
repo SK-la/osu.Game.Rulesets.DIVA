@@ -25,9 +25,7 @@ jobs:
 
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: |
-            8.0.x
-            10.0.x
+          dotnet-version: '10.0.x'
 
       - name: Resolve release version
         id: version
@@ -51,16 +49,13 @@ jobs:
           -p:RulesetVerifyBuild=true
           &&
           pwsh .github/scripts/Verify-RulesetAssembly.ps1
-          -AssemblyPath osu.Game.Rulesets.Diva/bin/Release/net8.0/osu.Game.Rulesets.Diva.dll
-          &&
-          pwsh .github/scripts/Verify-RulesetAssembly.ps1
           -AssemblyPath osu.Game.Rulesets.Diva/bin/Release/net10.0/osu.Game.Rulesets.Diva.dll
 
-      - name: Publish ruleset (net8 + net10)
+      - name: Publish ruleset
         shell: pwsh
         run: |
           $ver = '${{ steps.version.outputs.value }}'
-          foreach ($tfm in @('net8.0', 'net10.0')) {
+          foreach ($tfm in @('net10.0')) {
             dotnet publish osu.Game.Rulesets.Diva/osu.Game.Rulesets.Diva.csproj `
               -c Release `
               -f $tfm `
@@ -69,8 +64,6 @@ jobs:
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
           New-Item -ItemType Directory -Force -Path artifacts | Out-Null
-          Copy-Item osu.Game.Rulesets.Diva/bin/Release/net8.0/publish/osu.Game.Rulesets.Diva.dll `
-            artifacts/osu.Game.Rulesets.Diva.net8.0.dll -Force
           Copy-Item osu.Game.Rulesets.Diva/bin/Release/net10.0/publish/osu.Game.Rulesets.Diva.dll `
             artifacts/osu.Game.Rulesets.Diva.net10.0.dll -Force
 
@@ -80,7 +73,6 @@ jobs:
         with:
           name: Release ${{ steps.version.outputs.value }}
           files: |
-            artifacts/osu.Game.Rulesets.Diva.net8.0.dll
             artifacts/osu.Game.Rulesets.Diva.net10.0.dll
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -93,7 +85,6 @@ jobs:
           name: Release ${{ steps.version.outputs.value }}
           generate_release_notes: true
           files: |
-            artifacts/osu.Game.Rulesets.Diva.net8.0.dll
             artifacts/osu.Game.Rulesets.Diva.net10.0.dll
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

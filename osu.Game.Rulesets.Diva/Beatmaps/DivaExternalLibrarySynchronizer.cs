@@ -1,7 +1,7 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
-#if NET10_0
+#if DIVA_EZ2LAZER
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -115,7 +115,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
 
                         if (!string.IsNullOrWhiteSpace(audio))
                         {
-                            string? resolvedAudio = DivaChartTextEncoding.ResolveExistingRelativePath(contentRoot, audio) ?? audio;
+                            string resolvedAudio = DivaChartTextEncoding.ResolveExistingRelativePath(contentRoot, audio) ?? audio;
                             string audioRel = resolvedAudio.Replace('\\', '/');
                             string audioFull = Path.Combine(contentRoot, audioRel.Replace('/', Path.DirectorySeparatorChar));
                             if (File.Exists(audioFull))
@@ -125,7 +125,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
 
                         if (!string.IsNullOrWhiteSpace(background))
                         {
-                            string? resolvedBg = DivaChartTextEncoding.ResolveExistingRelativePath(contentRoot, background) ?? background;
+                            string resolvedBg = DivaChartTextEncoding.ResolveExistingRelativePath(contentRoot, background) ?? background;
                             string bgRel = resolvedBg.Replace('\\', '/');
                             string bgFull = Path.Combine(contentRoot, bgRel.Replace('/', Path.DirectorySeparatorChar));
                             if (File.Exists(bgFull))
@@ -137,9 +137,10 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
 
                         if (!string.IsNullOrWhiteSpace(video))
                         {
-                            string? resolvedVideo = DivaChartTextEncoding.ResolveExistingRelativePath(contentRoot, video) ?? video;
+                            string resolvedVideo = DivaChartTextEncoding.ResolveExistingRelativePath(contentRoot, video) ?? video;
                             string videoRel = resolvedVideo.Replace('\\', '/');
                             string videoFull = Path.Combine(contentRoot, videoRel.Replace('/', Path.DirectorySeparatorChar));
+
                             if (File.Exists(videoFull))
                             {
                                 setDirty |= replaceNamedFileMapping(destination, videoRel, computeFileHash(videoFull), realmFileStore, r).Changed;

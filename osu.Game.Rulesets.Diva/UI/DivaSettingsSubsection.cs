@@ -31,10 +31,6 @@ namespace osu.Game.Rulesets.Diva.UI
 {
     public partial class DivaSettingsSubsection : RulesetSettingsSubsection
     {
-#if NET8_0
-        protected override LocalisableString Header => DivaStrings.SETTINGS_HEADER;
-#endif
-
         private readonly Ruleset ruleset;
         private DivaRulesetConfigManager divaConfig = null!;
         private SettingsNote cacheStatusNote = null!;
@@ -74,13 +70,13 @@ namespace osu.Game.Rulesets.Diva.UI
                 return;
 
             Bindable<bool>? importBindable = divaConfig.GetBindable<bool>(DivaRulesetSettings.ImportToRealm);
-#if NET8_0
+#if !DIVA_EZ2LAZER
             importBindable.Value = true;
             importBindable.Disabled = true;
 #endif
 
-            Children = new Drawable[]
-            {
+            Children =
+            [
                 new SettingsButtonV2
                 {
                     Text = DivaStrings.SETTINGS_OPEN_PATH_WIZARD,
@@ -152,7 +148,7 @@ namespace osu.Game.Rulesets.Diva.UI
                     LabelText = DivaStrings.SETTINGS_HIT_EXPLOSION_ALPHA,
                     Current = divaConfig.GetBindable<double>(DivaRulesetSettings.HitExplosionAlpha)
                 }
-            };
+            ];
 
             updatePathStatus();
         }
@@ -167,7 +163,7 @@ namespace osu.Game.Rulesets.Diva.UI
                 return;
             }
 
-            runner.PerformFromScreen(screen => { screen.Push(new DivaDirectorySelectScreen(divaConfig, applyPathsAndProcess)); }, new[] { typeof(MainMenu), typeof(OsuSongSelect) });
+            runner.PerformFromScreen(screen => { screen.Push(new DivaDirectorySelectScreen(divaConfig, applyPathsAndProcess)); }, [typeof(MainMenu), typeof(OsuSongSelect)]);
         }
 
         private void applyPathsAndProcess(IReadOnlyList<string> paths, bool importToRealm)
@@ -234,11 +230,11 @@ namespace osu.Game.Rulesets.Diva.UI
                     }
                     else
                     {
-#if NET10_0
+#if DIVA_EZ2LAZER
                         await DivaLibraryImportPipeline.SynchronizeExternalAsync(realm, storage, beatmapManager, ruleset.RulesetInfo, paths, report, token).ConfigureAwait(false);
                         collectionSync = DivaCollectionSynchronizer.SyncFromLibraryPaths(realm, paths);
 #else
-                        throw new NotSupportedException("External library linking requires Ez2Lazer (net10).");
+                        throw new NotSupportedException("External library linking requires Ez2Lazer.");
 #endif
                     }
 

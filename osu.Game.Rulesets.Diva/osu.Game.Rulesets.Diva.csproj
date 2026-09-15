@@ -1,26 +1,33 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup Label="Project">
-    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <TargetFramework>net10.0</TargetFramework>
     <AssemblyTitle>osu.Game.Rulesets.DIVA</AssemblyTitle>
     <OutputType>Library</OutputType>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <RootNamespace>osu.Game.Rulesets.Diva</RootNamespace>
     <AssemblyName>osu.Game.Rulesets.Diva</AssemblyName>
+    <!-- *Lazer 配置 = 官方 osu!lazer 变体（ppy.osu.Game）；其余（Debug/Release/VisualTests）= Ez2Lazer -->
+    <Configurations>Debug;Release;VisualTests;DebugLazer;ReleaseLazer</Configurations>
+  </PropertyGroup>
+  <PropertyGroup>
+    <DivaLazerBuild Condition="'$(Configuration)' == 'DebugLazer' or '$(Configuration)' == 'ReleaseLazer'">true</DivaLazerBuild>
+    <!-- 官方变体缺少 Ez 专有 API（外链谱面库等），相关代码用该符号排除 -->
+    <DefineConstants Condition="'$(DivaLazerBuild)' != 'true'">$(DefineConstants);DIVA_EZ2LAZER</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\**" />
   </ItemGroup>
   <ItemGroup Label="Package References">
-    <!-- 官方 lazer：ppy.osu.Game (net8) -->
-    <PackageReference Include="ppy.osu.Game" Condition="'$(TargetFramework)' == 'net8.0'" />
-    <!-- Ez2Lazer：ez2lazer.Game (net10)；AssemblyName 仍为 osu.Game -->
-    <PackageReference Include="ez2lazer.Game" Condition="'$(TargetFramework)' == 'net10.0'" />
-    <!-- Rulesets.Osu 仅官方包；两 TFM 共用 -->
     <PackageReference Include="ppy.osu.Game.Rulesets.Osu" />
-    <!-- net10：压掉 Rulesets.Osu 传递的 ppy.osu.Game，避免与 ez2lazer.Game 抢 osu.Game -->
-    <PackageReference Include="ppy.osu.Game" Condition="'$(TargetFramework)' == 'net10.0'">
+    <!-- Ez2Lazer：ez2lazer.Game 提供 osu.Game / osu.Framework -->
+    <PackageReference Include="ez2lazer.Game" Condition="'$(DivaLazerBuild)' != 'true'" />
+    <!-- 官方 lazer：直接引用 ppy.osu.Game -->
+    <PackageReference Include="ppy.osu.Game" Condition="'$(DivaLazerBuild)' == 'true'" />
+    <!-- Ez2Lazer：压掉 Rulesets.Osu 传递来的 ppy.osu.Game，避免与 ez2lazer.Game 抢 osu.Game -->
+    <PackageReference Include="ppy.osu.Game" Condition="'$(DivaLazerBuild)' != 'true'">
       <ExcludeAssets>all</ExcludeAssets>
       <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>none</IncludeAssets>
     </PackageReference>
     <PackageReference Include="ppy.osu.Framework.SourceGeneration">
       <PrivateAssets>all</PrivateAssets>

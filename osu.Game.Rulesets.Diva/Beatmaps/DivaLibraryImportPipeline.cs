@@ -141,7 +141,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                     StringComparer.OrdinalIgnoreCase));
         }
 
-#if NET10_0
+#if DIVA_EZ2LAZER
         public static async Task SynchronizeExternalAsync(
             RealmAccess realm,
             Storage storage,

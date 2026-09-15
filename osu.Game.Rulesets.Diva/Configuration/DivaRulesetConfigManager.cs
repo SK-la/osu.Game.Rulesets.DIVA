@@ -61,19 +61,19 @@ namespace osu.Game.Rulesets.Diva.Configuration
 
         public bool GetImportToRealm()
         {
-#if NET8_0
-            return true;
-#else
+#if DIVA_EZ2LAZER
             return Get<bool>(DivaRulesetSettings.ImportToRealm);
+#else
+            return true;
 #endif
         }
 
         public void PersistImportToRealm(bool value)
         {
-#if NET8_0
-            SetValue(DivaRulesetSettings.ImportToRealm, true);
-#else
+#if DIVA_EZ2LAZER
             SetValue(DivaRulesetSettings.ImportToRealm, value);
+#else
+            SetValue(DivaRulesetSettings.ImportToRealm, true);
 #endif
         }
 

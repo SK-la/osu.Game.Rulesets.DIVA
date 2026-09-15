@@ -131,9 +131,9 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             foreach ((string collectionName, List<string> beatmapHashes) in hashesByCollectionName)
             {
                 List<string> distinctHashes = beatmapHashes
-                    .Where(h => !string.IsNullOrEmpty(h))
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .ToList();
+                                              .Where(h => !string.IsNullOrEmpty(h))
+                                              .Distinct(StringComparer.OrdinalIgnoreCase)
+                                              .ToList();
 
                 if (distinctHashes.Count == 0)
                     continue;
@@ -141,7 +141,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                 realm.Write(r =>
                 {
                     BeatmapCollection? existing = r.All<BeatmapCollection>()
-                        .FirstOrDefault(c => c.Name == collectionName);
+                                                   .FirstOrDefault(c => c.Name == collectionName);
 
                     if (existing != null)
                     {
@@ -167,7 +167,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
 
         private static bool setBelongsUnderRoot(BeatmapSetInfo set, string normalisedRoot)
         {
-#if NET10_0
+#if DIVA_EZ2LAZER
             if (set.HostingKind == BeatmapSetHostingKind.External
                 && !string.IsNullOrWhiteSpace(set.ExternalContentRoot))
             {

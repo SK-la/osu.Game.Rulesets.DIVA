@@ -58,7 +58,7 @@ namespace osu.Game.Rulesets.Diva.UI
             this.applyAction = applyAction;
             stagedPaths = config.GetLibraryPaths().ToList();
             importToRealm.Value = config.GetImportToRealm();
-#if NET8_0
+#if !DIVA_EZ2LAZER
             importToRealm.Value = true;
             importToRealm.Disabled = true;
 #endif
