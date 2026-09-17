@@ -1,5 +1,6 @@
 # 发布 tag 格式：yyyy.mdd.0（与 osu! lazer 一致，例如 2026.524.0）
-# 同一 Release 同时上传 net8（官方 lazer）与 net10（Ez2Lazer）DLL。
+# 同一 Release 上传两份 net10 DLL：Ez2Lazer（ez2lazer.Game）与官方 lazer（ppy.osu.Game）。
+# 资产名带变体后缀便于区分；DLL 文件名不影响加载，客户端只看程序集名与前缀。
 name: Release DIVA ruleset
 
 on:
@@ -42,7 +43,7 @@ jobs:
           Write-Host "ReleaseVersion=$tag"
           "value=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
-      - name: Verify ruleset assembly loads
+      - name: Verify ruleset assembly loads (Ez2Lazer)
         run: >
           dotnet build osu.Game.Rulesets.Diva/osu.Game.Rulesets.Diva.csproj
           -c Release
@@ -51,21 +52,34 @@ jobs:
           pwsh .github/scripts/Verify-RulesetAssembly.ps1
           -AssemblyPath osu.Game.Rulesets.Diva/bin/Release/net10.0/osu.Game.Rulesets.Diva.dll
 
+      - name: Verify ruleset assembly loads (official lazer)
+        run: >
+          dotnet build osu.Game.Rulesets.Diva/osu.Game.Rulesets.Diva.csproj
+          -c ReleaseLazer
+          -p:RulesetVerifyBuild=true
+          &&
+          pwsh .github/scripts/Verify-RulesetAssembly.ps1
+          -AssemblyPath osu.Game.Rulesets.Diva/bin/ReleaseLazer/net10.0/osu.Game.Rulesets.Diva.dll
+
       - name: Publish ruleset
         shell: pwsh
         run: |
           $ver = '${{ steps.version.outputs.value }}'
-          foreach ($tfm in @('net10.0')) {
+          $variants = @(
+            @{ Configuration = 'Release';      Asset = 'osu.Game.Rulesets.Diva.Ez2Lazer.dll' },
+            @{ Configuration = 'ReleaseLazer'; Asset = 'osu.Game.Rulesets.Diva.Lazer.dll' }
+          )
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+          foreach ($variant in $variants) {
             dotnet publish osu.Game.Rulesets.Diva/osu.Game.Rulesets.Diva.csproj `
-              -c Release `
-              -f $tfm `
+              -c $variant.Configuration `
+              -f net10.0 `
               -p:OfficialRelease=true `
               -p:ReleaseVersion=$ver
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            Copy-Item "osu.Game.Rulesets.Diva/bin/$($variant.Configuration)/net10.0/publish/osu.Game.Rulesets.Diva.dll" `
+              "artifacts/$($variant.Asset)" -Force
           }
-          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
-          Copy-Item osu.Game.Rulesets.Diva/bin/Release/net10.0/publish/osu.Game.Rulesets.Diva.dll `
-            artifacts/osu.Game.Rulesets.Diva.net10.0.dll -Force
 
       - name: Upload release asset (tag push)
         if: github.event_name == 'push'
@@ -73,7 +87,8 @@ jobs:
         with:
           name: Release ${{ steps.version.outputs.value }}
           files: |
-            artifacts/osu.Game.Rulesets.Diva.net10.0.dll
+            artifacts/osu.Game.Rulesets.Diva.Ez2Lazer.dll
+            artifacts/osu.Game.Rulesets.Diva.Lazer.dll
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -85,6 +100,7 @@ jobs:
           name: Release ${{ steps.version.outputs.value }}
           generate_release_notes: true
           files: |
-            artifacts/osu.Game.Rulesets.Diva.net10.0.dll
+            artifacts/osu.Game.Rulesets.Diva.Ez2Lazer.dll
+            artifacts/osu.Game.Rulesets.Diva.Lazer.dll
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

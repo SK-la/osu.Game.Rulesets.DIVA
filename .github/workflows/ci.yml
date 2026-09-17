@@ -17,21 +17,30 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Build with dependencies for verification
+      - name: Build Ez2Lazer variant with dependencies for verification
         run: dotnet build -p:RulesetVerifyBuild=true
 
-      - name: Verify ruleset assembly loads
-        run: pwsh .github/scripts/Verify-RulesetAssembly.ps1 -AssemblyPath osu.Game.Rulesets.Diva/bin/Debug/net10.0/osu.Game.Rulesets.Diva.dll
+      - name: Build official lazer variant with dependencies for verification
+        run: dotnet build osu.Game.Rulesets.Diva/osu.Game.Rulesets.Diva.csproj -c DebugLazer -p:RulesetVerifyBuild=true
 
-      - name: Publish single-DLL ruleset artifact
-        run: dotnet publish osu.Game.Rulesets.Diva/osu.Game.Rulesets.Diva.csproj -c Debug --no-build
+      - name: Verify ruleset assemblies load
+        run: |
+          pwsh .github/scripts/Verify-RulesetAssembly.ps1 -AssemblyPath osu.Game.Rulesets.Diva/bin/Debug/net10.0/osu.Game.Rulesets.Diva.dll
+          pwsh .github/scripts/Verify-RulesetAssembly.ps1 -AssemblyPath osu.Game.Rulesets.Diva/bin/DebugLazer/net10.0/osu.Game.Rulesets.Diva.dll
+
+      - name: Publish single-DLL ruleset artifacts
+        run: |
+          dotnet publish osu.Game.Rulesets.Diva/osu.Game.Rulesets.Diva.csproj -c Debug --no-build -f net10.0
+          dotnet publish osu.Game.Rulesets.Diva/osu.Game.Rulesets.Diva.csproj -c DebugLazer --no-build -f net10.0
 
       - name: Unit tests
         run: dotnet test --no-build
 
-      - name: Upload artifact
+      - name: Upload artifacts
         if: github.event_name == 'push'
         uses: actions/upload-artifact@v4
         with:
           name: release
-          path: osu.Game.Rulesets.Diva/bin/Debug/net10.0/publish/osu.Game.Rulesets.Diva.dll
+          path: |
+            osu.Game.Rulesets.Diva/bin/Debug/net10.0/publish/osu.Game.Rulesets.Diva.dll
+            osu.Game.Rulesets.Diva/bin/DebugLazer/net10.0/publish/osu.Game.Rulesets.Diva.dll

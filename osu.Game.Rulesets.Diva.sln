@@ -12,6 +12,8 @@ Global
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 		VisualTests|Any CPU = VisualTests|Any CPU
+		DebugLazer|Any CPU = DebugLazer|Any CPU
+		ReleaseLazer|Any CPU = ReleaseLazer|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{5AE1F0F1-DAFA-46E7-959C-DA233B7C87E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -20,12 +22,18 @@ Global
 		{5AE1F0F1-DAFA-46E7-959C-DA233B7C87E9}.Release|Any CPU.Build.0 = Release|Any CPU
 		{5AE1F0F1-DAFA-46E7-959C-DA233B7C87E9}.VisualTests|Any CPU.ActiveCfg = Release|Any CPU
 		{5AE1F0F1-DAFA-46E7-959C-DA233B7C87E9}.VisualTests|Any CPU.Build.0 = Release|Any CPU
+		{5AE1F0F1-DAFA-46E7-959C-DA233B7C87E9}.DebugLazer|Any CPU.ActiveCfg = DebugLazer|Any CPU
+		{5AE1F0F1-DAFA-46E7-959C-DA233B7C87E9}.DebugLazer|Any CPU.Build.0 = DebugLazer|Any CPU
+		{5AE1F0F1-DAFA-46E7-959C-DA233B7C87E9}.ReleaseLazer|Any CPU.ActiveCfg = ReleaseLazer|Any CPU
+		{5AE1F0F1-DAFA-46E7-959C-DA233B7C87E9}.ReleaseLazer|Any CPU.Build.0 = ReleaseLazer|Any CPU
 		{B4577C85-CB83-462A-BCE3-22FFEB16311D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B4577C85-CB83-462A-BCE3-22FFEB16311D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B4577C85-CB83-462A-BCE3-22FFEB16311D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B4577C85-CB83-462A-BCE3-22FFEB16311D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B4577C85-CB83-462A-BCE3-22FFEB16311D}.VisualTests|Any CPU.ActiveCfg = Debug|Any CPU
 		{B4577C85-CB83-462A-BCE3-22FFEB16311D}.VisualTests|Any CPU.Build.0 = Debug|Any CPU
+		{B4577C85-CB83-462A-BCE3-22FFEB16311D}.DebugLazer|Any CPU.ActiveCfg = Debug|Any CPU
+		{B4577C85-CB83-462A-BCE3-22FFEB16311D}.ReleaseLazer|Any CPU.ActiveCfg = Release|Any CPU
 		{5265E0F9-AC64-49A0-9A40-303CAAC0EC8E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5265E0F9-AC64-49A0-9A40-303CAAC0EC8E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5265E0F9-AC64-49A0-9A40-303CAAC0EC8E}.Release|Any CPU.ActiveCfg = Release|Any CPU

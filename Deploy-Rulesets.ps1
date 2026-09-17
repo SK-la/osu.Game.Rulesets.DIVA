@@ -1,10 +1,11 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-  Release-build the DIVA ruleset for net10 (Ez2Lazer) and copy the DLL into the local client.
+  Release-build the DIVA ruleset for both variants and copy the DLLs into the local clients.
 
 .DESCRIPTION
-  - net10 → F:\MUG OSU\EZ2OSU-lazer\rulesets\osu.Game.Rulesets.Diva.dll
+  - Release      (Ez2Lazer, ez2lazer.Game) → F:\MUG OSU\EZ2OSU-lazer\rulesets\osu.Game.Rulesets.Diva.dll
+  - ReleaseLazer (官方 lazer, ppy.osu.Game) → F:\MUG OSU\osu-lazer\rulesets\osu.Game.Rulesets.Diva.dll
   Existing files are overwritten. Only the ruleset DLL is copied (not Game/Framework deps).
   If the destination DLL is locked, processes launched from that client folder are stopped, then copy is retried.
 #>
@@ -16,10 +17,18 @@ $project = Join-Path $repoRoot 'osu.Game.Rulesets.Diva\osu.Game.Rulesets.Diva.cs
 
 $targets = @(
     @{
+        Configuration  = 'Release'
         Framework      = 'net10.0'
         DestinationDir = 'F:\MUG OSU\EZ2OSU-lazer\rulesets'
         ClientRoot     = 'F:\MUG OSU\EZ2OSU-lazer'
         Label          = 'Ez2Lazer'
+    },
+    @{
+        Configuration  = 'ReleaseLazer'
+        Framework      = 'net10.0'
+        DestinationDir = 'F:\MUG OSU\osu-lazer\rulesets'
+        ClientRoot     = 'F:\MUG OSU\osu-lazer'
+        Label          = 'osu!lazer'
     }
 )
 
@@ -98,14 +107,14 @@ Push-Location $repoRoot
 try {
     foreach ($t in $targets) {
         Write-Host ""
-        Write-Host "==> Publish $($t.Framework) ($($t.Label))" -ForegroundColor Cyan
+        Write-Host "==> Publish $($t.Configuration) / $($t.Framework) ($($t.Label))" -ForegroundColor Cyan
 
-        & dotnet publish $project -c Release -f $t.Framework --nologo
+        & dotnet publish $project -c $t.Configuration -f $t.Framework --nologo
         if ($LASTEXITCODE -ne 0) {
-            throw "dotnet publish failed for $($t.Framework) (exit $LASTEXITCODE)"
+            throw "dotnet publish failed for $($t.Configuration) (exit $LASTEXITCODE)"
         }
 
-        $sourceDll = Join-Path $repoRoot "osu.Game.Rulesets.Diva\bin\Release\$($t.Framework)\publish\osu.Game.Rulesets.Diva.dll"
+        $sourceDll = Join-Path $repoRoot "osu.Game.Rulesets.Diva\bin\$($t.Configuration)\$($t.Framework)\publish\osu.Game.Rulesets.Diva.dll"
         if (-not (Test-Path -LiteralPath $sourceDll)) {
             throw "Publish output missing: $sourceDll"
         }
