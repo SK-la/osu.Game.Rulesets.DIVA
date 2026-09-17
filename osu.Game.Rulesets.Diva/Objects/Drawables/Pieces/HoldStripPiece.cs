@@ -57,7 +57,6 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables.Pieces
         private readonly Vector2 startPos;
         private readonly Color4 colour;
         private readonly double durationMs;
-        private readonly double approachDurationMs;
 
         private SmoothPath outerPath = null!;
         private SmoothPath innerPath = null!;
@@ -93,8 +92,8 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables.Pieces
             this.startPos = startPos;
             this.colour = colour;
             this.durationMs = Math.Max(durationMs, 1);
-            this.approachDurationMs = Math.Max(approachDurationMs, 1);
-            durationRatio = (float)(this.durationMs / this.approachDurationMs);
+            double approachDurationMs1 = Math.Max(approachDurationMs, 1);
+            durationRatio = (float)(this.durationMs / approachDurationMs1);
 
             RelativeSizeAxes = Axes.Both;
             Anchor = Anchor.Centre;
@@ -143,6 +142,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables.Pieces
         }
 
         /// <param name="blend">0 at spawn → 1 at note time (approach complete).</param>
+        /// <param name="timeOffsetFromStart">0 at note time → negative before, positive after.</param>
         public void UpdateStrip(float blend, double timeOffsetFromStart)
         {
             float visibleRatio = Math.Max(durationRatio, min_visible_ratio);

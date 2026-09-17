@@ -14,4 +14,7 @@
     <CopyLocalLockFileAssemblies Condition="'$(RulesetVerifyBuild)' == 'true'">true</CopyLocalLockFileAssemblies>
     <CopyLocalLockFileAssemblies Condition="'$(RulesetVerifyBuild)' != 'true'">false</CopyLocalLockFileAssemblies>
   </PropertyGroup>
+  <PropertyGroup>
+	<NoWarn>NU1903</NoWarn>
+  </PropertyGroup>
 </Project>
