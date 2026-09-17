@@ -184,13 +184,23 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             ApproachPiece.Texture = textures.Get($"{textureLocation}{textureAction}Move");
             ApproachHand.Texture = textures.Get("hand");
 
-            Color4 trailColour = DivaProjectDivaAtlas.GetUnitColor(ValidAction);
-            ApproachTrail = new ApproachTrailLayer(trailColour)
+            if (UseApproachTrail)
             {
-                Depth = 3,
-            };
-            AddInternal(ApproachTrail);
+                Color4 trailColour = DivaProjectDivaAtlas.GetUnitColor(ValidAction);
+                ApproachTrail = new ApproachTrailLayer(trailColour)
+                {
+                    Depth = 3,
+                };
+                AddInternal(ApproachTrail);
+            }
         }
+
+        /// <summary>
+        ///     Whether the flying head leaves a particle trail. ProjectDIVA only connects a flying piece to its previous
+        ///     position for normal notes; a strip's head draws none, its particles come from the body instead
+        ///     (<see cref="HoldStripPiece" />), so a strip must not add a second, spurious stream on its head.
+        /// </summary>
+        protected virtual bool UseApproachTrail => true;
 
         /// <summary>
         ///     Root textures are face buttons (○□△✕).
@@ -291,6 +301,13 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
         protected override void Update()
         {
+            // Replay playback can run gameplay time backwards. Stars spawned on the abandoned timeline keep their
+            // absolute spawn times, so drop them instead of letting them be re-shown over the fixed target.
+            if (Time.Current < lastUpdateTime)
+                ApproachTrail?.Reset();
+
+            lastUpdateTime = Time.Current;
+
             var b = (float)((Time.Current - LifetimeStart) / TimePreempt);
 
             if (b < 1f)
@@ -306,12 +323,18 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             OnApproachUpdate(b);
         }
 
-        /// <summary>Radius within which the flying piece counts as merged into the fixed target's own footprint.</summary>
+        /// <summary>
+        ///     Trail particles are spawned at the flying piece, so emitting all the way in would spawn them inside the
+        ///     stationary target note's own footprint. Stop once the two sprites overlap.
+        /// </summary>
         private float targetMergeRadius => (float)NoteSize.Value * 0.5f;
 
+        /// <summary>Gameplay time observed last frame, used to notice replay seeks running time backwards.</summary>
+        private double lastUpdateTime;
+
         /// <summary>
-        ///     Trail particles are spawned at the flying piece, so emitting all the way in would leave a clump of stars
-        ///     resting on the stationary target note. Stop once the two visually overlap.
+        ///     Whether the flying piece has arrived at the fixed target, measured from the piece's own position so it
+        ///     tracks the current frame rather than a stale one.
         /// </summary>
         private bool hasReachedTarget => ApproachPiece.Position.LengthSquared <= targetMergeRadius * targetMergeRadius;
 

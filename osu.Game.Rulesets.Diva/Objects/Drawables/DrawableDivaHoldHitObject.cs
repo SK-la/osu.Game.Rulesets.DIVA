@@ -23,6 +23,11 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         private HoldStripPiece? strip;
         private readonly double holdDuration;
 
+        /// <summary>
+        ///     A strip's flying head has no trail in ProjectDIVA; its particle stream is the body's stars.
+        /// </summary>
+        protected override bool UseApproachTrail => false;
+
         private bool holding;
         private bool pendingRelease;
         private bool? pendingHeadPressValid;
@@ -55,6 +60,11 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             {
                 if (strip != null)
                     strip.StarDensity = (float)(v.NewValue / 100.0);
+            }, true);
+            NoteSize.BindValueChanged(v =>
+            {
+                if (strip != null)
+                    strip.TargetHalfExtent = (float)v.NewValue * 0.5f;
             }, true);
 
             applyFlightSettings();

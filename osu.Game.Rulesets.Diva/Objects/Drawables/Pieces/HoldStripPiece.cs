@@ -46,10 +46,10 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables.Pieces
         private const float star_jitter = 6f;
 
         /// <summary>
-        ///     Keep-out radius around the fixed target: the strip head is pinned on the target for the whole hold, so
-        ///     without this the head-most star sits on the resting note for the entire body.
+        ///     Closest a star may get to the body's far end. The strip head is pinned on the fixed target for the whole
+        ///     hold, so without this the head-most star parks on the resting note for the entire body.
         /// </summary>
-        private const float target_clearance = 22f;
+        private const float star_head_min_offset = 4f;
 
         private const double flicker_min = 55;
         private const double flicker_max = 120;
@@ -81,6 +81,12 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables.Pieces
 
         /// <summary>Star density multiplier (1.0 = <see cref="star_spacing" />); 0 hides the stars.</summary>
         public float StarDensity = 1f;
+
+        /// <summary>
+        ///     Half-extent of the fixed target the head is pinned to, synced from the note size by the owning drawable.
+        ///     Stars are held clear of it so none is ever left sitting on the resting note.
+        /// </summary>
+        public float TargetHalfExtent = 20f;
 
         public HoldStripPiece(Vector2 startPos, Color4 colour, double durationMs, double approachDurationMs)
         {
@@ -222,10 +228,13 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables.Pieces
         }
 
         /// <summary>
-        ///     Body length actually available to stars; the head-most <see cref="target_clearance" /> is reserved so no
-        ///     star is parked on the fixed target the head is pinned to for the whole hold.
+        ///     Body length actually available to stars: the target's own extent plus a star's size, scatter and head
+        ///     offset is reserved at the far end so no star lands on the fixed target.
         /// </summary>
-        private float starSpanLength => bodyLength - target_clearance;
+        private float starSpanLength => bodyLength - targetClearance;
+
+        /// <summary>Keep-out radius at the far end of the body; see <see cref="TargetHalfExtent" />.</summary>
+        private float targetClearance => TargetHalfExtent + star_max_size * 0.5f + star_jitter + star_head_min_offset;
 
         /// <summary>
         ///     Keeps one star per <see cref="star_spacing" /> of body length and blinks each in place, so the total
@@ -281,10 +290,14 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables.Pieces
             if (density <= 0 || span <= 0 || !float.IsFinite(span))
                 return 0;
 
-            int byLength = (int)MathF.Round(bodyLength * density / star_spacing);
+            int byLength = (int)MathF.Round(span * density / star_spacing);
             int floor = (int)MathF.Round(min_stars * density);
 
-            return Math.Clamp(Math.Max(byLength, floor), 0, max_stars);
+            // Never pack tighter than half the nominal spacing: the floor above is meant for short-but-long-enough
+            // bodies, and a body barely longer than the keep-out would otherwise collapse into a single bright blob.
+            int maxBySpacing = Math.Max(1, (int)MathF.Round(span / (star_spacing * 0.5f)));
+
+            return Math.Clamp(Math.Max(byLength, floor), 0, Math.Min(max_stars, maxBySpacing));
         }
 
         private StripStar? createStar()

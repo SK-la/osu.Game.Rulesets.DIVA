@@ -66,5 +66,15 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables.Pieces
             Add(particle);
             particle.FadeOut(280).ScaleTo(0.25f, 280).Expire();
         }
+
+        /// <summary>
+        ///     Drops every live particle and restarts the emission timer. Particle lifetimes are absolute, so without
+        ///     this a seek backwards re-shows particles whose fade never completed, stranding them on the target.
+        /// </summary>
+        public void Reset()
+        {
+            emitClock = 0;
+            Clear();
+        }
     }
 }
