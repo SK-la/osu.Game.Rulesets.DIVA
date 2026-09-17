@@ -14,5 +14,11 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
         DivaChartMetadata ReadMetadata(string path);
 
         DivaChart Decode(string path);
+
+        /// <param name="highPrecisionCoordinates">
+        ///     See <see cref="DivaChartFileWriter.ExportToString" />. Off keeps the written chart readable
+        ///     by ProjectDIVA itself.
+        /// </param>
+        void Encode(string path, DivaChart chart, bool highPrecisionCoordinates = false);
     }
 }

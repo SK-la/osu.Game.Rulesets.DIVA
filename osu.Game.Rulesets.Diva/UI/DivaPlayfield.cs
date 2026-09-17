@@ -16,6 +16,7 @@ using osu.Game.Rulesets.Objects;
 using osu.Game.Rulesets.Objects.Drawables;
 using osu.Game.Rulesets.Scoring;
 using osu.Game.Rulesets.UI;
+using osuTK;
 
 namespace osu.Game.Rulesets.Diva.UI
 {
@@ -28,11 +29,18 @@ namespace osu.Game.Rulesets.Diva.UI
 
         private readonly Container judgementAboveHitObjectLayer;
 
+        /// <summary>
+        ///     Logical field size in note units; used to clip flying pieces the way ProjectDIVA's
+        ///     <c>InsideDrawRangeEx</c> does.
+        /// </summary>
+        public Vector2 LogicalSize { get; }
+
         [Cached]
         private readonly DivaHitSamplePlayer hitSamplePlayer;
 
-        public DivaPlayfield()
+        public DivaPlayfield(Vector2 logicalSize)
         {
+            LogicalSize = logicalSize;
             hitSamplePlayer = new DivaHitSamplePlayer();
 
             InternalChildren =

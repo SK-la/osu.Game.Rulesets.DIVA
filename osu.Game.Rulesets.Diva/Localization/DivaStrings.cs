@@ -80,6 +80,48 @@ namespace osu.Game.Rulesets.Diva.Localization
         public static readonly LocalisableString SETTINGS_HIT_EXPLOSION_ALPHA =
             new DivaLocalizationManager.DivaLocalisableString("打击爆发透明度", "Hit Explosion alpha");
 
+        public static readonly LocalisableString SETTINGS_NOTE_APPEARANCE =
+            new DivaLocalizationManager.DivaLocalisableString("音符出现方式", "Note appearance");
+
+        public static readonly LocalisableString SETTINGS_NOTE_APPEARANCE_TOOLTIP = new DivaLocalizationManager.DivaLocalisableString(
+            "DIVA 原生：飞行件在场地外不绘制、进场即满尺寸弹出，目标音符从 1.8 倍缩回并匀速旋转（与 ProjectDIVA 一致）。淡入：保留原有整体淡入 + 指针缩放旋转。",
+            "DIVA native: flying pieces are not drawn outside the field and pop in at full size, while the target note shrinks back from 1.8x and spins at a constant rate (matches ProjectDIVA). Fade in: the previous whole-note fade with pointer scale/spin.");
+
+        public static readonly LocalisableString APPEARANCE_DIVA_NATIVE =
+            new DivaLocalizationManager.DivaLocalisableString("DIVA 原生", "DIVA native");
+
+        public static readonly LocalisableString APPEARANCE_FADE_IN =
+            new DivaLocalizationManager.DivaLocalisableString("淡入", "Fade in");
+
+        public static readonly LocalisableString SETTINGS_FLIGHT_CURVE =
+            new DivaLocalizationManager.DivaLocalisableString("飞行轨迹曲线", "Flight curve");
+
+        public static readonly LocalisableString SETTINGS_FLIGHT_CURVE_TOOLTIP = new DivaLocalizationManager.DivaLocalisableString(
+            "ProjectDIVA 原版为 S 形三次贝塞尔（中点在直线上）；其余为二次单弧、样条以及只改变速度剖面的缓动直线。侧偏大小见「轨迹侧偏幅度」。",
+            "ProjectDIVA's original is an S-shaped cubic Bézier (midpoint lies on the chord); alternatives are a quadratic arc, a spline, and eased straight lines that only change the speed profile. Lateral size is set by the flight amplitude.");
+
+        public static readonly LocalisableString CURVE_DIVA_NATIVE =
+            new DivaLocalizationManager.DivaLocalisableString("DIVA 原生（S 形贝塞尔）", "DIVA native (S Bézier)");
+
+        public static readonly LocalisableString CURVE_QUADRATIC =
+            new DivaLocalizationManager.DivaLocalisableString("二次单弧（C 形）", "Quadratic arc (C shape)");
+
+        public static readonly LocalisableString CURVE_CATMULL_ROM =
+            new DivaLocalizationManager.DivaLocalisableString("样条（Hermite）", "Spline (Hermite)");
+
+        public static readonly LocalisableString CURVE_EASED_SMOOTH_STEP =
+            new DivaLocalizationManager.DivaLocalisableString("缓入缓出（直线）", "Ease in-out (straight)");
+
+        public static readonly LocalisableString CURVE_EASED_EXPO_OUT =
+            new DivaLocalizationManager.DivaLocalisableString("急出减速（直线）", "Ease out (straight)");
+
+        public static readonly LocalisableString SETTINGS_FLIGHT_AMPLITUDE =
+            new DivaLocalizationManager.DivaLocalisableString("轨迹侧偏幅度", "Flight lateral amplitude");
+
+        public static readonly LocalisableString SETTINGS_FLIGHT_AMPLITUDE_TOOLTIP = new DivaLocalizationManager.DivaLocalisableString(
+            "100% = 各曲线自身的 ProjectDIVA 基准幅度（默认即原版观感），0% = 直线。对缓动直线无效。",
+            "100% = each curve's own ProjectDIVA baseline (the default matches the original), 0% = straight line. Has no effect on the eased straight lines.");
+
         public static readonly LocalisableString SETTINGS_CANNOT_OPEN_WIZARD =
             new DivaLocalizationManager.DivaLocalisableString("无法从此界面打开路径向导。", "Cannot open path wizard from this screen.");
 

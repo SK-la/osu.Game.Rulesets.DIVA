@@ -59,8 +59,17 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
         public int FrameIndex { get; init; }
         public double StartTimeMs { get; init; }
         public int Type { get; init; }
-        public int GridX { get; init; }
-        public int GridY { get; init; }
+
+        /// <summary>
+        /// Note position in ProjectDIVA grid units (<c>DELTA_X</c>/<c>DELTA_Y</c> per cell). Fractional
+        /// values are kept so high-precision charts survive a native round-trip; ProjectDIVA itself reads
+        /// these as integers.
+        /// </summary>
+        public float X { get; init; }
+
+        /// <inheritdoc cref="X"/>
+        public float Y { get; init; }
+
         public int TailX { get; init; }
         public int TailY { get; init; }
         public int Key { get; init; }
@@ -185,6 +194,23 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
         public const int DISTANCE = 500;
         public const double BASE_BPM = 120;
         public const double SECOND = 1000.0;
+
+        /// <summary>ProjectDIVA target note pop scale on spawn (<c>NOTE_BLOWUP</c> in GameMana.cpp).</summary>
+        public const float NOTE_BLOWUP = 1.8f;
+
+        /// <summary>Fraction of the approach over which <see cref="NOTE_BLOWUP"/> decays to 1.</summary>
+        public const float NOTE_BLOWUP_WINDOW = 0.125f;
+
+        /// <summary>
+        /// ProjectDIVA target note scale for a given approach progress
+        /// (<paramref name="percent"/>: 1 on spawn → 0 at hit). 1.8 shrinks back to 1 within the
+        /// first <see cref="NOTE_BLOWUP_WINDOW"/> of the approach and stays there.
+        /// </summary>
+        public static float NoteBlowupScale(float percent)
+        {
+            float progress = (percent - (1f - NOTE_BLOWUP_WINDOW)) / NOTE_BLOWUP_WINDOW;
+            return 1f + (NOTE_BLOWUP - 1f) * Math.Clamp(progress, 0f, 1f);
+        }
 
         public static readonly string[] LEVEL_NAMES =
         [

@@ -8,12 +8,18 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables.Pieces
 {
     public partial class ApproachPiece : Sprite
     {
-        private const float slerp_distance = 150;
         public Vector2 StartPos;
 
+        /// <summary>Path shape, synced from the ruleset setting by the owning drawable.</summary>
+        public DivaNoteFlightCurve Curve = DivaNoteFlightCurve.DivaNative;
+
+        /// <summary>Lateral multiplier; 1.0 is the curve's ProjectDIVA-matching baseline.</summary>
+        public float Amplitude = 1f;
+
+        /// <param name="blend">0 at spawn → 1 at note time; ProjectDIVA's percent runs the other way.</param>
         public void UpdatePos(float blend)
         {
-            Position = Extensions.CubicInterpolate(StartPos, Vector2.Zero, blend, slerp_distance);
+            Position = DivaFlightPath.Sample(Curve, StartPos, 1f - blend, Amplitude);
         }
     }
 }

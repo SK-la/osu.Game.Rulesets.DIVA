@@ -51,6 +51,17 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             AddInternal(strip);
 
             ApproachPreemptScale.BindValueChanged(_ => strip?.SetApproachDuration(TimePreempt), true);
+
+            applyFlightSettings();
+        }
+
+        protected override void OnFlightSettingsChanged(DivaNoteFlightCurve curve, float amplitude)
+        {
+            if (strip == null)
+                return;
+
+            strip.Curve = curve;
+            strip.Amplitude = amplitude;
         }
 
         protected override void OnApproachUpdate(float blend)

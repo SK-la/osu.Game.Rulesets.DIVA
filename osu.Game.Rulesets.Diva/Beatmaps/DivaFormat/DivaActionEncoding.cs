@@ -66,8 +66,9 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
 
         /// <summary>
         ///     Grid cell → ProjectDIVA playfield pixels (480×272), matching <c>ORIGIN + grid*DELTA + 12</c>.
+        ///     Grid coordinates may be fractional (high-precision charts / future editor).
         /// </summary>
-        public static Vector2 ToPlayfieldPosition(int gridX, int gridY)
+        public static Vector2 ToPlayfieldPosition(float gridX, float gridY)
         {
             float x = DivaChartConstants.ORIGIN_X + gridX * DivaChartConstants.DELTA_X + 12;
             float y = DivaChartConstants.ORIGIN_Y + gridY * DivaChartConstants.DELTA_Y + 12;
@@ -75,7 +76,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
         }
 
         /// <summary>Obsolete name kept for call sites; prefers playfield space.</summary>
-        public static Vector2 ToOsuPosition(int gridX, int gridY) => ToPlayfieldPosition(gridX, gridY);
+        public static Vector2 ToOsuPosition(float gridX, float gridY) => ToPlayfieldPosition(gridX, gridY);
 
         /// <summary>
         ///     Relative approach start (note-local), matching ProjectDIVA
@@ -97,7 +98,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
 
         public static Vector2 ComputeApproachOrigin(DivaChartNote note, double bpm)
         {
-            Vector2 notePos = ToPlayfieldPosition(note.GridX, note.GridY);
+            Vector2 notePos = ToPlayfieldPosition(note.X, note.Y);
             return ComputeApproachOrigin(notePos, note.TailX, note.TailY, bpm);
         }
 

@@ -80,7 +80,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             foreach (DivaChartNote note in chart.Notes.OrderBy(n => n.StartTimeMs))
             {
                 DivaAction action = DivaActionEncoding.ResolveAction(note);
-                Vector2 position = DivaActionEncoding.ToPlayfieldPosition(note.GridX, note.GridY);
+                Vector2 position = DivaActionEncoding.ToPlayfieldPosition(note.X, note.Y);
                 double bpm = resolveBpmAt(chart, note.StartTimeMs, headerBpm);
                 Vector2 approach = DivaActionEncoding.ComputeApproachOrigin(note, bpm);
 

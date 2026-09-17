@@ -18,6 +18,7 @@ using osu.Game.Rulesets.Diva.Graphics;
 using osu.Game.Rulesets.Diva.Judgements;
 using osu.Game.Rulesets.Diva.Objects.Drawables.Pieces;
 using osu.Game.Rulesets.Diva.Scoring;
+using osu.Game.Rulesets.Diva.UI;
 using osu.Game.Rulesets.Judgements;
 using osu.Game.Rulesets.Objects.Drawables;
 using osu.Game.Rulesets.Scoring;
@@ -30,6 +31,12 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
     {
         public const float BASE_SIZE = 40;
         private const double fade_in_ratio = 0.24;
+
+        /// <summary>
+        ///     hand.png is authored so the tip sits at the texture centre, so it needs 180° to point
+        ///     outward; the spin is applied on top of that.
+        /// </summary>
+        private const float hand_base_rotation = 180f;
 
         public override bool HandlePositionalInput => false;
 
@@ -47,6 +54,14 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         internal BindableBool EnableVisualBursts { get; } = new BindableBool(true);
         protected BindableDouble NoteSize = new BindableDouble(BASE_SIZE);
 
+        /// <summary>Slides in from outside the field, then pops in at full size (ProjectDIVA) vs the old fade.</summary>
+        protected Bindable<DivaNoteAppearance> NoteAppearanceMode { get; } = new Bindable<DivaNoteAppearance>(DivaNoteAppearance.DivaNative);
+
+        protected Bindable<DivaNoteFlightCurve> FlightCurve { get; } = new Bindable<DivaNoteFlightCurve>(DivaNoteFlightCurve.DivaNative);
+
+        /// <summary>Percent of the curve's own baseline lateral offset (100 = ProjectDIVA).</summary>
+        protected BindableDouble FlightAmplitude { get; } = new BindableDouble(100);
+
         /// <summary>Multiplier on PD <c>note_standing × MsPerFrame(BPM)</c> (default 1.0).</summary>
         protected BindableDouble ApproachPreemptScale = new BindableDouble(1.0);
 
@@ -58,6 +73,13 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
         [Resolved(canBeNull: true)]
         private IBeatmap? beatmap { get; set; }
+
+        /// <summary>Used to clip flying pieces to ProjectDIVA's draw range.</summary>
+        [Resolved(canBeNull: true)]
+        private DivaPlayfield? divaPlayfield { get; set; }
+
+        /// <summary>Logical field size; falls back to the native field while the playfield is unresolved.</summary>
+        protected Vector2 LogicalPlayfieldSize => divaPlayfield?.LogicalSize ?? DivaPlayfieldSize.DefaultNativeSize;
 
         /// <summary>Approach window in ms, matching ProjectDIVA standing time × user scale.</summary>
         protected double TimePreempt
@@ -132,6 +154,13 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             config?.BindWith(DivaRulesetSettings.ApproachPreemptScale, ApproachPreemptScale);
             config?.BindWith(DivaRulesetSettings.JudgementLock, JudgementLock);
             config?.BindWith(DivaRulesetSettings.InputOffset, InputOffset);
+            config?.BindWith(DivaRulesetSettings.NoteAppearance, NoteAppearanceMode);
+            config?.BindWith(DivaRulesetSettings.FlightCurve, FlightCurve);
+            config?.BindWith(DivaRulesetSettings.FlightAmplitude, FlightAmplitude);
+
+            FlightCurve.BindValueChanged(_ => applyFlightSettings());
+            FlightAmplitude.BindValueChanged(_ => applyFlightSettings());
+            applyFlightSettings();
 
             NoteSize.BindValueChanged(v => Size = new Vector2((float)v.NewValue), true);
 
@@ -225,6 +254,13 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
         protected override void UpdateInitialTransforms()
         {
+            if (NoteAppearanceMode.Value == DivaNoteAppearance.DivaNative)
+            {
+                // ProjectDIVA draws the target immediately at full alpha; the pop is driven from Update.
+                this.Alpha = 1;
+                return;
+            }
+
             this.FadeInFromZero(timeFadein);
             ApproachHand.ScaleTo(2, timeFadein, Easing.In);
 
@@ -256,10 +292,56 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             if (b < 1f)
             {
                 ApproachPiece.UpdatePos(b);
-                ApproachTrail?.EmitAt(ApproachPiece.Position, Time.Elapsed);
+
+                if (NoteAppearanceMode.Value == DivaNoteAppearance.DivaNative)
+                    updateDivaNativeAppearance(b);
+                else
+                    ApproachTrail?.EmitAt(ApproachPiece.Position, Time.Elapsed);
             }
 
             OnApproachUpdate(b);
+        }
+
+        /// <summary>
+        ///     ProjectDIVA presentation: the flying piece is drawn only inside the field (no fade), while the
+        ///     fixed target shrinks back from <c>NOTE_BLOWUP</c> and the pointer spins at a constant rate.
+        /// </summary>
+        private void updateDivaNativeAppearance(float blend)
+        {
+            if (Judged)
+                return;
+
+            Vector2 fieldPosition = HitObject.Position + ApproachPiece.Position;
+            bool inside = DivaPlayfieldSize.IsInsideDrawRange(fieldPosition, LogicalPlayfieldSize, (float)NoteSize.Value);
+
+            ApproachPiece.Alpha = inside ? 1 : 0;
+
+            if (inside)
+                ApproachTrail?.EmitAt(ApproachPiece.Position, Time.Elapsed);
+
+            float percent = 1f - blend;
+            float scale = DivaChartConstants.NoteBlowupScale(percent);
+
+            if (StatSprite != null)
+                StatSprite.Scale = new Vector2(scale);
+
+            ApproachHand.Scale = new Vector2(scale);
+            ApproachHand.Rotation = hand_base_rotation - 360f * percent;
+        }
+
+        protected void applyFlightSettings()
+        {
+            float amplitude = (float)(FlightAmplitude.Value / 100.0);
+
+            ApproachPiece.Curve = FlightCurve.Value;
+            ApproachPiece.Amplitude = amplitude;
+
+            OnFlightSettingsChanged(FlightCurve.Value, amplitude);
+        }
+
+        /// <summary>Lets subclasses keep their own curve consumers (e.g. the hold strip) in sync.</summary>
+        protected virtual void OnFlightSettingsChanged(DivaNoteFlightCurve curve, float amplitude)
+        {
         }
 
         protected virtual void OnApproachUpdate(float blend)

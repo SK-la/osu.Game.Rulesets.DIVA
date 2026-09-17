@@ -100,7 +100,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
             }
 
             var notes = new List<DivaChartNote>();
-            var rawNotes = new List<(int pos, int type, int x, int y, int tx, int ty, int key, double duration)>();
+            var rawNotes = new List<(int pos, int type, float x, float y, int tx, int ty, int key, double duration)>();
 
             while (true)
             {
@@ -110,8 +110,9 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
                     break;
 
                 int type = readIntToken(reader);
-                int x = readIntToken(reader);
-                int y = readIntToken(reader);
+                // Coordinates accept decimals here, unlike ProjectDIVA's own fscanf("%d").
+                float x = (float)readDoubleToken(reader);
+                float y = (float)readDoubleToken(reader);
                 int tx = readIntToken(reader);
                 int ty = readIntToken(reader);
                 int key = readIntToken(reader);
@@ -216,7 +217,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
 
             double[] frameActiveBpms = buildFrameActiveBpms(frameBpms, headerBpm, frameCount);
 
-            foreach ((int pos, int type, int x, int y, int tx, int ty, int key, double duration) raw in rawNotes)
+            foreach ((int pos, int type, float x, float y, int tx, int ty, int key, double duration) raw in rawNotes)
             {
                 int clamped = Math.Clamp(raw.pos, 0, Math.Max(frameTimes.Length - 1, 0));
                 double start = frameTimes.Length == 0 ? 0 : frameTimes[clamped];
@@ -234,8 +235,8 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
                     FrameIndex = raw.pos,
                     StartTimeMs = start,
                     Type = raw.type,
-                    GridX = raw.x,
-                    GridY = raw.y,
+                    X = raw.x,
+                    Y = raw.y,
                     TailX = raw.tx,
                     TailY = raw.ty,
                     Key = raw.key,

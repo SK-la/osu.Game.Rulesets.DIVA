@@ -34,6 +34,12 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables.Pieces
         private Texture? starTexture;
         private float durationRatio;
 
+        /// <summary>Path shape, synced from the ruleset setting by the owning drawable.</summary>
+        public DivaNoteFlightCurve Curve = DivaNoteFlightCurve.DivaNative;
+
+        /// <summary>Lateral multiplier; 1.0 is the curve's ProjectDIVA-matching baseline.</summary>
+        public float Amplitude = 1f;
+
         public HoldStripPiece(Vector2 startPos, Color4 colour, double durationMs, double approachDurationMs)
         {
             this.startPos = startPos;
@@ -146,7 +152,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables.Pieces
         private Vector2 sampleCurve(float t)
         {
             // t=0 far, t=1 note. Allow t<0 to extend past the far end (tail behind head).
-            return Extensions.CubicInterpolate(startPos, Vector2.Zero, t, 150);
+            return DivaFlightPath.Sample(Curve, startPos, 1f - t, Amplitude);
         }
 
         private void spawnStar(float tTail, float tHead)

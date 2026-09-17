@@ -40,5 +40,20 @@ namespace osu.Game.Rulesets.Diva.UI
 
             return new Vector2(width, height);
         }
+
+        /// <summary>
+        ///     ProjectDIVA <c>InsideDrawRangeEx</c>: the field plus a 20px margin. Flying pieces outside
+        ///     this box are not drawn at all (no fade — this is the whole appear effect).
+        /// </summary>
+        /// <param name="notePosition">Playfield-space position of the point being tested.</param>
+        /// <param name="logicalSize">Logical field size (see <see cref="Compute"/>).</param>
+        /// <param name="noteSize">Current note sprite size, used to widen the margin for larger notes.</param>
+        public static bool IsInsideDrawRange(Vector2 notePosition, Vector2 logicalSize, float noteSize)
+        {
+            float margin = MathF.Max(20f, noteSize * 0.5f);
+
+            return notePosition.X > -margin && notePosition.Y > -margin
+                   && notePosition.X < logicalSize.X + margin && notePosition.Y < logicalSize.Y + margin;
+        }
     }
 }

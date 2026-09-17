@@ -23,6 +23,7 @@ using osu.Game.Overlays.Settings;
 using osu.Game.Rulesets.Diva.Beatmaps;
 using osu.Game.Rulesets.Diva.Configuration;
 using osu.Game.Rulesets.Diva.Localization;
+using osu.Game.Rulesets.Diva.Objects.Drawables.Pieces;
 using osu.Game.Screens;
 using osu.Game.Screens.Menu;
 using OsuSongSelect = osu.Game.Screens.Select.SongSelect;
@@ -142,6 +143,24 @@ namespace osu.Game.Rulesets.Diva.UI
                     LabelText = DivaStrings.SETTINGS_APPROACH_PREEMPT_SCALE,
                     TooltipText = DivaStrings.SETTINGS_APPROACH_PREEMPT_SCALE_TOOLTIP,
                     Current = divaConfig.GetBindable<double>(DivaRulesetSettings.ApproachPreemptScale)
+                },
+                new SettingsEnumDropdown<DivaNoteAppearance>
+                {
+                    LabelText = DivaStrings.SETTINGS_NOTE_APPEARANCE,
+                    TooltipText = DivaStrings.SETTINGS_NOTE_APPEARANCE_TOOLTIP,
+                    Current = divaConfig.GetBindable<DivaNoteAppearance>(DivaRulesetSettings.NoteAppearance)
+                },
+                new SettingsEnumDropdown<DivaNoteFlightCurve>
+                {
+                    LabelText = DivaStrings.SETTINGS_FLIGHT_CURVE,
+                    TooltipText = DivaStrings.SETTINGS_FLIGHT_CURVE_TOOLTIP,
+                    Current = divaConfig.GetBindable<DivaNoteFlightCurve>(DivaRulesetSettings.FlightCurve)
+                },
+                new SettingsSlider<double>
+                {
+                    LabelText = DivaStrings.SETTINGS_FLIGHT_AMPLITUDE,
+                    TooltipText = DivaStrings.SETTINGS_FLIGHT_AMPLITUDE_TOOLTIP,
+                    Current = divaConfig.GetBindable<double>(DivaRulesetSettings.FlightAmplitude)
                 },
                 new SettingsSlider<double>
                 {

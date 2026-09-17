@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Text.Json;
 using osu.Game.Configuration;
 using osu.Game.Rulesets.Configuration;
+using osu.Game.Rulesets.Diva.Objects.Drawables.Pieces;
 
 namespace osu.Game.Rulesets.Diva.Configuration
 {
@@ -96,6 +97,11 @@ namespace osu.Game.Rulesets.Diva.Configuration
             SetDefault(DivaRulesetSettings.DivaRootPath, string.Empty);
             SetDefault(DivaRulesetSettings.DivaLibraryPaths, "[]");
             SetDefault(DivaRulesetSettings.ImportToRealm, true);
+            // ProjectDIVA native: off-field clipping + NOTE_BLOWUP pop on the target note.
+            SetDefault(DivaRulesetSettings.NoteAppearance, DivaNoteAppearance.DivaNative);
+            SetDefault(DivaRulesetSettings.FlightCurve, DivaNoteFlightCurve.DivaNative);
+            // Percent of the curve's baseline lateral offset (ProjectDIVA's own amplitude is 100%); 0 is a straight line.
+            SetDefault(DivaRulesetSettings.FlightAmplitude, 100.0, 0.0, 200.0, 5.0);
         }
 
         private static List<string> normalisePaths(IEnumerable<string> paths)
@@ -130,6 +136,9 @@ namespace osu.Game.Rulesets.Diva.Configuration
         InputOffset,
         DivaRootPath,
         DivaLibraryPaths,
-        ImportToRealm
+        ImportToRealm,
+        NoteAppearance,
+        FlightCurve,
+        FlightAmplitude
     }
 }

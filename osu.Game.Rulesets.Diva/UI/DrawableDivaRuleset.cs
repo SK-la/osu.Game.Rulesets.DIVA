@@ -80,7 +80,7 @@ namespace osu.Game.Rulesets.Diva.UI
             return DivaPlayfieldSize.Compute(Beatmap.HitObjects.OfType<DivaHitObject>());
         }
 
-        protected override Playfield CreatePlayfield() => new DivaPlayfield();
+        protected override Playfield CreatePlayfield() => new DivaPlayfield(resolveLogicalPlayfieldSize());
 
         protected override ReplayInputHandler CreateReplayInputHandler(Replay replay) => new DivaFramedReplayInputHandler(replay);
 

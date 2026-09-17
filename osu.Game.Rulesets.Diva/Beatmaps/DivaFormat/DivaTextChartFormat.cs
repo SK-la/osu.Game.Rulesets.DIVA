@@ -30,6 +30,9 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
         public DivaChartMetadata ReadMetadata(string path) => DivaChartFileParser.ReadMetadata(path);
 
         public DivaChart Decode(string path) => DivaChartFileParser.Parse(path);
+
+        public void Encode(string path, DivaChart chart, bool highPrecisionCoordinates = false)
+            => DivaChartFileWriter.WriteToFile(chart, path, highPrecisionCoordinates);
     }
 
     public static class DivaChartFormatRegistry
