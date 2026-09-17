@@ -1,5 +1,12 @@
 <Project>
   <PropertyGroup>
+    <!-- 两个变体（Ez2Lazer / 官方 lazer）只在编译期 Game 包上不同。NuGet restore 产物
+         （project.assets.json、*.nuget.g.props 等）默认落在 obj 根目录且不带 Configuration，
+         会被后一次 restore 覆盖，导致 IDE 用另一变体的引用解析代码（Ez 专有 API 全红）。
+         编译中间产物本就在 obj\<Configuration>\<TFM>\ 下，这里只隔离 project extensions 路径。
+         本文件在 Microsoft.Common.props 中先于 MSBuildProjectExtensionsPath 取默认值处导入。 -->
+    <MSBuildProjectExtensionsPath>obj\$(Configuration)\</MSBuildProjectExtensionsPath>
+
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <Version Condition="'$(Version)' == ''">0.0.0</Version>
