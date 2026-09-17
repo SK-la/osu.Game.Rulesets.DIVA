@@ -24,10 +24,17 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables.Pieces
         private const int segments = 32;
 
         /// <summary>Path units per star at 100% density.</summary>
-        private const float star_spacing = 34f;
+        private const float star_spacing = 8f;
+
+        /// <summary>
+        ///     Star count floor at 100% density. The pre-fix effect spawned on a timer, so a short strip held as many
+        ///     stars as a long one; without this floor a short hold would carry only a couple of stars, i.e. far
+        ///     fewer than that look. Bodies longer than the floor implies keep the constant-density spacing.
+        /// </summary>
+        private const int min_stars = 14;
 
         /// <summary>Cap for extremely long bodies; a longer strip then thins out instead of growing without bound.</summary>
-        private const int max_stars = 48;
+        private const int max_stars = 200;
 
         /// <summary>ProjectDIVA <c>AddStarParticle</c> draws each strip star at <c>rand_size * 10</c> px.</summary>
         private const float star_max_size = 10f;
@@ -63,6 +70,8 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables.Pieces
         private float bodyLength;
 
         private readonly List<StripStar> stars = new List<StripStar>();
+        private readonly Vector2[] pathPoints = new Vector2[segments + 1];
+        private readonly float[] pathLengths = new float[segments + 1];
 
         /// <summary>Path shape, synced from the ruleset setting by the owning drawable.</summary>
         public DivaNoteFlightCurve Curve = DivaNoteFlightCurve.DivaNative;
@@ -164,19 +173,18 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables.Pieces
             if (head - tail < 0.001f)
                 return;
 
-            Vector2 previous = sampleCurve(tail);
-
             for (int i = 0; i <= segments; i++)
             {
                 float t = tail + (head - tail) * (i / (float)segments);
                 Vector2 pos = sampleCurve(t);
+                pathPoints[i] = pos;
                 outerPath.AddVertex(pos);
                 innerPath.AddVertex(pos);
 
                 if (i > 0)
-                    bodyLength += Vector2.Distance(previous, pos);
+                    bodyLength += Vector2.Distance(pathPoints[i - 1], pos);
 
-                previous = pos;
+                pathLengths[i] = bodyLength;
             }
 
             // Keep path local origin at note centre (0,0); do not reassign OriginPosition each frame.
@@ -186,11 +194,38 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables.Pieces
             innerPath.OriginPosition = innerPath.PositionInBoundingBox(Vector2.Zero);
         }
 
+        /// <summary>Position <paramref name="distance" /> along the body, measured from its far (tail) end.</summary>
+        private Vector2 positionAtDistance(float distance)
+        {
+            if (distance <= 0)
+                return pathPoints[0];
+
+            if (distance >= bodyLength)
+                return pathPoints[segments];
+
+            int i = 1;
+
+            while (i < segments && pathLengths[i] < distance)
+                i++;
+
+            float segmentStart = pathLengths[i - 1];
+            float segmentLength = pathLengths[i] - segmentStart;
+            float f = segmentLength > 0 ? (distance - segmentStart) / segmentLength : 0;
+
+            return Vector2.Lerp(pathPoints[i - 1], pathPoints[i], f);
+        }
+
         private Vector2 sampleCurve(float t)
         {
             // t=0 far, t=1 note. Allow t<0 to extend past the far end (tail behind head).
             return DivaFlightPath.Sample(Curve, startPos, 1f - t, Amplitude);
         }
+
+        /// <summary>
+        ///     Body length actually available to stars; the head-most <see cref="target_clearance" /> is reserved so no
+        ///     star is parked on the fixed target the head is pinned to for the whole hold.
+        /// </summary>
+        private float starSpanLength => bodyLength - target_clearance;
 
         /// <summary>
         ///     Keeps one star per <see cref="star_spacing" /> of body length and blinks each in place, so the total
@@ -217,24 +252,15 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables.Pieces
                 stars.Add(created);
             }
 
-            float span = bodyHead - bodyTail;
+            float span = starSpanLength;
+            int count = stars.Count;
 
-            for (int i = 0; i < stars.Count; i++)
+            for (int i = 0; i < count; i++)
             {
                 StripStar star = stars[i];
 
-                // Even slot along the visible body: density does not change as the strip grows or shrinks.
-                float slot = (i + 0.5f) / stars.Count;
-                Vector2 position = sampleCurve(bodyTail + slot * span) + star.Jitter;
-
-                // Never park a star on the fixed target note.
-                if (position.LengthSquared <= target_clearance * target_clearance)
-                {
-                    star.Sprite.Alpha = 0;
-                    continue;
-                }
-
-                star.Sprite.Position = position;
+                // Even slot by arc length over the span clear of the target: density holds as the strip grows/shrinks.
+                star.Sprite.Position = positionAtDistance((i + 0.5f) / count * span) + star.Jitter;
 
                 if (Time.Current >= star.NextFlickerTime)
                 {
@@ -250,11 +276,15 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables.Pieces
         private int desiredStarCount()
         {
             float density = Math.Clamp(StarDensity, 0f, 2f);
+            float span = starSpanLength;
 
-            if (density <= 0 || bodyLength <= 0 || !float.IsFinite(bodyLength))
+            if (density <= 0 || span <= 0 || !float.IsFinite(span))
                 return 0;
 
-            return Math.Clamp((int)MathF.Round(bodyLength * density / star_spacing), 0, max_stars);
+            int byLength = (int)MathF.Round(bodyLength * density / star_spacing);
+            int floor = (int)MathF.Round(min_stars * density);
+
+            return Math.Clamp(Math.Max(byLength, floor), 0, max_stars);
         }
 
         private StripStar? createStar()

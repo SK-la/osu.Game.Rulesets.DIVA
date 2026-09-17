@@ -126,8 +126,8 @@ namespace osu.Game.Rulesets.Diva.Localization
             new DivaLocalizationManager.DivaLocalisableString("长条星尘密度", "Strip star density");
 
         public static readonly LocalisableString SETTINGS_HOLD_STAR_DENSITY_TOOLTIP = new DivaLocalizationManager.DivaLocalisableString(
-            "长条 body 上星尘的数量（100% 为默认间距，星星按弧长等距分布，总密度不随长条伸缩变化）；0% 关闭星尘。",
-            "How many stars the hold body carries (100% is the default spacing; stars stay evenly spaced by arc length, so the density does not change as the strip grows or shrinks). 0% hides them.");
+            "长条 body 上星尘的数量：100% 为默认间距（约为修复前 60fps 的观感），星星按弧长等距分布、贴住长条缩短自动减少，不会无限累积；短长条有最低数量以维持观感，0% 关闭星尘。",
+            "How many stars the hold body carries: 100% is the default spacing (roughly the pre-fix 60fps look). Stars stay evenly spaced by arc length and drop away as the strip shrinks, so they never accumulate without bound; short strips keep a floor so they still read as stardust. 0% hides them.");
 
         public static readonly LocalisableString SETTINGS_CANNOT_OPEN_WIZARD =
             new DivaLocalizationManager.DivaLocalisableString("无法从此界面打开路径向导。", "Cannot open path wizard from this screen.");
