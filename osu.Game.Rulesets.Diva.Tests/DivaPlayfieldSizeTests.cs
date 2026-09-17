@@ -56,5 +56,33 @@ namespace osu.Game.Rulesets.Diva.Tests
             Assert.That(size.X, Is.EqualTo(512 + DivaPlayfieldSize.EDGE_PADDING));
             Assert.That(size.Y, Is.EqualTo(384 + DivaPlayfieldSize.EDGE_PADDING));
         }
+
+        [Test]
+        public void IsInsideDrawRange_matches_project_diva_20px_margin()
+        {
+            Vector2 size = DivaPlayfieldSize.DefaultNativeSize;
+            const float note_size = 24;
+
+            Assert.That(DivaPlayfieldSize.IsInsideDrawRange(new Vector2(-19.9f, 100), size, note_size), Is.True);
+            Assert.That(DivaPlayfieldSize.IsInsideDrawRange(new Vector2(-20.1f, 100), size, note_size), Is.False);
+
+            Assert.That(DivaPlayfieldSize.IsInsideDrawRange(new Vector2(100, size.Y + 19.9f), size, note_size), Is.True);
+            Assert.That(DivaPlayfieldSize.IsInsideDrawRange(new Vector2(100, size.Y + 20.1f), size, note_size), Is.False);
+
+            Assert.That(DivaPlayfieldSize.IsInsideDrawRange(new Vector2(size.X + 19.9f, 100), size, note_size), Is.True);
+            Assert.That(DivaPlayfieldSize.IsInsideDrawRange(new Vector2(size.X + 20.1f, 100), size, note_size), Is.False);
+
+            Assert.That(DivaPlayfieldSize.IsInsideDrawRange(new Vector2(100, -20.1f), size, note_size), Is.False);
+        }
+
+        [Test]
+        public void IsInsideDrawRange_widens_the_margin_for_large_notes()
+        {
+            Vector2 size = DivaPlayfieldSize.DefaultNativeSize;
+
+            // note_size 64 → margin 32, so a piece 30px outside is still drawn.
+            Assert.That(DivaPlayfieldSize.IsInsideDrawRange(new Vector2(-30, 100), size, 64), Is.True);
+            Assert.That(DivaPlayfieldSize.IsInsideDrawRange(new Vector2(-33, 100), size, 64), Is.False);
+        }
     }
 }

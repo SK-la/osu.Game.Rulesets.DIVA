@@ -590,5 +590,181 @@ namespace osu.Game.Rulesets.Diva.Tests
                 Directory.Delete(root, true);
             }
         }
+
+        [Test]
+        public void Parses_fractional_note_coordinates()
+        {
+            using var reader = new StringReader(RoundtripChart.Replace("0 0 10 12 0 0 0", "0 0 10.5 12.25 0 0 0"));
+            DivaChart parsed = DivaChartFileParser.Parse(reader, "decimal.diva", @"C:\songs\decimal");
+
+            Assert.That(parsed.Notes[0].X, Is.EqualTo(10.5f).Within(1e-4f));
+            Assert.That(parsed.Notes[0].Y, Is.EqualTo(12.25f).Within(1e-4f));
+        }
+
+        [Test]
+        public void Note_blowup_scale_matches_project_diva_window()
+        {
+            Assert.That(DivaChartConstants.NoteBlowupScale(1f), Is.EqualTo(DivaChartConstants.NOTE_BLOWUP).Within(1e-4f));
+            Assert.That(DivaChartConstants.NoteBlowupScale(0.875f), Is.EqualTo(1f).Within(1e-4f));
+
+            // Halfway through the pop window.
+            Assert.That(DivaChartConstants.NoteBlowupScale(0.9375f),
+                Is.EqualTo(1f + (DivaChartConstants.NOTE_BLOWUP - 1f) * 0.5f).Within(1e-4f));
+
+            // Outside the window the note stays at its normal size instead of shrinking below it.
+            Assert.That(DivaChartConstants.NoteBlowupScale(0.5f), Is.EqualTo(1f));
+            Assert.That(DivaChartConstants.NoteBlowupScale(0f), Is.EqualTo(1f));
+        }
+
+        [Test]
+        public void Diva_roundtrip_preserves_chart_without_high_precision()
+        {
+            DivaChart parsed = parseRoundtripChart();
+
+            string written = DivaChartFileWriter.ExportToString(parsed);
+            using var reread = new StringReader(written);
+            DivaChart again = DivaChartFileParser.Parse(reread, "roundtrip.diva", @"C:\songs\roundtrip");
+
+            assertChartsEquivalent(parsed, again);
+            // Coordinates stay integers so ProjectDIVA's own fscanf("%d") can still read the file.
+            Assert.That(written, Does.Contain("0 0 10 12 0 0 0"));
+            Assert.That(written, Does.Contain("96 8 15 10 0 0 2 48"));
+        }
+
+        [Test]
+        public void Diva_roundtrip_rounds_fractional_coordinates_by_default()
+        {
+            DivaChart parsed = parseRoundtripChart("0 0 10.5 12.25 0 0 0");
+
+            string written = DivaChartFileWriter.ExportToString(parsed);
+            using var reread = new StringReader(written);
+            DivaChart again = DivaChartFileParser.Parse(reread, "rounded.diva", @"C:\songs\rounded");
+
+            Assert.That(again.Notes[0].X, Is.EqualTo(11f));
+            Assert.That(again.Notes[0].Y, Is.EqualTo(12f));
+        }
+
+        [Test]
+        public void Diva_roundtrip_keeps_fractional_coordinates_with_high_precision()
+        {
+            DivaChart parsed = parseRoundtripChart("0 0 10.5 12.25 0 0 0");
+
+            string written = DivaChartFileWriter.ExportToString(parsed, highPrecisionCoordinates: true);
+            using var reread = new StringReader(written);
+            DivaChart again = DivaChartFileParser.Parse(reread, "precise.diva", @"C:\songs\precise");
+
+            Assert.That(again.Notes[0].X, Is.EqualTo(10.5f).Within(1e-4f));
+            Assert.That(again.Notes[0].Y, Is.EqualTo(12.25f).Within(1e-4f));
+            Assert.That(written, Does.Contain("0 0 10.5 12.25 0 0 0"));
+            // Integral coordinates are still written without a decimal point.
+            Assert.That(written, Does.Contain("96 8 15 10 0 0 2 48"));
+        }
+
+        [Test]
+        public void Diva_write_to_file_round_trips_through_the_format_registry()
+        {
+            string directory = Path.Combine(Path.GetTempPath(), "diva-write-" + Path.GetRandomFileName());
+            Directory.CreateDirectory(directory);
+            string source = Path.Combine(directory, "source.diva");
+            string destination = Path.Combine(directory, "destination.diva");
+
+            try
+            {
+                File.WriteAllText(source, RoundtripChart, new UTF8Encoding(false));
+                DivaChart parsed = DivaChartFileParser.Parse(source);
+
+                DivaTextChartFormat.Instance.Encode(destination, parsed);
+
+                DivaChart again = DivaTextChartFormat.Instance.Decode(destination);
+                assertChartsEquivalent(parsed, again);
+            }
+            finally
+            {
+                Directory.Delete(directory, true);
+            }
+        }
+
+        /// <summary>Chart with a normal note, a hold, timing/BGS/resource events and Chance Time.</summary>
+        private const string RoundtripChart = """
+                                              1.0.4.8
+                                              Roundtrip Song
+                                              Mapper
+                                              Artist
+                                              Style
+                                              bg.png
+                                              2
+                                              5
+                                              120
+                                              2
+                                              0 120
+                                              96 240
+                                              -1
+                                              48 7
+                                              -1
+                                              0 0 1
+                                              96 1 2
+                                              -1
+                                              0 0 10 12 0 0 0
+                                              96 8 15 10 0 0 2 48
+                                              -1
+                                              0 song.mp3
+                                              -1
+                                              0 bg.png
+                                              7 movie.avi
+                                              -1
+                                              48 95
+                                              """;
+
+        private static DivaChart parseRoundtripChart(string? noteLine = null)
+        {
+            string chart = noteLine == null ? RoundtripChart : RoundtripChart.Replace("0 0 10 12 0 0 0", noteLine);
+
+            using var reader = new StringReader(chart);
+            return DivaChartFileParser.Parse(reader, "roundtrip.diva", @"C:\songs\roundtrip");
+        }
+
+        private static void assertChartsEquivalent(DivaChart expected, DivaChart actual)
+        {
+            Assert.That(actual.Metadata.EditorVersion, Is.EqualTo(expected.Metadata.EditorVersion));
+            Assert.That(actual.Metadata.Title, Is.EqualTo(expected.Metadata.Title));
+            Assert.That(actual.Metadata.Creator, Is.EqualTo(expected.Metadata.Creator));
+            Assert.That(actual.Metadata.Artist, Is.EqualTo(expected.Metadata.Artist));
+            Assert.That(actual.Metadata.Style, Is.EqualTo(expected.Metadata.Style));
+            Assert.That(actual.Metadata.OverviewPicture, Is.EqualTo(expected.Metadata.OverviewPicture));
+            Assert.That(actual.Metadata.Level, Is.EqualTo(expected.Metadata.Level));
+            Assert.That(actual.Metadata.Hard, Is.EqualTo(expected.Metadata.Hard));
+            Assert.That(actual.Metadata.Bpm, Is.EqualTo(expected.Metadata.Bpm));
+            Assert.That(actual.PeriodCount, Is.EqualTo(expected.PeriodCount));
+            Assert.That(actual.FrameCount, Is.EqualTo(expected.FrameCount));
+
+            Assert.That(actual.TimingPoints.Select(t => (t.FrameIndex, t.Bpm)),
+                Is.EqualTo(expected.TimingPoints.Select(t => (t.FrameIndex, t.Bpm))));
+
+            Assert.That(actual.Notes.Count, Is.EqualTo(expected.Notes.Count));
+
+            for (int i = 0; i < expected.Notes.Count; i++)
+            {
+                DivaChartNote e = expected.Notes[i];
+                DivaChartNote a = actual.Notes[i];
+
+                Assert.That(a.FrameIndex, Is.EqualTo(e.FrameIndex));
+                Assert.That(a.Type, Is.EqualTo(e.Type));
+                Assert.That(a.X, Is.EqualTo(e.X).Within(1e-4f));
+                Assert.That(a.Y, Is.EqualTo(e.Y).Within(1e-4f));
+                Assert.That(a.TailX, Is.EqualTo(e.TailX));
+                Assert.That(a.TailY, Is.EqualTo(e.TailY));
+                Assert.That(a.Key, Is.EqualTo(e.Key));
+                Assert.That(a.DurationMs, Is.EqualTo(e.DurationMs).Within(1e-3));
+            }
+
+            Assert.That(actual.WavFiles, Is.EqualTo(expected.WavFiles));
+            Assert.That(actual.ResourceFiles, Is.EqualTo(expected.ResourceFiles));
+            Assert.That(actual.BgmEvents.Select(b => (b.FrameIndex, b.Slot, b.WavId, b.DeclaredSourceOffsetMs)),
+                Is.EqualTo(expected.BgmEvents.Select(b => (b.FrameIndex, b.Slot, b.WavId, b.DeclaredSourceOffsetMs))));
+            Assert.That(actual.ResourceEvents.Select(r => (r.FrameIndex, r.ResourceId, r.DeclaredSourceOffsetMs)),
+                Is.EqualTo(expected.ResourceEvents.Select(r => (r.FrameIndex, r.ResourceId, r.DeclaredSourceOffsetMs))));
+            Assert.That(actual.ChanceTimeStart, Is.EqualTo(expected.ChanceTimeStart));
+            Assert.That(actual.ChanceTimeEnd, Is.EqualTo(expected.ChanceTimeEnd));
+        }
     }
 }
