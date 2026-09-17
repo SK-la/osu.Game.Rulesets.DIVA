@@ -22,6 +22,7 @@ using osu.Game.Rulesets.Diva.UI;
 using osu.Game.Rulesets.Judgements;
 using osu.Game.Rulesets.Objects.Drawables;
 using osu.Game.Rulesets.Scoring;
+using osu.Game.Screens.Play;
 using osuTK;
 using osuTK.Graphics;
 
@@ -76,6 +77,14 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
         [Resolved(canBeNull: true)]
         private IBeatmap? beatmap { get; set; }
+
+        /// <summary>
+        ///     Replay playback is running the gameplay clock backwards. <see cref="DrawableHitObject.UpdateResult"/>
+        ///     refuses to judge in this state, so anything parked here for a judgement (pending press, blown-up target,
+        ///     faded flying piece) must not be written either — a leftover would later be consumed against a stale
+        ///     <c>timeOffset</c>.
+        /// </summary>
+        protected bool IsGameplayRewinding => (Clock as IGameplayClock)?.IsRewinding == true;
 
         /// <summary>Used to clip flying pieces to ProjectDIVA's draw range.</summary>
         [Resolved(canBeNull: true)]
@@ -162,9 +171,9 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             config?.BindWith(DivaRulesetSettings.FlightAmplitude, FlightAmplitude);
             config?.BindWith(DivaRulesetSettings.HoldStarDensity, HoldStarDensity);
 
-            FlightCurve.BindValueChanged(_ => applyFlightSettings());
-            FlightAmplitude.BindValueChanged(_ => applyFlightSettings());
-            applyFlightSettings();
+            FlightCurve.BindValueChanged(_ => ApplyFlightSettings());
+            FlightAmplitude.BindValueChanged(_ => ApplyFlightSettings());
+            ApplyFlightSettings();
 
             NoteSize.BindValueChanged(v => Size = new Vector2((float)v.NewValue), true);
 
@@ -268,10 +277,26 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
         protected override void UpdateInitialTransforms()
         {
+            // Also runs when a reverted result puts the object back to Idle (replay rewind). Everything the previous
+            // pass parked on it has to go; the framework has already cleared this object's and its children's
+            // transforms by now, so plain assignments stick.
+            ResetTransientState();
+
             if (NoteAppearanceMode.Value == DivaNoteAppearance.DivaNative)
             {
                 // ProjectDIVA draws the target immediately at full alpha; the pop is driven from Update.
                 this.Alpha = 1;
+
+                if (ApproachBlend >= 1f)
+                {
+                    // Revived at or past its own note time, so Update no longer drives the flying pieces: park the
+                    // head on the target at rest instead of leaving it wherever the previous pass left it.
+                    ApproachPiece.UpdatePos(1f);
+                    StatSprite?.Scale = Vector2.One;
+                    ApproachHand.Scale = Vector2.One;
+                    ApproachHand.Rotation = hand_base_rotation;
+                }
+
                 return;
             }
 
@@ -279,6 +304,19 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             ApproachHand.ScaleTo(2, timeFadein, Easing.In);
 
             ApproachHand.RotateTo(360, TimePreempt, Easing.In);
+        }
+
+        /// <summary>
+        ///     Drops state that must not survive a reverted judgement: parked input, trail particles spawned on the
+        ///     abandoned timeline, and the flying pieces' faded-out look.
+        /// </summary>
+        protected virtual void ResetTransientState()
+        {
+            pendingValidPress = null;
+            ApproachTrail?.Reset();
+
+            ApproachPiece.Alpha = 1;
+            ApproachHand.Alpha = 1;
         }
 
         protected override void UpdateHitStateTransforms(ArmedState state)
@@ -308,7 +346,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
             lastUpdateTime = Time.Current;
 
-            var b = (float)((Time.Current - LifetimeStart) / TimePreempt);
+            float b = ApproachBlend;
 
             if (b < 1f)
             {
@@ -322,6 +360,9 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
             OnApproachUpdate(b);
         }
+
+        /// <summary>0 on spawn → 1 at the note's own start time (clamped past it for the hold body).</summary>
+        protected float ApproachBlend => TimePreempt > 0 ? (float)((Time.Current - LifetimeStart) / TimePreempt) : 1f;
 
         /// <summary>
         ///     Trail particles are spawned at the flying piece, so emitting all the way in would spawn them inside the
@@ -358,14 +399,13 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             float percent = 1f - blend;
             float scale = DivaChartConstants.NoteBlowupScale(percent);
 
-            if (StatSprite != null)
-                StatSprite.Scale = new Vector2(scale);
+            StatSprite?.Scale = new Vector2(scale);
 
             ApproachHand.Scale = new Vector2(scale);
             ApproachHand.Rotation = hand_base_rotation - 360f * percent;
         }
 
-        protected void applyFlightSettings()
+        protected void ApplyFlightSettings()
         {
             float amplitude = (float)(FlightAmplitude.Value / 100.0);
 
@@ -386,7 +426,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
         public virtual bool OnPressed(KeyBindingPressEvent<DivaAction> e)
         {
-            if (Judged)
+            if (Judged || IsGameplayRewinding)
                 return false;
 
             if (!AcceptsInput(e.Action))
