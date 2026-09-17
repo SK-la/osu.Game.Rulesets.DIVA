@@ -3,6 +3,7 @@
 
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
+using osu.Framework.Graphics.Textures;
 using osu.Framework.Input.Events;
 using osu.Game.Rulesets.Diva.Audio;
 using osu.Game.Rulesets.Diva.Graphics;
@@ -11,6 +12,7 @@ using osu.Game.Rulesets.Diva.Scoring;
 using osu.Game.Rulesets.Diva.UI;
 using osu.Game.Rulesets.Objects.Drawables;
 using osu.Game.Rulesets.Scoring;
+using osuTK;
 using osuTK.Graphics;
 
 namespace osu.Game.Rulesets.Diva.Objects.Drawables
@@ -21,6 +23,13 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
     public partial class DrawableDivaHoldHitObject : DrawableDivaHitObject
     {
         private HoldStripPiece? strip;
+
+        /// <summary>
+        ///     ProjectDIVA flies both ends of a strip, so the far end gets its own piece riding the body's far end.
+        ///     It keeps flying after the head press and lands on the fixed target as the hold is released.
+        /// </summary>
+        private ApproachPiece? tailPiece;
+
         private readonly double holdDuration;
 
         /// <summary>
@@ -46,7 +55,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         }
 
         [BackgroundDependencyLoader]
-        private void load()
+        private void load(TextureStore textures)
         {
             Color4 colour = DivaProjectDivaAtlas.GetUnitColor(ValidAction);
             strip = new HoldStripPiece(HitObject.ApproachPieceOriginPosition, colour, holdDuration, TimePreempt)
@@ -55,19 +64,28 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             };
             AddInternal(strip);
 
+            tailPiece = new ApproachPiece
+            {
+                Depth = 0,
+                RelativeSizeAxes = Axes.Both,
+                Anchor = Anchor.Centre,
+                Origin = Anchor.Centre,
+                StartPos = HitObject.ApproachPieceOriginPosition,
+                Texture = textures.Get($"{GetTextureLocation()}{GetTextureAction()}Move"),
+            };
+            AddInternal(tailPiece);
+
             ApproachPreemptScale.BindValueChanged(_ => strip?.SetApproachDuration(TimePreempt), true);
             HoldStarDensity.BindValueChanged(v =>
             {
-                if (strip != null)
-                    strip.StarDensity = (float)(v.NewValue / 100.0);
+                strip?.StarDensity = (float)(v.NewValue / 100.0);
             }, true);
             NoteSize.BindValueChanged(v =>
             {
-                if (strip != null)
-                    strip.TargetHalfExtent = (float)v.NewValue * 0.5f;
+                strip?.TargetHalfExtent = (float)v.NewValue * 0.5f;
             }, true);
 
-            applyFlightSettings();
+            ApplyFlightSettings();
         }
 
         protected override void OnFlightSettingsChanged(DivaNoteFlightCurve curve, float amplitude)
@@ -77,17 +95,38 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
             strip.Curve = curve;
             strip.Amplitude = amplitude;
+
+            if (tailPiece != null)
+            {
+                tailPiece.Curve = curve;
+                tailPiece.Amplitude = amplitude;
+            }
         }
 
         protected override void OnApproachUpdate(float blend)
         {
+            if (strip == null || tailPiece == null)
+                return;
+
             double offset = Time.Current - HitObject.StartTime;
-            strip?.UpdateStrip(blend, offset);
+            strip.UpdateStrip(blend, offset);
+
+            tailPiece.UpdatePos(strip.TailBlend);
+
+            bool nativeAppearance = NoteAppearanceMode.Value == DivaNoteAppearance.DivaNative;
+
+            // ProjectDIVA culls flying pieces per piece, so the body follows its own head: without this the strip
+            // slides in from outside the field while its head is still culled, i.e. the head looks delayed.
+            strip.DrawRangeVisible = !nativeAppearance || isWithinDrawRange(ApproachPiece.Position);
+            tailPiece.Alpha = !nativeAppearance || isWithinDrawRange(tailPiece.Position) ? 1 : 0;
         }
+
+        private bool isWithinDrawRange(Vector2 localPosition)
+            => DivaPlayfieldSize.IsInsideDrawRange(HitObject.Position + localPosition, LogicalPlayfieldSize, (float)NoteSize.Value);
 
         public override bool OnPressed(KeyBindingPressEvent<DivaAction> e)
         {
-            if (Judged || holding)
+            if (Judged || holding || IsGameplayRewinding)
                 return false;
 
             if (!AcceptsInput(e.Action))
@@ -105,7 +144,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
         public override void OnReleased(KeyBindingReleaseEvent<DivaAction> e)
         {
-            if (!holding || Judged)
+            if (!holding || Judged || IsGameplayRewinding)
                 return;
 
             if (!ComputeValidPress(e.Action))
@@ -125,6 +164,10 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
             if (!holding)
             {
+                // A release only counts while the head is held; anything parked here would be replayed as a release
+                // at the next press.
+                pendingRelease = false;
+
                 if (!userTriggered)
                 {
                     if (DivaHitJudgementEvaluator.ShouldMissHold(startOffset))
@@ -175,6 +218,18 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
                 ApplyResult((r, _) => r.Type = DivaHitJudgementEvaluator.CombineHoldResults(headResult, HitResult.Miss));
         }
 
+        protected override void ResetTransientState()
+        {
+            base.ResetTransientState();
+
+            holding = false;
+            pendingRelease = false;
+            pendingHeadPressValid = null;
+            headResult = HitResult.None;
+
+            strip?.ResetVisualState();
+        }
+
         protected override void UpdateHitStateTransforms(ArmedState state)
         {
             switch (state)
@@ -192,7 +247,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
         private void hideFlyingPieces()
         {
-            // ProjectDIVA: after press, rhythm head is hidden; fixed target + strip remain.
+            // ProjectDIVA: after press, the head is hidden; fixed target, strip and flying tail remain.
             ApproachPiece.FadeOut(60);
             ApproachHand.FadeOut(60);
             ApproachTrail?.FadeOut(60);

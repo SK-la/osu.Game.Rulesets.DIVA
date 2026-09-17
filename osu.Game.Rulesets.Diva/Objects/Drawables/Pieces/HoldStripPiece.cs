@@ -64,7 +64,6 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables.Pieces
         private Texture? starTexture;
         private float durationRatio;
 
-        private float bodyTail;
         private float bodyHead = 1f;
         private float bodyLength;
 
@@ -86,6 +85,15 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables.Pieces
         ///     Stars are held clear of it so none is ever left sitting on the resting note.
         /// </summary>
         public float TargetHalfExtent = 20f;
+
+        /// <summary>
+        ///     ProjectDIVA's <c>InsideDrawRangeEx</c> verdict for the strip's own flying head. The body is hidden while
+        ///     the head is culled, so the strip can never slide in ahead of it.
+        /// </summary>
+        public bool DrawRangeVisible = true;
+
+        /// <summary>Far end of the drawn body in path percent; the owning drawable flies the tail piece on it.</summary>
+        public float TailBlend { get; private set; }
 
         public HoldStripPiece(Vector2 startPos, Color4 colour, double durationMs, double approachDurationMs)
         {
@@ -161,13 +169,31 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables.Pieces
                 head = Math.Clamp(blend, 0f, 1f);
             }
 
-            bodyTail = head - visibleRatio;
+            TailBlend = head - visibleRatio;
             bodyHead = head;
-            rebuildPath(bodyTail, bodyHead);
+            rebuildPath(TailBlend, bodyHead);
 
-            Alpha = remain <= 0 ? 0 : 0.45f + 0.55f * Math.Max(remain, 0.2f);
+            Alpha = !DrawRangeVisible || remain <= 0 ? 0 : 0.45f + 0.55f * Math.Max(remain, 0.2f);
 
             updateStars();
+        }
+
+        /// <summary>
+        ///     Drops stars and body carried over from a reverted playthrough (replay rewind), so the strip cannot
+        ///     reappear with a stale body or stars parked on the fixed target.
+        /// </summary>
+        public void ResetVisualState()
+        {
+            foreach (StripStar star in stars)
+                star.Sprite.Expire();
+
+            stars.Clear();
+
+            TailBlend = 0;
+            bodyHead = 1f;
+            Alpha = 1;
+            DrawRangeVisible = true;
+            rebuildPath(0, 1);
         }
 
         private void rebuildPath(float tail, float head)
@@ -179,18 +205,30 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables.Pieces
             if (head - tail < 0.001f)
                 return;
 
+            // The body is a disc swept along the sampled polyline, so each end bulges one cap radius past the last
+            // vertex. ProjectDIVA aligns the cap's vertex — not its centre — with the note centre, so sample the span
+            // once to measure it, then redraw it pulled in by that radius at both ends.
+            sampleSpan(tail, head);
+
+            float total = pathLengths[segments];
+            float farLength = capInset;
+            float nearLength = total - capInset;
+
+            if (nearLength < farLength)
+            {
+                // Shorter than two caps: collapse to a single resting point, the two caps alone form the body.
+                farLength = nearLength = total * 0.5f;
+            }
+
+            sampleSpan(tAtLength(farLength, tail, head), tAtLength(nearLength, tail, head));
+
             for (int i = 0; i <= segments; i++)
             {
-                float t = tail + (head - tail) * (i / (float)segments);
-                Vector2 pos = sampleCurve(t);
-                pathPoints[i] = pos;
-                outerPath.AddVertex(pos);
-                innerPath.AddVertex(pos);
+                outerPath.AddVertex(pathPoints[i]);
+                innerPath.AddVertex(pathPoints[i]);
 
                 if (i > 0)
-                    bodyLength += Vector2.Distance(pathPoints[i - 1], pos);
-
-                pathLengths[i] = bodyLength;
+                    bodyLength += Vector2.Distance(pathPoints[i - 1], pathPoints[i]);
             }
 
             // Keep path local origin at note centre (0,0); do not reassign OriginPosition each frame.
@@ -198,6 +236,41 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables.Pieces
             innerPath.Position = Vector2.Zero;
             outerPath.OriginPosition = outerPath.PositionInBoundingBox(Vector2.Zero);
             innerPath.OriginPosition = innerPath.PositionInBoundingBox(Vector2.Zero);
+        }
+
+        /// <summary>Samples the curve over <paramref name="from"/>..<paramref name="to"/> into the path buffers.</summary>
+        private void sampleSpan(float from, float to)
+        {
+            for (int i = 0; i <= segments; i++)
+            {
+                float t = from + (to - from) * (i / (float)segments);
+                Vector2 pos = sampleCurve(t);
+                pathPoints[i] = pos;
+                pathLengths[i] = i == 0 ? 0 : pathLengths[i - 1] + Vector2.Distance(pathPoints[i - 1], pos);
+            }
+        }
+
+        /// <summary>Inverse of <see cref="sampleSpan"/>: the path percent <paramref name="distance"/> along the samples.</summary>
+        private float tAtLength(float distance, float from, float to)
+        {
+            if (distance <= 0)
+                return from;
+
+            float total = pathLengths[segments];
+
+            if (distance >= total)
+                return to;
+
+            int i = 1;
+
+            while (i < segments && pathLengths[i] < distance)
+                i++;
+
+            float segmentStart = pathLengths[i - 1];
+            float segmentLength = pathLengths[i] - segmentStart;
+            float f = segmentLength > 0 ? (distance - segmentStart) / segmentLength : 0;
+
+            return from + (to - from) * ((i - 1 + f) / segments);
         }
 
         /// <summary>Position <paramref name="distance" /> along the body, measured from its far (tail) end.</summary>
@@ -234,7 +307,14 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables.Pieces
         private float starSpanLength => bodyLength - targetClearance;
 
         /// <summary>Keep-out radius at the far end of the body; see <see cref="TargetHalfExtent" />.</summary>
-        private float targetClearance => TargetHalfExtent + star_max_size * 0.5f + star_jitter + star_head_min_offset;
+        private float targetClearance =>
+            Math.Max(0f, TargetHalfExtent - capInset) + star_max_size * 0.5f + star_jitter + star_head_min_offset;
+
+        /// <summary>
+        ///     Radius of the outermost path's end cap. Each end of the polyline is pulled in by this (see
+        ///     <see cref="rebuildPath" />) so the cap's vertex, not its centre, lands on the end point.
+        /// </summary>
+        private float capInset => outerPath.PathRadius;
 
         /// <summary>
         ///     Keeps one star per <see cref="star_spacing" /> of body length and blinks each in place, so the total
