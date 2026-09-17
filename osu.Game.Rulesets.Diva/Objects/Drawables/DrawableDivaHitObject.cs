@@ -62,6 +62,9 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         /// <summary>Percent of the curve's own baseline lateral offset (100 = ProjectDIVA).</summary>
         protected BindableDouble FlightAmplitude { get; } = new BindableDouble(100);
 
+        /// <summary>Percent of the default hold-body star spacing (100 = default, 0 = no stars).</summary>
+        protected BindableDouble HoldStarDensity { get; } = new BindableDouble(100);
+
         /// <summary>Multiplier on PD <c>note_standing × MsPerFrame(BPM)</c> (default 1.0).</summary>
         protected BindableDouble ApproachPreemptScale = new BindableDouble(1.0);
 
@@ -157,6 +160,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             config?.BindWith(DivaRulesetSettings.NoteAppearance, NoteAppearanceMode);
             config?.BindWith(DivaRulesetSettings.FlightCurve, FlightCurve);
             config?.BindWith(DivaRulesetSettings.FlightAmplitude, FlightAmplitude);
+            config?.BindWith(DivaRulesetSettings.HoldStarDensity, HoldStarDensity);
 
             FlightCurve.BindValueChanged(_ => applyFlightSettings());
             FlightAmplitude.BindValueChanged(_ => applyFlightSettings());
@@ -295,12 +299,21 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
                 if (NoteAppearanceMode.Value == DivaNoteAppearance.DivaNative)
                     updateDivaNativeAppearance(b);
-                else
+                else if (!hasReachedTarget)
                     ApproachTrail?.EmitAt(ApproachPiece.Position, Time.Elapsed);
             }
 
             OnApproachUpdate(b);
         }
+
+        /// <summary>Radius within which the flying piece counts as merged into the fixed target's own footprint.</summary>
+        private float targetMergeRadius => (float)NoteSize.Value * 0.5f;
+
+        /// <summary>
+        ///     Trail particles are spawned at the flying piece, so emitting all the way in would leave a clump of stars
+        ///     resting on the stationary target note. Stop once the two visually overlap.
+        /// </summary>
+        private bool hasReachedTarget => ApproachPiece.Position.LengthSquared <= targetMergeRadius * targetMergeRadius;
 
         /// <summary>
         ///     ProjectDIVA presentation: the flying piece is drawn only inside the field (no fade), while the
@@ -316,7 +329,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
             ApproachPiece.Alpha = inside ? 1 : 0;
 
-            if (inside)
+            if (inside && !hasReachedTarget)
                 ApproachTrail?.EmitAt(ApproachPiece.Position, Time.Elapsed);
 
             float percent = 1f - blend;

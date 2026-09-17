@@ -122,6 +122,13 @@ namespace osu.Game.Rulesets.Diva.Localization
             "100% = 各曲线自身的 ProjectDIVA 基准幅度（默认即原版观感），0% = 直线。对缓动直线无效。",
             "100% = each curve's own ProjectDIVA baseline (the default matches the original), 0% = straight line. Has no effect on the eased straight lines.");
 
+        public static readonly LocalisableString SETTINGS_HOLD_STAR_DENSITY =
+            new DivaLocalizationManager.DivaLocalisableString("长条星尘密度", "Strip star density");
+
+        public static readonly LocalisableString SETTINGS_HOLD_STAR_DENSITY_TOOLTIP = new DivaLocalizationManager.DivaLocalisableString(
+            "长条 body 上星尘的数量（100% 为默认间距，星星按弧长等距分布，总密度不随长条伸缩变化）；0% 关闭星尘。",
+            "How many stars the hold body carries (100% is the default spacing; stars stay evenly spaced by arc length, so the density does not change as the strip grows or shrinks). 0% hides them.");
+
         public static readonly LocalisableString SETTINGS_CANNOT_OPEN_WIZARD =
             new DivaLocalizationManager.DivaLocalisableString("无法从此界面打开路径向导。", "Cannot open path wizard from this screen.");
 

@@ -23,14 +23,29 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables.Pieces
         private const float min_visible_ratio = 0.08f;
         private const int segments = 32;
 
-        /// <summary>Spacing between twinkle stars in path units; live star count follows body length.</summary>
-        private const float star_spacing = 38f;
+        /// <summary>Path units per star at 100% density.</summary>
+        private const float star_spacing = 34f;
 
-        /// <summary>Cap for extremely long bodies (a longer strip then thins out instead of unbounded sprite growth).</summary>
+        /// <summary>Cap for extremely long bodies; a longer strip then thins out instead of growing without bound.</summary>
         private const int max_stars = 48;
 
-        private const double star_period_min = 620;
-        private const double star_period_max = 980;
+        /// <summary>ProjectDIVA <c>AddStarParticle</c> draws each strip star at <c>rand_size * 10</c> px.</summary>
+        private const float star_max_size = 10f;
+
+        /// <summary>Floor on the random size so a rolled-away particle stays visible.</summary>
+        private const float star_min_size = 2.5f;
+
+        /// <summary>ProjectDIVA scatters each strip star within ±6px of the strip.</summary>
+        private const float star_jitter = 6f;
+
+        /// <summary>
+        ///     Keep-out radius around the fixed target: the strip head is pinned on the target for the whole hold, so
+        ///     without this the head-most star sits on the resting note for the entire body.
+        /// </summary>
+        private const float target_clearance = 22f;
+
+        private const double flicker_min = 55;
+        private const double flicker_max = 120;
 
         private readonly Vector2 startPos;
         private readonly Color4 colour;
@@ -47,13 +62,16 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables.Pieces
         private float bodyHead = 1f;
         private float bodyLength;
 
-        private readonly List<TwinkleStar> stars = new List<TwinkleStar>();
+        private readonly List<StripStar> stars = new List<StripStar>();
 
         /// <summary>Path shape, synced from the ruleset setting by the owning drawable.</summary>
         public DivaNoteFlightCurve Curve = DivaNoteFlightCurve.DivaNative;
 
         /// <summary>Lateral multiplier; 1.0 is the curve's ProjectDIVA-matching baseline.</summary>
         public float Amplitude = 1f;
+
+        /// <summary>Star density multiplier (1.0 = <see cref="star_spacing" />); 0 hides the stars.</summary>
+        public float StarDensity = 1f;
 
         public HoldStripPiece(Vector2 startPos, Color4 colour, double durationMs, double approachDurationMs)
         {
@@ -175,77 +193,113 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables.Pieces
         }
 
         /// <summary>
-        ///     Keeps a fixed number of stars on the body — one per <see cref="star_spacing" /> of length — and blinks
-        ///     each in place on its own period, so the strip's total star density stays constant instead of
-        ///     accumulating with frame rate.
+        ///     Keeps one star per <see cref="star_spacing" /> of body length and blinks each in place, so the total
+        ///     star density stays constant while the strip grows and shrinks.
         /// </summary>
         private void updateStars()
         {
-            int desired = bodyLength > 0 && float.IsFinite(bodyLength)
-                ? Math.Clamp((int)MathF.Round(bodyLength / star_spacing), 0, max_stars)
-                : 0;
+            int desired = desiredStarCount();
 
             while (stars.Count > desired)
             {
-                TwinkleStar removed = stars[^1];
+                StripStar removed = stars[^1];
                 stars.RemoveAt(stars.Count - 1);
                 removed.Sprite.Expire();
             }
 
-            while (stars.Count < desired && starTexture != null)
-                stars.Add(createStar());
+            while (stars.Count < desired)
+            {
+                StripStar? created = createStar();
+
+                if (created == null)
+                    break;
+
+                stars.Add(created);
+            }
 
             float span = bodyHead - bodyTail;
 
             for (int i = 0; i < stars.Count; i++)
             {
-                TwinkleStar star = stars[i];
+                StripStar star = stars[i];
 
-                // Even slot along the visible body: density stays constant as the strip grows/shrinks.
+                // Even slot along the visible body: density does not change as the strip grows or shrinks.
                 float slot = (i + 0.5f) / stars.Count;
-                star.Sprite.Position = sampleCurve(bodyTail + slot * span) + star.Jitter;
+                Vector2 position = sampleCurve(bodyTail + slot * span) + star.Jitter;
 
-                double phase = (Time.Current / star.Period + star.Phase) % 1.0;
-                if (phase < 0)
-                    phase += 1;
+                // Never park a star on the fixed target note.
+                if (position.LengthSquared <= target_clearance * target_clearance)
+                {
+                    star.Sprite.Alpha = 0;
+                    continue;
+                }
 
-                float blink = (float)(0.5 - 0.5 * Math.Cos(2 * Math.PI * phase));
+                star.Sprite.Position = position;
 
-                star.Sprite.Alpha = 0.12f + 0.83f * blink;
-                star.Sprite.Scale = new Vector2(0.7f + 0.45f * blink);
+                if (Time.Current >= star.NextFlickerTime)
+                {
+                    // ProjectDIVA re-rolls a strip star's alpha (ParticleComet state bit 1) rather than fading it.
+                    star.NextFlickerTime = Time.Current + star.FlickerPeriod;
+                    star.Alpha = 0.08f + 0.92f * Random.Shared.NextSingle();
+                }
+
+                star.Sprite.Alpha = star.Alpha;
             }
         }
 
-        private TwinkleStar createStar()
+        private int desiredStarCount()
         {
+            float density = Math.Clamp(StarDensity, 0f, 2f);
+
+            if (density <= 0 || bodyLength <= 0 || !float.IsFinite(bodyLength))
+                return 0;
+
+            return Math.Clamp((int)MathF.Round(bodyLength * density / star_spacing), 0, max_stars);
+        }
+
+        private StripStar? createStar()
+        {
+            if (starTexture == null)
+                return null;
+
+            // ProjectDIVA AddStarParticle: a random colour averaged with the unit colour, so strip stars vary per particle.
+            var starColour = new Color4(
+                (Random.Shared.NextSingle() + colour.R) * 0.5f,
+                (Random.Shared.NextSingle() + colour.G) * 0.5f,
+                (Random.Shared.NextSingle() + colour.B) * 0.5f,
+                1f);
+
             var sprite = new Sprite
             {
                 Texture = starTexture,
-                Size = new Vector2(9 + Random.Shared.NextSingle() * 7),
+                Size = new Vector2(MathF.Max(star_min_size, Random.Shared.NextSingle() * star_max_size)),
                 Anchor = Anchor.Centre,
                 Origin = Anchor.Centre,
-                Colour = colour,
+                Colour = starColour,
                 Blending = BlendingParameters.Additive,
                 Alpha = 0f,
             };
 
             starLayer.Add(sprite);
 
-            return new TwinkleStar
+            return new StripStar
             {
                 Sprite = sprite,
-                Jitter = new Vector2((Random.Shared.NextSingle() - 0.5f) * 14, (Random.Shared.NextSingle() - 0.5f) * 14),
-                Phase = Random.Shared.NextSingle(),
-                Period = star_period_min + Random.Shared.NextDouble() * (star_period_max - star_period_min),
+                Jitter = new Vector2(
+                    (Random.Shared.NextSingle() - 0.5f) * 2 * star_jitter,
+                    (Random.Shared.NextSingle() - 0.5f) * 2 * star_jitter),
+                FlickerPeriod = flicker_min + Random.Shared.NextDouble() * (flicker_max - flicker_min),
+                NextFlickerTime = Time.Current,
             };
         }
 
-        private sealed class TwinkleStar
+        private sealed class StripStar
         {
             public Sprite Sprite = null!;
             public Vector2 Jitter;
-            public float Phase;
-            public double Period;
+            public double NextFlickerTime;
+            public double FlickerPeriod;
+            public float Alpha;
         }
     }
 }

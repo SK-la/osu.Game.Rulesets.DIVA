@@ -51,6 +51,11 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             AddInternal(strip);
 
             ApproachPreemptScale.BindValueChanged(_ => strip?.SetApproachDuration(TimePreempt), true);
+            HoldStarDensity.BindValueChanged(v =>
+            {
+                if (strip != null)
+                    strip.StarDensity = (float)(v.NewValue / 100.0);
+            }, true);
 
             applyFlightSettings();
         }

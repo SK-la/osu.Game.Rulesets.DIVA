@@ -164,6 +164,12 @@ namespace osu.Game.Rulesets.Diva.UI
                 },
                 new SettingsSlider<double>
                 {
+                    LabelText = DivaStrings.SETTINGS_HOLD_STAR_DENSITY,
+                    TooltipText = DivaStrings.SETTINGS_HOLD_STAR_DENSITY_TOOLTIP,
+                    Current = divaConfig.GetBindable<double>(DivaRulesetSettings.HoldStarDensity)
+                },
+                new SettingsSlider<double>
+                {
                     LabelText = DivaStrings.SETTINGS_HIT_EXPLOSION_ALPHA,
                     Current = divaConfig.GetBindable<double>(DivaRulesetSettings.HitExplosionAlpha)
                 }

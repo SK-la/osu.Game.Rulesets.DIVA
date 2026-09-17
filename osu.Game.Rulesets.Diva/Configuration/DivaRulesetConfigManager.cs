@@ -102,6 +102,8 @@ namespace osu.Game.Rulesets.Diva.Configuration
             SetDefault(DivaRulesetSettings.FlightCurve, DivaNoteFlightCurve.DivaNative);
             // Percent of the curve's baseline lateral offset (ProjectDIVA's own amplitude is 100%); 0 is a straight line.
             SetDefault(DivaRulesetSettings.FlightAmplitude, 100.0, 0.0, 200.0, 5.0);
+            // Percent of the default hold-body star spacing (100 = ProjectDIVA-ish density); 0 hides the stars.
+            SetDefault(DivaRulesetSettings.HoldStarDensity, 100.0, 0.0, 200.0, 5.0);
         }
 
         private static List<string> normalisePaths(IEnumerable<string> paths)
@@ -139,6 +141,7 @@ namespace osu.Game.Rulesets.Diva.Configuration
         ImportToRealm,
         NoteAppearance,
         FlightCurve,
-        FlightAmplitude
+        FlightAmplitude,
+        HoldStarDensity
     }
 }
