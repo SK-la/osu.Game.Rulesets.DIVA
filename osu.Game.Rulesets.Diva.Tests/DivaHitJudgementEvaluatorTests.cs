@@ -47,10 +47,10 @@ namespace osu.Game.Rulesets.Diva.Tests
             Assert.That(DivaHitJudgementEvaluator.GetPressResult(validPress, -timeOffset), Is.EqualTo(expected));
         }
 
-        [TestCase(HitResult.Perfect, DivaJudgementResult.DivaMehSource.PerfectWindowWrongPress)]
-        [TestCase(HitResult.Great, DivaJudgementResult.DivaMehSource.GreatWindowWrongPress)]
-        [TestCase(HitResult.Good, DivaJudgementResult.DivaMehSource.GoodWindowWrongPress)]
-        [TestCase(HitResult.Ok, DivaJudgementResult.DivaMehSource.OkWindowWrongPress)]
+        [TestCase(HitResult.Perfect, DivaJudgementResult.DivaMehSource.CoolWindowWrongPress)]
+        [TestCase(HitResult.Great, DivaJudgementResult.DivaMehSource.FineWindowWrongPress)]
+        [TestCase(HitResult.Good, DivaJudgementResult.DivaMehSource.SafeWindowWrongPress)]
+        [TestCase(HitResult.Ok, DivaJudgementResult.DivaMehSource.SadWindowWrongPress)]
         [TestCase(HitResult.Miss, DivaJudgementResult.DivaMehSource.None)]
         public void GetMehSourceFor_maps_sources(HitResult result, DivaJudgementResult.DivaMehSource expected)
         {
@@ -66,7 +66,7 @@ namespace osu.Game.Rulesets.Diva.Tests
             Assert.That(hitWindows.IsHitResultAllowed(HitResult.Meh), Is.True);
             Assert.That(hitWindows.IsHitResultAllowed(HitResult.Miss), Is.True);
             // Miss uses OK_WINDOW so JudgementResult.TimeOffset / HitErrorMeter work (Miss==0 is skipped by HUD).
-            Assert.That(hitWindows.WindowFor(HitResult.Miss), Is.EqualTo(DivaHitJudgementEvaluator.OK_WINDOW));
+            Assert.That(hitWindows.WindowFor(HitResult.Miss), Is.EqualTo(DivaHitJudgementEvaluator.SAD_WINDOW));
         }
 
         [TestCase(120.0, false)]

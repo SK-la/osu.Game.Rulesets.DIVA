@@ -22,13 +22,13 @@ namespace osu.Game.Rulesets.Diva.Scoring
 
         public override double WindowFor(HitResult result) => result switch
         {
-            HitResult.Perfect => DivaHitJudgementEvaluator.PERFECT_WINDOW,
-            HitResult.Great => DivaHitJudgementEvaluator.GREAT_WINDOW,
-            HitResult.Good => DivaHitJudgementEvaluator.GOOD_WINDOW,
-            HitResult.Ok => DivaHitJudgementEvaluator.OK_WINDOW,
+            HitResult.Perfect => DivaHitJudgementEvaluator.COOL_WINDOW,
+            HitResult.Great => DivaHitJudgementEvaluator.FINE_WINDOW,
+            HitResult.Good => DivaHitJudgementEvaluator.SAFE_WINDOW,
+            HitResult.Ok => DivaHitJudgementEvaluator.SAD_WINDOW,
             // Align with ShouldMiss (timeOffset > OK_WINDOW). Required for JudgementResult.TimeOffset
             // clamping and HitErrorMeter (which skips rulesets with Miss window == 0).
-            HitResult.Miss => DivaHitJudgementEvaluator.OK_WINDOW,
+            HitResult.Miss => DivaHitJudgementEvaluator.SAD_WINDOW,
             // Meh/Worst is a special penalty result and should not be obtainable from timing alone.
             HitResult.Meh => 0,
             _ => 0

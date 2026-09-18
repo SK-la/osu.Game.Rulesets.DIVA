@@ -78,16 +78,16 @@ namespace osu.Game.Rulesets.Diva.Scoring
         {
             switch (mehSource)
             {
-                case DivaJudgementResult.DivaMehSource.PerfectWindowWrongPress:
+                case DivaJudgementResult.DivaMehSource.CoolWindowWrongPress:
                     return 0.25;
 
-                case DivaJudgementResult.DivaMehSource.GreatWindowWrongPress:
+                case DivaJudgementResult.DivaMehSource.FineWindowWrongPress:
                     return 0.5;
 
-                case DivaJudgementResult.DivaMehSource.GoodWindowWrongPress:
+                case DivaJudgementResult.DivaMehSource.SafeWindowWrongPress:
                     return 0.75;
 
-                case DivaJudgementResult.DivaMehSource.OkWindowWrongPress:
+                case DivaJudgementResult.DivaMehSource.SadWindowWrongPress:
                     return 1.0;
 
                 default:

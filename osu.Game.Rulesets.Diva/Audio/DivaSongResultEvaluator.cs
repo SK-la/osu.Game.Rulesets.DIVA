@@ -51,6 +51,6 @@ namespace osu.Game.Rulesets.Diva.Audio
         }
 
         private static int count(IReadOnlyDictionary<HitResult, int> statistics, HitResult result)
-            => statistics.TryGetValue(result, out int c) ? c : 0;
+            => statistics.GetValueOrDefault(result, 0);
     }
 }

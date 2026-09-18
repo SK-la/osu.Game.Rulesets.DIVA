@@ -13,10 +13,10 @@ namespace osu.Game.Rulesets.Diva.Judgements
         public enum DivaMehSource
         {
             None,
-            PerfectWindowWrongPress,
-            GreatWindowWrongPress,
-            GoodWindowWrongPress,
-            OkWindowWrongPress
+            CoolWindowWrongPress,
+            FineWindowWrongPress,
+            SafeWindowWrongPress,
+            SadWindowWrongPress
         }
 
         /// <summary>

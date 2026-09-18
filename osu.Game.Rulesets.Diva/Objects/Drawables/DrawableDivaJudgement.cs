@@ -149,10 +149,10 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
         private static string getMehSuffix(DivaJudgementResult.DivaMehSource source) => source switch
         {
-            DivaJudgementResult.DivaMehSource.PerfectWindowWrongPress => DivaStrings.JUDGEMENT_FINE,
-            DivaJudgementResult.DivaMehSource.GreatWindowWrongPress => DivaStrings.JUDGEMENT_SAFE,
-            DivaJudgementResult.DivaMehSource.GoodWindowWrongPress => DivaStrings.JUDGEMENT_SAD,
-            DivaJudgementResult.DivaMehSource.OkWindowWrongPress => DivaStrings.JUDGEMENT_WRONG,
+            DivaJudgementResult.DivaMehSource.CoolWindowWrongPress => DivaStrings.JUDGEMENT_FINE,
+            DivaJudgementResult.DivaMehSource.FineWindowWrongPress => DivaStrings.JUDGEMENT_SAFE,
+            DivaJudgementResult.DivaMehSource.SafeWindowWrongPress => DivaStrings.JUDGEMENT_SAD,
+            DivaJudgementResult.DivaMehSource.SadWindowWrongPress => DivaStrings.JUDGEMENT_WRONG,
             _ => string.Empty
         };
 

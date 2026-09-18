@@ -9,22 +9,15 @@ namespace osu.Game.Rulesets.Diva.Scoring
 {
     public static class DivaHitJudgementEvaluator
     {
-        public const double PERFECT_WINDOW = 32;
-        public const double GREAT_WINDOW = 50;
-        public const double GOOD_WINDOW = 80;
-        public const double OK_WINDOW = 120;
+        public const double COOL_WINDOW = 50;
+        public const double FINE_WINDOW = 100;
+        public const double SAFE_WINDOW = 200;
+        public const double SAD_WINDOW = 300;
 
-        /// <summary>ProjectDIVA strip COOL window.</summary>
-        public const double HOLD_PERFECT_WINDOW = 50;
-
-        /// <summary>ProjectDIVA strip FINE window.</summary>
-        public const double HOLD_GREAT_WINDOW = 100;
-
-        /// <summary>ProjectDIVA strip SAFE window.</summary>
-        public const double HOLD_GOOD_WINDOW = 200;
-
-        /// <summary>ProjectDIVA strip SAD window.</summary>
-        public const double HOLD_OK_WINDOW = 300;
+        public const double HOLD_COOL_WINDOW = 50;
+        public const double HOLD_FINE_WINDOW = 100;
+        public const double HOLD_SAFE_WINDOW = 200;
+        public const double HOLD_SAD_WINDOW = 300;
 
         /// <summary>ProjectDIVA <c>gameini.delay</c> after Start/End before forced miss.</summary>
         public const double HOLD_MISS_TIMEOUT = 350;
@@ -33,10 +26,10 @@ namespace osu.Game.Rulesets.Diva.Scoring
         {
             var abs = Math.Abs(timeOffset);
 
-            if (abs <= PERFECT_WINDOW) return HitResult.Perfect;
-            if (abs <= GREAT_WINDOW) return HitResult.Great;
-            if (abs <= GOOD_WINDOW) return HitResult.Good;
-            if (abs <= OK_WINDOW) return HitResult.Ok;
+            if (abs <= COOL_WINDOW) return HitResult.Perfect;
+            if (abs <= FINE_WINDOW) return HitResult.Great;
+            if (abs <= SAFE_WINDOW) return HitResult.Good;
+            if (abs <= SAD_WINDOW) return HitResult.Ok;
 
             return HitResult.None;
         }
@@ -46,17 +39,17 @@ namespace osu.Game.Rulesets.Diva.Scoring
         {
             var abs = Math.Abs(timeOffset);
 
-            if (abs <= HOLD_PERFECT_WINDOW) return HitResult.Perfect;
-            if (abs <= HOLD_GREAT_WINDOW) return HitResult.Great;
-            if (abs <= HOLD_GOOD_WINDOW) return HitResult.Good;
-            if (abs <= HOLD_OK_WINDOW) return HitResult.Ok;
+            if (abs <= HOLD_COOL_WINDOW) return HitResult.Perfect;
+            if (abs <= HOLD_FINE_WINDOW) return HitResult.Great;
+            if (abs <= HOLD_SAFE_WINDOW) return HitResult.Good;
+            if (abs <= HOLD_SAD_WINDOW) return HitResult.Ok;
 
             return HitResult.None;
         }
 
-        public static bool IsWithinOkWindow(double timeOffset) => Math.Abs(timeOffset) <= OK_WINDOW;
+        public static bool IsWithinOkWindow(double timeOffset) => Math.Abs(timeOffset) <= SAD_WINDOW;
 
-        public static bool ShouldMiss(double timeOffset) => timeOffset > OK_WINDOW;
+        public static bool ShouldMiss(double timeOffset) => timeOffset > SAD_WINDOW;
 
         public static bool ShouldMissHold(double timeOffset) => timeOffset > HOLD_MISS_TIMEOUT;
 
@@ -86,10 +79,10 @@ namespace osu.Game.Rulesets.Diva.Scoring
 
         public static DivaJudgementResult.DivaMehSource GetMehSourceFor(HitResult result) => result switch
         {
-            HitResult.Perfect => DivaJudgementResult.DivaMehSource.PerfectWindowWrongPress,
-            HitResult.Great => DivaJudgementResult.DivaMehSource.GreatWindowWrongPress,
-            HitResult.Good => DivaJudgementResult.DivaMehSource.GoodWindowWrongPress,
-            HitResult.Ok => DivaJudgementResult.DivaMehSource.OkWindowWrongPress,
+            HitResult.Perfect => DivaJudgementResult.DivaMehSource.CoolWindowWrongPress,
+            HitResult.Great => DivaJudgementResult.DivaMehSource.FineWindowWrongPress,
+            HitResult.Good => DivaJudgementResult.DivaMehSource.SafeWindowWrongPress,
+            HitResult.Ok => DivaJudgementResult.DivaMehSource.SadWindowWrongPress,
             _ => DivaJudgementResult.DivaMehSource.None
         };
     }
