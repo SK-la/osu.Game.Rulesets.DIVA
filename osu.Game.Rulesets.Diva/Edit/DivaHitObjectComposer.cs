@@ -42,11 +42,18 @@ namespace osu.Game.Rulesets.Diva.Edit
         ];
 
         private readonly Bindable<TernaryState> gridSnapToggle = new Bindable<TernaryState>(TernaryState.True);
+        private readonly Bindable<TernaryState> replaceOnSameTimeToggle = new Bindable<TernaryState>(TernaryState.False);
         private readonly Dictionary<DivaAction, Bindable<TernaryState>> actionStates = new Dictionary<DivaAction, Bindable<TernaryState>>();
 
         private RectangularPositionSnapGrid? positionSnapGrid;
 
         public DivaAction CurrentAction { get; private set; } = DivaAction.Circle;
+
+        public bool ReplaceOnSameTime => replaceOnSameTimeToggle.Value == TernaryState.True;
+
+        public bool GridSnapEnabled => gridSnapToggle.Value == TernaryState.True;
+
+        public IBindable<TernaryState> GridSnapToggle => gridSnapToggle;
 
         public DivaHitObjectComposer(Ruleset ruleset)
             : base(ruleset)
@@ -82,6 +89,16 @@ namespace osu.Game.Rulesets.Diva.Edit
                 CreateIcon = () => new SpriteIcon { Icon = OsuIcon.EditorGridSnap },
                 Action = DivaAction.EditorToggleGridSnap,
                 Hotkey = HotkeyForAction(DivaAction.EditorToggleGridSnap)
+            };
+
+            yield return new DrawableTernaryButton<DivaAction>
+            {
+                Current = replaceOnSameTimeToggle,
+                Description = DivaStrings.EDITOR_REPLACE_ON_SAME_TIME,
+                TooltipText = DivaStrings.EDITOR_REPLACE_ON_SAME_TIME_TOOLTIP,
+                CreateIcon = () => new SpriteIcon { Icon = FontAwesome.Solid.Clone },
+                Action = DivaAction.EditorToggleReplaceOnSameTime,
+                Hotkey = HotkeyForAction(DivaAction.EditorToggleReplaceOnSameTime)
             };
 
             foreach (var action in PLAY_ACTIONS)

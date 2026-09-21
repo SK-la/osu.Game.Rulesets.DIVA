@@ -13,6 +13,7 @@ using osu.Game.Beatmaps.ControlPoints;
 using osu.Game.Rulesets.Diva.Beatmaps;
 using osu.Game.Rulesets.Diva.Beatmaps.DivaFormat;
 using osu.Game.Rulesets.Diva.Edit;
+using osu.Game.Rulesets.Diva.Localization;
 using osu.Game.Rulesets.Diva.Objects;
 using osu.Game.Rulesets.Edit;
 using osu.Game.Screens.Edit;
@@ -65,7 +66,7 @@ namespace osu.Game.Rulesets.Diva.Tests.Editor
         public void Place_tap_snaps_time_grid_and_action()
         {
             AddStep("seek to 1000", () => EditorClock.Seek(1000));
-            AddStep("select tap tool", () => composer.ChildrenOfType<EditorRadioButton>().ElementAt(1).TriggerClick());
+            AddStep("select tap tool", () => selectTool(DivaStrings.EDITOR_TAP_TOOL.ToString()));
             AddStep("move to playfield centre", () => InputManager.MoveMouseTo(composer.Playfield.ScreenSpaceDrawQuad.Centre));
             AddStep("place", () => InputManager.Click(MouseButton.Left));
 
@@ -86,7 +87,7 @@ namespace osu.Game.Rulesets.Diva.Tests.Editor
         public void Place_hold_has_positive_duration()
         {
             AddStep("seek to 0", () => EditorClock.Seek(0));
-            AddStep("select hold tool", () => composer.ChildrenOfType<EditorRadioButton>().ElementAt(2).TriggerClick());
+            AddStep("select hold tool", () => selectTool(DivaStrings.EDITOR_HOLD_TOOL.ToString()));
             AddStep("move to playfield centre", () => InputManager.MoveMouseTo(composer.Playfield.ScreenSpaceDrawQuad.Centre));
             AddStep("commit head", () => InputManager.Click(MouseButton.Left));
             AddStep("seek one beat", () => EditorClock.Seek(500));
@@ -94,6 +95,26 @@ namespace osu.Game.Rulesets.Diva.Tests.Editor
 
             AddAssert("one hold placed", () => editorBeatmap.HitObjects.OfType<DivaHoldHitObject>().Count(), () => Is.EqualTo(1));
             AddAssert("duration at least one beat", () => editorBeatmap.HitObjects.OfType<DivaHoldHitObject>().Single().Duration, () => Is.GreaterThanOrEqualTo(500));
+        }
+
+        [Test]
+        public void Multi_place_keeps_same_time_notes()
+        {
+            AddStep("seek to 1000", () => EditorClock.Seek(1000));
+            AddStep("select tap tool", () => selectTool(DivaStrings.EDITOR_TAP_TOOL.ToString()));
+            AddStep("place first", () =>
+            {
+                InputManager.MoveMouseTo(composer.Playfield.ScreenSpaceDrawQuad.Centre);
+                InputManager.Click(MouseButton.Left);
+            });
+            AddStep("place second offset", () =>
+            {
+                InputManager.MoveMouseTo(composer.Playfield.ToScreenSpace(composer.Playfield.ToLocalSpace(composer.Playfield.ScreenSpaceDrawQuad.Centre) + new Vector2(48, 0)));
+                InputManager.Click(MouseButton.Left);
+            });
+
+            AddAssert("two notes kept", () => editorBeatmap.HitObjects.Count, () => Is.EqualTo(2));
+            AddAssert("same start time", () => editorBeatmap.HitObjects.All(h => h.StartTime == 1000));
         }
 
         [Test]
@@ -126,6 +147,9 @@ namespace osu.Game.Rulesets.Diva.Tests.Editor
                        && Vector2.Distance(note.Position, roundTripped) < 0.01f;
             });
         }
+
+        private void selectTool(string name)
+            => composer.ChildrenOfType<EditorRadioButton>().First(b => b.Text.ToString() == name).TriggerClick();
 
         private static bool isIntegerCell(float value) => MathF.Abs(value - MathF.Round(value)) < 1e-3f;
 

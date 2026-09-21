@@ -63,6 +63,7 @@ namespace osu.Game.Rulesets.Diva.Edit.Blueprints
             base.Update();
 
             piece.UpdateFrom(HitObject, textures);
+            approachHandle.Position = HitObject.Position;
             approachHandle.Alpha = IsSelected ? 1 : 0;
             durationHandle.Alpha = IsSelected ? 1 : 0;
 
@@ -73,7 +74,13 @@ namespace osu.Game.Rulesets.Diva.Edit.Blueprints
 
         protected override bool OnDragStart(DragStartEvent e)
         {
-            if (!IsSelected || e.Button != MouseButton.Left || !durationHandle.ReceivePositionalInputAt(e.ScreenSpaceMousePosition))
+            if (!IsSelected || e.Button != MouseButton.Left)
+                return false;
+
+            if (approachHandle.ReceivePositionalInputAt(e.ScreenSpaceMousePosition))
+                return false;
+
+            if (!durationHandle.ReceivePositionalInputAt(e.ScreenSpaceMousePosition))
                 return false;
 
             editorBeatmap.BeginChange();

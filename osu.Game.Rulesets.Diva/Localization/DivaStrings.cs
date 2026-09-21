@@ -275,6 +275,25 @@ namespace osu.Game.Rulesets.Diva.Localization
         public static readonly LocalisableString EDITOR_GRID_SNAP =
             new DivaLocalizationManager.DivaLocalisableString("格子吸附", "Grid Snap");
 
+        public static readonly LocalisableString EDITOR_REPLACE_ON_SAME_TIME =
+            new DivaLocalizationManager.DivaLocalisableString("同拍替换", "Replace same time");
+
+        public static readonly LocalisableString EDITOR_REPLACE_ON_SAME_TIME_TOOLTIP = new DivaLocalizationManager.DivaLocalisableString(
+            "开启后，在同一拍再放会覆盖已有音符。关闭后可在同一拍叠放多个音符。",
+            "When on, placing on the same beat replaces the existing note. When off, multiple notes can share a beat.");
+
+        public static readonly LocalisableString EDITOR_INSPECTOR_GRID_X =
+            new DivaLocalizationManager.DivaLocalisableString("格子 X", "Grid X");
+
+        public static readonly LocalisableString EDITOR_INSPECTOR_GRID_Y =
+            new DivaLocalizationManager.DivaLocalisableString("格子 Y", "Grid Y");
+
+        public static readonly LocalisableString EDITOR_INSPECTOR_APPROACH_X =
+            new DivaLocalizationManager.DivaLocalisableString("飞入 X", "Approach X");
+
+        public static readonly LocalisableString EDITOR_INSPECTOR_APPROACH_Y =
+            new DivaLocalizationManager.DivaLocalisableString("飞入 Y", "Approach Y");
+
         public static readonly LocalisableString EDITOR_BUTTONS_GROUP =
             new DivaLocalizationManager.DivaLocalisableString("按键", "buttons");
 

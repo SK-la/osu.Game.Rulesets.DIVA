@@ -10,6 +10,7 @@ using osu.Game.Rulesets.Diva.Audio;
 using osu.Game.Rulesets.Diva.Edit.Blueprints.Components;
 using osu.Game.Rulesets.Diva.Objects;
 using osu.Game.Rulesets.Edit;
+using osu.Game.Rulesets.Objects;
 using osuTK;
 using osuTK.Input;
 
@@ -30,6 +31,9 @@ namespace osu.Game.Rulesets.Diva.Edit.Blueprints
         [Resolved]
         private TextureStore textures { get; set; } = null!;
 
+        public override bool ReplacesExistingObject(HitObject existing)
+            => composer?.ReplaceOnSameTime == true && base.ReplacesExistingObject(existing);
+
         protected override bool IsValidForPlacement =>
             base.IsValidForPlacement && (PlacementActive == PlacementState.Waiting || Precision.DefinitelyBigger(HitObject.Duration, 0));
 
@@ -38,7 +42,7 @@ namespace osu.Game.Rulesets.Diva.Edit.Blueprints
         {
             HitObject.Samples.Clear();
             HitObject.Samples.Add(DivaHitSampleInfo.Normal);
-            Child = piece = new DivaNotePiece();
+            Child = piece = new DivaNotePiece { Alpha = 0.55f };
         }
 
         protected override void LoadComplete()

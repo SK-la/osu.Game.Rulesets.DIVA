@@ -40,6 +40,7 @@ namespace osu.Game.Rulesets.Diva.Edit.Blueprints
             base.Update();
 
             piece.UpdateFrom(HitObject, textures);
+            approachHandle.Position = HitObject.Position;
             approachHandle.Alpha = IsSelected ? 1 : 0;
         }
 

@@ -16,8 +16,13 @@ using osuTK.Input;
 
 namespace osu.Game.Rulesets.Diva.Edit.Blueprints.Components
 {
+    /// <summary>
+    ///     Independent approach-origin handle. Kept AutoSize so it does not swallow playfield drags.
+    /// </summary>
     public partial class DivaApproachHandle : CompositeDrawable
     {
+        public const float HANDLE_SIZE = 16;
+
         private readonly DivaHitObject hitObject;
         private readonly Circle handle;
         private readonly Path path;
@@ -29,18 +34,20 @@ namespace osu.Game.Rulesets.Diva.Edit.Blueprints.Components
         {
             this.hitObject = hitObject;
 
-            RelativeSizeAxes = Axes.Both;
+            AutoSizeAxes = Axes.Both;
+            Origin = Anchor.Centre;
 
             InternalChildren =
             [
                 path = new SmoothPath
                 {
                     PathRadius = 1.5f,
+                    BypassAutoSizeAxes = Axes.Both,
                 },
                 handle = new Circle
                 {
                     Origin = Anchor.Centre,
-                    Size = new Vector2(16),
+                    Size = new Vector2(HANDLE_SIZE),
                 }
             ];
         }
@@ -56,8 +63,8 @@ namespace osu.Game.Rulesets.Diva.Edit.Blueprints.Components
         {
             base.Update();
 
-            Vector2 origin = hitObject.Position;
-            Vector2 far = origin + hitObject.ApproachPieceOriginPosition;
+            Vector2 origin = Vector2.Zero;
+            Vector2 far = hitObject.ApproachPieceOriginPosition;
 
             handle.Position = far;
             path.Position = Vector2.Zero;
@@ -66,9 +73,12 @@ namespace osu.Game.Rulesets.Diva.Edit.Blueprints.Components
             path.AddVertex(far);
         }
 
+        protected override bool OnMouseDown(MouseDownEvent e)
+            => e.Button == MouseButton.Left && handle.ReceivePositionalInputAt(e.ScreenSpaceMousePosition);
+
         protected override bool OnDragStart(DragStartEvent e)
         {
-            if (e.Button != MouseButton.Left)
+            if (e.Button != MouseButton.Left || !handle.ReceivePositionalInputAt(e.ScreenSpaceMouseDownPosition))
                 return false;
 
             editorBeatmap.BeginChange();
@@ -77,7 +87,7 @@ namespace osu.Game.Rulesets.Diva.Edit.Blueprints.Components
 
         protected override void OnDrag(DragEvent e)
         {
-            hitObject.ApproachPieceOriginPosition = ToLocalSpace(e.ScreenSpaceMousePosition) - hitObject.Position;
+            hitObject.ApproachPieceOriginPosition = ToLocalSpace(e.ScreenSpaceMousePosition);
             editorBeatmap.Update(hitObject);
         }
 

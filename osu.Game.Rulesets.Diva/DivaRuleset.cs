@@ -191,6 +191,7 @@ namespace osu.Game.Rulesets.Diva
                         new KeyBinding(InputKey.Number2, DivaAction.EditorTapTool),
                         new KeyBinding(InputKey.Number3, DivaAction.EditorHoldTool),
                         new KeyBinding(InputKey.T, DivaAction.EditorToggleGridSnap),
+                        new KeyBinding(InputKey.R, DivaAction.EditorToggleReplaceOnSameTime),
                     ];
             }
         }

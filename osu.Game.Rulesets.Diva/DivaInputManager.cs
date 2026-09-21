@@ -66,5 +66,8 @@ namespace osu.Game.Rulesets.Diva
 
         [Description("Grid Snap")]
         EditorToggleGridSnap,
+
+        [Description("Replace on same time")]
+        EditorToggleReplaceOnSameTime,
     }
 }
