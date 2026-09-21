@@ -19,10 +19,12 @@ using osu.Game.Rulesets.Difficulty;
 using osu.Game.Rulesets.Diva.Beatmaps;
 using osu.Game.Rulesets.Diva.Configuration;
 using osu.Game.Rulesets.Diva.Difficulty;
+using osu.Game.Rulesets.Diva.Edit;
 using osu.Game.Rulesets.Diva.Localization;
 using osu.Game.Rulesets.Diva.Mods;
 using osu.Game.Rulesets.Diva.Scoring;
 using osu.Game.Rulesets.Diva.UI;
+using osu.Game.Rulesets.Edit;
 using osu.Game.Rulesets.Mods;
 using osu.Game.Rulesets.Osu.Mods;
 using osu.Game.Rulesets.Scoring;
@@ -52,6 +54,8 @@ namespace osu.Game.Rulesets.Diva
         public override HealthProcessor CreateHealthProcessor(double drainStartTime) => new DivaHealthProcessor(drainStartTime);
 
         public override IBeatmapConverter CreateBeatmapConverter(IBeatmap beatmap) => new DivaBeatmapConverter(beatmap, this);
+
+        public override HitObjectComposer CreateHitObjectComposer() => new DivaHitObjectComposer(this);
 
         public override DifficultyCalculator CreateDifficultyCalculator(IWorkingBeatmap beatmap) => new DivaDifficultyCalculator(RulesetInfo, beatmap);
 
@@ -151,18 +155,36 @@ namespace osu.Game.Rulesets.Diva
             }
         }
 
-        public override IEnumerable<KeyBinding> GetDefaultKeyBindings(int variant = 0) => new[]
+        public override IEnumerable<KeyBinding> GetDefaultKeyBindings(int variant = 0)
         {
-            new KeyBinding(InputKey.A, DivaAction.Square),
-            new KeyBinding(InputKey.W, DivaAction.Triangle),
-            new KeyBinding(InputKey.S, DivaAction.Cross),
-            new KeyBinding(InputKey.D, DivaAction.Circle),
+            switch (variant)
+            {
+                default:
+                    return
+                    [
+                        new KeyBinding(InputKey.A, DivaAction.Square),
+                        new KeyBinding(InputKey.W, DivaAction.Triangle),
+                        new KeyBinding(InputKey.S, DivaAction.Cross),
+                        new KeyBinding(InputKey.D, DivaAction.Circle),
 
-            new KeyBinding(InputKey.Left, DivaAction.Left),
-            new KeyBinding(InputKey.Up, DivaAction.Up),
-            new KeyBinding(InputKey.Right, DivaAction.Right),
-            new KeyBinding(InputKey.Down, DivaAction.Down)
-        };
+                        new KeyBinding(InputKey.Left, DivaAction.Left),
+                        new KeyBinding(InputKey.Up, DivaAction.Up),
+                        new KeyBinding(InputKey.Right, DivaAction.Right),
+                        new KeyBinding(InputKey.Down, DivaAction.Down)
+                    ];
+
+                case EDITOR_VARIANT:
+                    return
+                    [
+                        new KeyBinding(InputKey.Number2, DivaAction.EditorTapTool),
+                        new KeyBinding(InputKey.Number3, DivaAction.EditorHoldTool),
+                        new KeyBinding(InputKey.T, DivaAction.EditorToggleGridSnap),
+                    ];
+            }
+        }
+
+        public override LocalisableString GetVariantName(int variant)
+            => variant == EDITOR_VARIANT ? DivaStrings.EDITOR_VARIANT : base.GetVariantName(variant);
 
         public override IEnumerable<HitResult> GetValidHitResults()
         {

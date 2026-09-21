@@ -57,5 +57,14 @@ namespace osu.Game.Rulesets.Diva
 
         [Description("↓")]
         Down,
+
+        [Description("Tap")]
+        EditorTapTool = 10000,
+
+        [Description("Hold")]
+        EditorHoldTool,
+
+        [Description("Grid Snap")]
+        EditorToggleGridSnap,
     }
 }

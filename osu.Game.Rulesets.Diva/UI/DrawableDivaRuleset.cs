@@ -70,9 +70,9 @@ namespace osu.Game.Rulesets.Diva.UI
         }
 
         public override PlayfieldAdjustmentContainer CreatePlayfieldAdjustmentContainer()
-            => new DivaPlayfieldAdjustmentContainer(resolveLogicalPlayfieldSize());
+            => new DivaPlayfieldAdjustmentContainer(ResolveLogicalPlayfieldSize());
 
-        private Vector2 resolveLogicalPlayfieldSize()
+        protected Vector2 ResolveLogicalPlayfieldSize()
         {
             if (Beatmap is DivaBeatmap divaBeatmap)
                 return divaBeatmap.LogicalPlayfieldSize;
@@ -80,7 +80,7 @@ namespace osu.Game.Rulesets.Diva.UI
             return DivaPlayfieldSize.Compute(Beatmap.HitObjects.OfType<DivaHitObject>());
         }
 
-        protected override Playfield CreatePlayfield() => new DivaPlayfield(resolveLogicalPlayfieldSize());
+        protected override Playfield CreatePlayfield() => new DivaPlayfield(ResolveLogicalPlayfieldSize());
 
         protected override ReplayInputHandler CreateReplayInputHandler(Replay replay) => new DivaFramedReplayInputHandler(replay);
 

@@ -339,6 +339,8 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
         protected override void Update()
         {
+            Position = HitObject.Position;
+
             // Replay playback can run gameplay time backwards. Stars spawned on the abandoned timeline keep their
             // absolute spawn times, so drop them instead of letting them be re-shown over the fixed target.
             if (Time.Current < lastUpdateTime)

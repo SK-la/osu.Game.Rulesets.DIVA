@@ -261,6 +261,37 @@ namespace osu.Game.Rulesets.Diva.Localization
 
         #endregion
 
+        #region Editor
+
+        public static readonly LocalisableString EDITOR_VARIANT =
+            new DivaLocalizationManager.DivaLocalisableString("编辑器", "Editor");
+
+        public static readonly LocalisableString EDITOR_TAP_TOOL =
+            new DivaLocalizationManager.DivaLocalisableString("单击", "Tap");
+
+        public static readonly LocalisableString EDITOR_HOLD_TOOL =
+            new DivaLocalizationManager.DivaLocalisableString("长按", "Hold");
+
+        public static readonly LocalisableString EDITOR_GRID_SNAP =
+            new DivaLocalizationManager.DivaLocalisableString("格子吸附", "Grid Snap");
+
+        public static readonly LocalisableString EDITOR_BUTTONS_GROUP =
+            new DivaLocalizationManager.DivaLocalisableString("按键", "buttons");
+
+        public static readonly LocalisableString EDITOR_INSPECTOR_ACTION =
+            new DivaLocalizationManager.DivaLocalisableString("按键", "Action");
+
+        public static readonly LocalisableString EDITOR_INSPECTOR_GRID =
+            new DivaLocalizationManager.DivaLocalisableString("格子", "Grid");
+
+        public static readonly LocalisableString EDITOR_INSPECTOR_APPROACH =
+            new DivaLocalizationManager.DivaLocalisableString("飞入", "Approach");
+
+        public static readonly LocalisableString EDITOR_INSPECTOR_DURATION =
+            new DivaLocalizationManager.DivaLocalisableString("时长", "Duration");
+
+        #endregion
+
         #region Mods
 
         public static readonly LocalisableString MOD_KEY1_DESCRIPTION =

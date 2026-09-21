@@ -75,6 +75,29 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
             return new Vector2(x, y);
         }
 
+        /// <summary>
+        ///     Inverse of <see cref="ToPlayfieldPosition"/>: playfield pixels → grid cell (may be fractional).
+        /// </summary>
+        public static Vector2 ToGridPosition(Vector2 playfield)
+        {
+            float x = (playfield.X - DivaChartConstants.ORIGIN_X - 12) / DivaChartConstants.DELTA_X;
+            float y = (playfield.Y - DivaChartConstants.ORIGIN_Y - 12) / DivaChartConstants.DELTA_Y;
+            return new Vector2(x, y);
+        }
+
+        /// <summary>
+        ///     Snap a playfield-space point onto the ProjectDIVA note grid.
+        /// </summary>
+        public static Vector2 SnapToGrid(Vector2 playfield, bool integerCells = true)
+        {
+            Vector2 grid = ToGridPosition(playfield);
+
+            if (integerCells)
+                grid = new Vector2(MathF.Round(grid.X), MathF.Round(grid.Y));
+
+            return ToPlayfieldPosition(grid.X, grid.Y);
+        }
+
         /// <summary>Obsolete name kept for call sites; prefers playfield space.</summary>
         public static Vector2 ToOsuPosition(float gridX, float gridY) => ToPlayfieldPosition(gridX, gridY);
 
