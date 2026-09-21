@@ -34,10 +34,10 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         private const double fade_in_ratio = 0.24;
 
         /// <summary>
-        ///     hand.png is authored so the tip sits at the texture centre, so it needs 180° to point
-        ///     outward; the spin is applied on top of that.
+        ///     Pointer is authored at half the note size, so rest scale is 2×; spin is applied on top of that.
         /// </summary>
-        private const float hand_base_rotation = 180f;
+        private const float hand_rest_scale = 2f;
+        private const float hand_base_rotation = 0f;
 
         public override bool HandlePositionalInput => false;
 
@@ -136,11 +136,10 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             AddRangeInternal([
                 ApproachHand = new Sprite
                 {
-                    // hand.png canvas is authored so the tip sits at the texture centre.
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
                     RelativeSizeAxes = Axes.Both,
-                    Rotation = 180f,
+                    Scale = new Vector2(hand_rest_scale),
                     Depth = 1,
                 },
                 ApproachPiece = new ApproachPiece
@@ -293,7 +292,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
                     // head on the target at rest instead of leaving it wherever the previous pass left it.
                     ApproachPiece.UpdatePos(1f);
                     StatSprite?.Scale = Vector2.One;
-                    ApproachHand.Scale = Vector2.One;
+                    ApproachHand.Scale = new Vector2(hand_rest_scale);
                     ApproachHand.Rotation = hand_base_rotation;
                 }
 
@@ -301,7 +300,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             }
 
             this.FadeInFromZero(timeFadein);
-            ApproachHand.ScaleTo(2, timeFadein, Easing.In);
+            ApproachHand.ScaleTo(hand_rest_scale, timeFadein, Easing.In);
 
             ApproachHand.RotateTo(360, TimePreempt, Easing.In);
         }
@@ -403,7 +402,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
             StatSprite?.Scale = new Vector2(scale);
 
-            ApproachHand.Scale = new Vector2(scale);
+            ApproachHand.Scale = new Vector2(scale * hand_rest_scale);
             ApproachHand.Rotation = hand_base_rotation - 360f * percent;
         }
 
