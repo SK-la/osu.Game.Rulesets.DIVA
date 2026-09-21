@@ -114,6 +114,7 @@ namespace osu.Game.Rulesets.Diva.Edit
             };
 
             LayerBelowRuleset.Add(positionSnapGrid);
+            RightToolbox.Add(new DivaExportToolbox());
 
             gridSnapToggle.BindValueChanged(state =>
             {

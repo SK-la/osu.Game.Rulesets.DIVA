@@ -11,6 +11,9 @@ using osu.Framework.Graphics.Textures;
 using osu.Framework.Input.Bindings;
 using osu.Framework.Localisation;
 using osu.Game.Beatmaps;
+#if DIVA_EZ2LAZER
+using osu.Game.Beatmaps.Formats;
+#endif
 using osu.Game.Beatmaps.Legacy;
 using osu.Game.Configuration;
 using osu.Game.Overlays.Settings;
@@ -29,6 +32,10 @@ using osu.Game.Rulesets.Mods;
 using osu.Game.Rulesets.Osu.Mods;
 using osu.Game.Rulesets.Scoring;
 using osu.Game.Rulesets.UI;
+#if DIVA_EZ2LAZER
+using osu.Game.Skinning;
+using osu.Game.Storyboards;
+#endif
 
 namespace osu.Game.Rulesets.Diva
 {
@@ -56,6 +63,11 @@ namespace osu.Game.Rulesets.Diva
         public override IBeatmapConverter CreateBeatmapConverter(IBeatmap beatmap) => new DivaBeatmapConverter(beatmap, this);
 
         public override HitObjectComposer CreateHitObjectComposer() => new DivaHitObjectComposer(this);
+
+#if DIVA_EZ2LAZER
+        public override IBeatmapEncoder? CreateBeatmapEncoder(IBeatmap beatmap, ISkin? skin, Storyboard? storyboard)
+            => new DivaBeatmapEncoder(beatmap, skin, storyboard);
+#endif
 
         public override DifficultyCalculator CreateDifficultyCalculator(IWorkingBeatmap beatmap) => new DivaDifficultyCalculator(RulesetInfo, beatmap);
 

@@ -290,6 +290,21 @@ namespace osu.Game.Rulesets.Diva.Localization
         public static readonly LocalisableString EDITOR_INSPECTOR_DURATION =
             new DivaLocalizationManager.DivaLocalisableString("时长", "Duration");
 
+        public static readonly LocalisableString EDITOR_EXPORT_DIVA =
+            new DivaLocalizationManager.DivaLocalisableString("导出 .diva", "Export .diva");
+
+        public static string Editor_ExportDivaComplete(string path) =>
+            editor_export_diva_complete_template.Format(path);
+
+        public static string Editor_ExportDivaFailed(string message) =>
+            editor_export_diva_failed_template.Format(message);
+
+        private static readonly DivaLocalizationManager.DivaLocalisableString editor_export_diva_complete_template =
+            new DivaLocalizationManager.DivaLocalisableString("已导出 .diva：{0}", "Exported .diva: {0}");
+
+        private static readonly DivaLocalizationManager.DivaLocalisableString editor_export_diva_failed_template =
+            new DivaLocalizationManager.DivaLocalisableString("导出 .diva 失败：{0}", "Failed to export .diva: {0}");
+
         #endregion
 
         #region Mods
