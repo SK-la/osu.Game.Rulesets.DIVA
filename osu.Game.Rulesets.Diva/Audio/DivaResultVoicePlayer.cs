@@ -27,11 +27,11 @@ namespace osu.Game.Rulesets.Diva.Audio
 
         private readonly IBindable<bool> samplePlaybackDisabled = new BindableBool();
 
-        [Resolved]
-        private ScoreProcessor scoreProcessor { get; set; } = null!;
+        [Resolved(canBeNull: true)]
+        private ScoreProcessor? scoreProcessor { get; set; }
 
-        [Resolved]
-        private HealthProcessor healthProcessor { get; set; } = null!;
+        [Resolved(canBeNull: true)]
+        private HealthProcessor? healthProcessor { get; set; }
 
         [Resolved(canBeNull: true)]
         private GameplayState? gameplayState { get; set; }
@@ -59,7 +59,7 @@ namespace osu.Game.Rulesets.Diva.Audio
         protected override void LoadComplete()
         {
             base.LoadComplete();
-            scoreProcessor.HasCompleted.BindValueChanged(onCompleted, true);
+            scoreProcessor?.HasCompleted.BindValueChanged(onCompleted, true);
         }
 
         protected override void Update()
@@ -75,12 +75,12 @@ namespace osu.Game.Rulesets.Diva.Audio
             if (!completed.NewValue)
                 return;
 
-            playVoice(failed: healthProcessor.HasFailed || (gameplayState?.HasFailed ?? false));
+            playVoice(failed: healthProcessor?.HasFailed == true || (gameplayState?.HasFailed ?? false));
         }
 
         private void playVoice(bool failed)
         {
-            if (played)
+            if (played || scoreProcessor == null)
                 return;
 
             if (gameplayState?.HasQuit == true)

@@ -38,6 +38,12 @@ namespace osu.Game.Rulesets.Diva.UI
         [Cached]
         private readonly DivaHitSamplePlayer hitSamplePlayer;
 
+        /// <summary>
+        ///     End-of-song grade VO needs gameplay <see cref="ScoreProcessor"/> / <see cref="HealthProcessor"/>.
+        ///     The editor playfield has neither, so it leaves this off.
+        /// </summary>
+        protected virtual bool AddResultVoicePlayer => true;
+
         public DivaPlayfield(Vector2 logicalSize)
         {
             LogicalSize = logicalSize;
@@ -68,7 +74,9 @@ namespace osu.Game.Rulesets.Diva.UI
 
             // After HitObjectContainer: reversed KeyBindingInputQueue hits us first (taiko/mania pattern).
             AddInternal(hitSamplePlayer);
-            AddInternal(new DivaResultVoicePlayer());
+
+            if (AddResultVoicePlayer)
+                AddInternal(new DivaResultVoicePlayer());
         }
 
         private void onJudgementLoaded(DrawableDivaJudgement j)

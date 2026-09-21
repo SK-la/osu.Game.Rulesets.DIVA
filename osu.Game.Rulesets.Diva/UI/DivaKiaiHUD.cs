@@ -29,8 +29,8 @@ namespace osu.Game.Rulesets.Diva.UI
 
         private int currentKiaiIndex = -1;
 
-        [Resolved]
-        private IGameplayClock gameplayClock { get; set; } = null!;
+        [Resolved(canBeNull: true)]
+        private IGameplayClock? gameplayClock { get; set; }
 
         public DivaKiaiHUD()
         {
@@ -97,7 +97,7 @@ namespace osu.Game.Rulesets.Diva.UI
             if (kiaiIntervals.Count == 0)
                 return;
 
-            double currentTime = gameplayClock.CurrentTime;
+            double currentTime = gameplayClock?.CurrentTime ?? Time.Current;
             int newKiaiIndex = -1;
 
             // 查找当前所在的Kiai区间

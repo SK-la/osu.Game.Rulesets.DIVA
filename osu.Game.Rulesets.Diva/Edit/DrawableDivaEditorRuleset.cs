@@ -26,6 +26,8 @@ namespace osu.Game.Rulesets.Diva.Edit
             }
 
             protected override GameplayCursorContainer? CreateCursor() => null;
+
+            protected override bool AddResultVoicePlayer => false;
         }
     }
 }
