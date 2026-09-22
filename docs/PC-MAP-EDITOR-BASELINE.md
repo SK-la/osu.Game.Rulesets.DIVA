@@ -423,10 +423,11 @@ PV 区点击 `[ed:68806-69223]`：
 | 删除当前时间点全部音符 | `Ctrl+Delete`，清空 `nowSelect` 帧的音符数 `ui:L66238` | `DivaAction.EditorDeleteAtCurrentTime`（默认 `Ctrl+Delete`）+ 工具栏按钮，走 `DivaRangeOperations.NotesAtFrame` |
 | 区间删除音符 | 区间对话框（`deleteInput`，起止以 1/192 记），清 `[起, 止]` 每个时间点的音符 `ui:L6.2` | `DivaRangeToolsToolbox`「删除区间内音符」，起止帧可输入；同样只按音符的**起始帧**判定，闭区间 |
 | 区间拷贝到指定偏移 | 区间对话框（`PasteInput`，源 `[起, 止]` + 目标起始，1/192 记）`ui:L6.1`；越界部分忽略 | `DivaRangeOperations.PlanRangeCopy` + 工具箱「复制区间到此帧」：音符（长条保持帧长）与 BGS/RES 事件整体平移，原内容保留，超出末帧的副本丢弃。**BPM/STOP 不随区间搬移**，理由见 §13.5 |
+| `F1–F4` / `Alt+F1–F4` 直选键位 | 菜单快捷键 `○□×△` / `→←↓↑` 各一键 `ui:L266` | 同 4 个方向键位动作（`Circle`/`Square`/`Cross`/`Triangle`/`Right`/`Left`/`Down`/`Up`）在编辑器变体下加绑 `F1–F4` / `Alt+F1–F4`；`DivaNoteToggleGrid.HandleAction` 收到具体音符键时直选该键**并把「箭头 / 符号」族跟着切过去**，否则随后按 WASD 会落回刚离开的那一族 |
 
 ### 13.2 未实现（按需再排）
 
-- **快捷键对齐（低优先）**：PC 的 `F5–F8` 模式键、`F1–F4`/`Alt+F1–F4` 选键位未引入；Ez 现为方向键/WASD 选键位、`2`·`3` 切工具、`X` 切单键/长条、`Ctrl+Delete` 删当前帧。只补与放置/编辑直接相关者，不引入模式键。
+- **`F5–F8` 四模式键（低优先）**：PC 用模式键切换「PV 区左键 / 数值列」的语义（§ui 表 `L240`）。Ez 走 lazer 的工具箱 + 三元按钮，不引入模式态——同一个物理键在不同模式下语义翻转会与 lazer 的「所见即所得」冲突，且模式键本身不提供 Ez 缺失的能力，故不补。其余快捷键（`F1–F4`/`Alt+F1–F4` 选键位、`2`·`3` 切工具、`X` 切单键/长条、`Ctrl+Delete` 删当前帧）已对齐。
 
 ### 13.3 已覆盖，无需改动（避免重复投入）
 

@@ -201,6 +201,16 @@ namespace osu.Game.Rulesets.Diva
                         new KeyBinding(InputKey.D, DivaAction.EditorButtonRight),
                         new KeyBinding(InputKey.Number5, DivaAction.EditorToggleButtonFamily),
                         new KeyBinding(new KeyCombination(InputKey.Control, InputKey.Delete), DivaAction.EditorDeleteAtCurrentTime),
+
+                        // The reference editor's F1–F4 name a face button, Alt+F1–F4 the matching arrow.
+                        new KeyBinding(InputKey.F1, DivaAction.Circle),
+                        new KeyBinding(InputKey.F2, DivaAction.Square),
+                        new KeyBinding(InputKey.F3, DivaAction.Cross),
+                        new KeyBinding(InputKey.F4, DivaAction.Triangle),
+                        new KeyBinding(new KeyCombination(InputKey.Alt, InputKey.F1), DivaAction.Right),
+                        new KeyBinding(new KeyCombination(InputKey.Alt, InputKey.F2), DivaAction.Left),
+                        new KeyBinding(new KeyCombination(InputKey.Alt, InputKey.F3), DivaAction.Down),
+                        new KeyBinding(new KeyCombination(InputKey.Alt, InputKey.F4), DivaAction.Up),
                     ];
             }
         }

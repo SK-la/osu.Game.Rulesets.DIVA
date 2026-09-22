@@ -329,7 +329,7 @@ namespace osu.Game.Rulesets.Diva.Tests.Editor
                        && DivaChartBuilder.FrameLengthAt(editorBeatmap, hold.StartTime, hold.Duration) == 48;
             });
 
-            AddAssert("the replacement is selected", () => editorBeatmap.SelectedHitObjects.Single(), () => Is.TypeOf<DivaHoldHitObject>());
+            AddAssert("the replacement is selected", () => editorBeatmap.SelectedHitObjects.Single(), Is.TypeOf<DivaHoldHitObject>);
 
             AddStep("convert back to tap", () => noteToolButton(DivaStrings.EDITOR_CONVERT_TO_TAP.ToString()).TriggerClick());
 
@@ -500,12 +500,13 @@ namespace osu.Game.Rulesets.Diva.Tests.Editor
 
         private RoundedButton rangeToolButton(string text)
             => rangeToolBox().ChildrenOfType<RoundedButton>()
-                            .Single(button => button.Text.ToString() == text);
+                             .Single(button => button.Text.ToString() == text);
 
         private DivaBatchToolsToolbox batchToolBox() => composer.ChildrenOfType<DivaBatchToolsToolbox>().Single();
+
         private RoundedButton batchToolButton(string text)
             => batchToolBox().ChildrenOfType<RoundedButton>()
-                            .Single(button => button.Text.ToString() == text);
+                             .Single(button => button.Text.ToString() == text);
 
         private RoundedButton noteToolButton(string text)
             => composer.ChildrenOfType<DivaNoteToolsToolbox>().Single()
@@ -541,6 +542,18 @@ namespace osu.Game.Rulesets.Diva.Tests.Editor
 
             AddAssert("5 toggles the family", () => isBound(DivaAction.EditorToggleButtonFamily, InputKey.Number5));
             AddAssert("X toggles tap/hold placement", () => isBound(DivaAction.EditorToggleHoldTool, InputKey.X));
+
+            AddAssert("F1–F4 pick a face button", () =>
+                isBound(DivaAction.Circle, InputKey.F1)
+                && isBound(DivaAction.Square, InputKey.F2)
+                && isBound(DivaAction.Cross, InputKey.F3)
+                && isBound(DivaAction.Triangle, InputKey.F4));
+
+            AddAssert("Alt+F1–F4 pick an arrow", () =>
+                isBound(DivaAction.Right, InputKey.Alt, InputKey.F1)
+                && isBound(DivaAction.Left, InputKey.Alt, InputKey.F2)
+                && isBound(DivaAction.Down, InputKey.Alt, InputKey.F3)
+                && isBound(DivaAction.Up, InputKey.Alt, InputKey.F4));
         }
 
         [Test]
@@ -550,7 +563,7 @@ namespace osu.Game.Rulesets.Diva.Tests.Editor
             AddAssert("toggle reads tap", () => holdPlacementButton().Current.Value, () => Is.EqualTo(TernaryState.False));
 
             AddStep("press the hold toggle", () => holdPlacementButton().TriggerClick());
-            AddUntilStep("hold tool active", () => composer.BlueprintContainer.CurrentTool, () => Is.TypeOf<DivaHoldCompositionTool>());
+            AddUntilStep("hold tool active", () => composer.BlueprintContainer.CurrentTool, Is.TypeOf<DivaHoldCompositionTool>);
             AddAssert("toolbar follows the toggle", () => holdPlacementButton().Current.Value, () => Is.EqualTo(TernaryState.True));
             AddAssert("hold radio highlighted", () => toolButton(DivaStrings.EDITOR_HOLD_TOOL.ToString()).Selected.Value, () => Is.True);
             AddAssert("tap radio cleared", () => toolButton(DivaStrings.EDITOR_TAP_TOOL.ToString()).Selected.Value, () => Is.False);
@@ -558,7 +571,7 @@ namespace osu.Game.Rulesets.Diva.Tests.Editor
             AddAssert("note button untouched", () => composer.CurrentAction, () => Is.EqualTo(DivaAction.Circle));
 
             AddStep("press the toggle again", () => holdPlacementButton().TriggerClick());
-            AddUntilStep("tap tool active", () => composer.BlueprintContainer.CurrentTool, () => Is.TypeOf<DivaTapCompositionTool>());
+            AddUntilStep("tap tool active", () => composer.BlueprintContainer.CurrentTool, Is.TypeOf<DivaTapCompositionTool>);
             AddAssert("toggle reads tap again", () => holdPlacementButton().Current.Value, () => Is.EqualTo(TernaryState.False));
 
             AddStep("click the hold radio directly", () => selectTool(DivaStrings.EDITOR_HOLD_TOOL.ToString()));
@@ -620,6 +633,18 @@ namespace osu.Game.Rulesets.Diva.Tests.Editor
 
             AddStep("press 5 again", () => grid().HandleAction(DivaAction.EditorToggleButtonFamily));
             AddAssert("back to the symbol half", () => composer.CurrentAction, () => Is.EqualTo(DivaAction.Cross));
+
+            AddStep("press F3", () => grid().HandleAction(DivaAction.Cross));
+            AddAssert("cross picked", () => composer.CurrentAction, () => Is.EqualTo(DivaAction.Cross));
+
+            AddStep("press W", () => grid().HandleAction(DivaAction.EditorButtonUp));
+            AddAssert("family followed the F-key", () => composer.CurrentAction, () => Is.EqualTo(DivaAction.Triangle));
+
+            AddStep("press Alt+F1", () => grid().HandleAction(DivaAction.Right));
+            AddAssert("arrow picked", () => composer.CurrentAction, () => Is.EqualTo(DivaAction.Right));
+
+            AddStep("press S", () => grid().HandleAction(DivaAction.EditorButtonDown));
+            AddAssert("family followed the Alt key", () => composer.CurrentAction, () => Is.EqualTo(DivaAction.Down));
 
             AddAssert("unrelated action is not handled", () => grid().HandleAction(DivaAction.EditorTapTool), () => Is.False);
         }

@@ -311,8 +311,8 @@ namespace osu.Game.Rulesets.Diva.Localization
             new DivaLocalizationManager.DivaLocalisableString("符号", "Symbols");
 
         public static readonly LocalisableString EDITOR_BUTTONS_FAMILY_TOOLTIP = new DivaLocalizationManager.DivaLocalisableString(
-            "按 WASD 选方向，点这里或按 5 切换 WASD 放置箭头还是符号。",
-            "WASD picks a direction; click here or press 5 to switch whether WASD places arrows or symbols.");
+            "按 WASD 选方向，点这里或按 5 切换 WASD 放置箭头还是符号；也可用 F1–F4 直接选符号、Alt+F1–F4 直接选箭头。",
+            "WASD picks a direction; click here or press 5 to switch whether WASD places arrows or symbols. F1–F4 picks a symbol outright, Alt+F1–F4 the matching arrow.");
 
         public static readonly LocalisableString EDITOR_INSPECTOR_ACTION =
             new DivaLocalizationManager.DivaLocalisableString("按键", "Action");

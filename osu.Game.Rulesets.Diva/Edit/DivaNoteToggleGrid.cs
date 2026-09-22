@@ -96,7 +96,7 @@ namespace osu.Game.Rulesets.Diva.Edit
         }
 
         /// <summary>
-        /// Applies a direction or family key, returning whether the key belonged to this grid.
+        /// Applies a direction, family or note key, returning whether the key belonged to this grid.
         /// Split out of <see cref="OnPressed"/> so the mapping stays testable without key bindings.
         /// </summary>
         public bool HandleAction(DivaAction action)
@@ -116,8 +116,17 @@ namespace osu.Game.Rulesets.Diva.Edit
                 return true;
             }
 
-            return false;
+            // The reference editor's F1–F4 / Alt+F1–F4 name a note outright rather than a row, so they also
+            // set the family: otherwise the next WASD press would keep placing the half the user just left.
+            if (!isNoteAction(action))
+                return false;
+
+            arrowFamily = NOTE_PAIRS.Any(pair => pair.Arrow == action);
+            composer.SelectAction(action);
+            return true;
         }
+
+        private static bool isNoteAction(DivaAction action) => NoteActions.Contains(action);
 
         private void setFamily(bool forArrows)
         {
