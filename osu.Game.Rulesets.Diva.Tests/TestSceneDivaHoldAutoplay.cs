@@ -73,7 +73,30 @@ namespace osu.Game.Rulesets.Diva.Tests
             AddAssert("no SAD / wrong / miss anywhere", allJudgedCleanly);
         }
 
-        private const double firstPassEnd = 4600;
+        /// <summary>
+        /// The dense stream puts four notes of one button inside a single judgement window of each other.
+        /// ProjectDIVA judges one note per keystroke, so an input path which fans a press out to every matching
+        /// note would reward the first press with the whole stream and then hand the rest of the presses nothing
+        /// to hit.
+        /// </summary>
+        [Test]
+        public void TestDenseStreamOnOneButtonJudgesOneNotePerPress()
+        {
+            AddUntilStep("wait for track to start running", () => Beatmap.Value.Track.IsRunning);
+
+            seekTo(firstPassEnd);
+            AddAssert("every dense note is judged", () => denseStreamDrawables().All(h => h.Judged));
+            AddAssert("every dense note is a PERFECT", () => denseStreamDrawables().All(h => h.Result.Type is HitResult.Perfect));
+            AddAssert("no SAD / wrong / miss anywhere", allJudgedCleanly);
+        }
+
+        private IEnumerable<DrawableDivaHitObject> denseStreamDrawables()
+            => Player.DrawableRuleset.Playfield.AllHitObjects
+                     .OfType<DrawableDivaHitObject>()
+                     .Where(h => h.HitObject.ValidAction == DivaAction.Up)
+                     .OrderBy(h => h.HitObject.StartTime);
+
+        private const double firstPassEnd = 4800;
 
         private void seekTo(double time)
         {
@@ -115,8 +138,15 @@ namespace osu.Game.Rulesets.Diva.Tests
             addNote(beatmap, 3500, DivaAction.Circle, new Vector2(360, 200));
             addNote(beatmap, 4000, DivaAction.Square, new Vector2(220, 240));
 
+            // Dense stream on one button: each note sits inside a single window of the next, so every press has to
+            // judge exactly one of them.
+            foreach (double time in denseStreamTimes)
+                addNote(beatmap, time, DivaAction.Up, new Vector2(200, 260));
+
             return beatmap;
         }
+
+        private static readonly double[] denseStreamTimes = { 4200, 4300, 4400, 4500 };
 
         private static void addNote(Beatmap beatmap, double time, DivaAction action, Vector2 position)
         {

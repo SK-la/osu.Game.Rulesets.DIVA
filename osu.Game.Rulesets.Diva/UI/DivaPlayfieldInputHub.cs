@@ -1,30 +1,28 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using osu.Framework.Graphics;
 using osu.Framework.Input.Bindings;
 using osu.Framework.Input.Events;
 using osu.Game.Rulesets.Diva.Objects.Drawables;
-using osu.Game.Rulesets.Objects;
+using osu.Game.Rulesets.Diva.Scoring;
 using osu.Game.Screens.Play;
 
 namespace osu.Game.Rulesets.Diva.UI
 {
     /// <summary>
-    /// Fans a single action press/release to every matching alive note.
+    /// Routes each press/release to the single note it judges.
     /// </summary>
     /// <remarks>
     /// Framework key bindings stop at the first handler that returns true, so per-note
-    /// <see cref="IKeyBindingHandler{T}"/> would consume a chord. Replay frames can also
-    /// carry multiple copies of the same action; each copy is a separate press here.
+    /// <see cref="IKeyBindingHandler{T}"/> would consume a chord. A frame may also carry several copies of the
+    /// same action for different notes of a chord; each copy picks its own target here.
     /// </remarks>
     public partial class DivaPlayfieldInputHub : Component, IKeyBindingHandler<DivaAction>
     {
         private readonly DivaPlayfield playfield;
-        private readonly Dictionary<DivaAction, int> pressCounts = new Dictionary<DivaAction, int>();
 
         public DivaPlayfieldInputHub(DivaPlayfield playfield)
         {
@@ -36,30 +34,7 @@ namespace osu.Game.Rulesets.Diva.UI
             if ((Clock as IGameplayClock)?.IsRewinding == true)
                 return false;
 
-            addPress(e.Action);
-
-            bool handledValid = false;
-
-            foreach (DrawableDivaHitObject note in aliveNotes())
-            {
-                if (!note.MatchesPressedAction(e.Action))
-                    continue;
-
-                handledValid |= note.TryHandlePress(e.Action);
-            }
-
-            if (!handledValid)
-            {
-                foreach (DrawableDivaHitObject note in aliveNotes())
-                {
-                    if (note.MatchesPressedAction(e.Action))
-                        continue;
-
-                    if (note.TryHandlePress(e.Action))
-                        break;
-                }
-            }
-
+            findPressTarget(e.Action)?.TryHandlePress(e.Action);
             return false;
         }
 
@@ -68,37 +43,44 @@ namespace osu.Game.Rulesets.Diva.UI
             if ((Clock as IGameplayClock)?.IsRewinding == true)
                 return;
 
-            int remaining = removePress(e.Action);
-            var holding = aliveNotes()
-                          .OfType<DrawableDivaHoldHitObject>()
-                          .Where(h => h.IsHoldingAction(e.Action))
-                          .OrderBy(h => Math.Abs(Time.Current - h.HitObject.GetEndTime()))
-                          .ToList();
+            // ProjectDIVA hands a release to the first held strip of that button, and only one.
+            foreach (DrawableDivaHitObject note in aliveNotes())
+            {
+                if (note is DrawableDivaHoldHitObject hold && hold.IsHoldingAction(e.Action))
+                {
+                    hold.TryHandleRelease(e.Action);
+                    return;
+                }
+            }
+        }
 
-            int excess = holding.Count - remaining;
+        /// <summary>
+        ///     Picks the single note a press judges, via <see cref="DivaPressTargetSelector"/>.
+        /// </summary>
+        private DrawableDivaHitObject? findPressTarget(DivaAction action)
+        {
+            var notes = new List<DrawableDivaHitObject>();
+            var candidates = new List<DivaPressTargetSelector.Candidate>();
 
-            for (int i = 0; i < excess; i++)
-                holding[i].TryHandleRelease(e.Action);
+            foreach (DrawableDivaHitObject note in aliveNotes())
+            {
+                if (!note.AcceptsPressNow)
+                    continue;
+
+                notes.Add(note);
+                candidates.Add(new DivaPressTargetSelector.Candidate(
+                    note.PressTimeOffsetAt(Time.Current),
+                    note.MatchesPressedAction(action),
+                    note is DrawableDivaHoldHitObject,
+                    note.JudgementLocked));
+            }
+
+            int index = DivaPressTargetSelector.Select(candidates);
+
+            return index < 0 ? null : notes[index];
         }
 
         private IEnumerable<DrawableDivaHitObject> aliveNotes()
             => playfield.HitObjectContainer.AliveObjects.OfType<DrawableDivaHitObject>();
-
-        private void addPress(DivaAction action)
-        {
-            pressCounts.TryGetValue(action, out int count);
-            pressCounts[action] = count + 1;
-        }
-
-        private int removePress(DivaAction action)
-        {
-            if (!pressCounts.TryGetValue(action, out int count) || count <= 1)
-            {
-                pressCounts.Remove(action);
-                return 0;
-            }
-
-            return pressCounts[action] = count - 1;
-        }
     }
 }

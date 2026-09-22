@@ -9,7 +9,6 @@ using osu.Game.Rulesets.Diva.Graphics;
 using osu.Game.Rulesets.Diva.Objects.Drawables.Pieces;
 using osu.Game.Rulesets.Diva.Scoring;
 using osu.Game.Rulesets.Diva.UI;
-using osu.Game.Rulesets.Objects;
 using osu.Game.Rulesets.Objects.Drawables;
 using osu.Game.Rulesets.Scoring;
 using osuTK;
@@ -127,19 +126,8 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
         public bool IsHoldingAction(DivaAction action) => IsHolding && !Judged && ComputeValidPress(action);
 
-        /// <summary>True when this strip should consume a release of its button (tail window / timeout).</summary>
-        public bool IsReleaseDue
-        {
-            get
-            {
-                if (!IsHolding || Judged)
-                    return false;
-
-                double endOffset = Time.Current - HitObject.GetEndTime() + InputOffset.Value;
-                return DivaHitJudgementEvaluator.GetHoldResultFor(endOffset) != HitResult.None
-                       || DivaHitJudgementEvaluator.ShouldMissHold(endOffset);
-            }
-        }
+        /// <summary>A started strip is already consumed by its head press; ProjectDIVA skips it entirely.</summary>
+        public override bool AcceptsPressNow => !Judged && !IsHolding;
 
         public override bool TryHandlePress(DivaAction action)
         {

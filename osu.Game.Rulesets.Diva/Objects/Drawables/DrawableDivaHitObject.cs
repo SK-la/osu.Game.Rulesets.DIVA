@@ -425,9 +425,21 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
 
         public bool MatchesPressedAction(DivaAction action) => ComputeValidPress(action);
 
+        /// <summary>Whether this note has not been consumed yet, so a press may still target it.</summary>
+        public virtual bool AcceptsPressNow => !Judged;
+
+        /// <summary>True while the wrong-key penalty applies; mirrors ProjectDIVA's strict judgement switch.</summary>
+        public bool JudgementLocked => JudgementLock.Value;
+
         /// <summary>
-        ///     Applies this press if the note can use it. Returns true only when the press produced a
-        ///     judgement or started a hold — the playfield fans one key to every matching note.
+        ///     Signed offset between <paramref name="time"/> and this note's press time. Mirrors the
+        ///     <c>timeOffset</c> a press would be judged with, so target selection can compare distances.
+        /// </summary>
+        public double PressTimeOffsetAt(double time) => time - HitObject.StartTime + InputOffset.Value;
+
+        /// <summary>
+        ///     Applies this press to this note. Returns true only when the press produced a judgement or
+        ///     started a hold; the playfield hands a press to a single selected note.
         /// </summary>
         public virtual bool TryHandlePress(DivaAction action)
         {
