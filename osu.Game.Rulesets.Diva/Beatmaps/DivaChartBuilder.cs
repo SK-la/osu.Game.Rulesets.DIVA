@@ -182,6 +182,22 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
         }
 
         /// <summary>
+        ///     Milliseconds one chart frame lasts at a playfield time — the unit the export quantises hold
+        ///     lengths to, so the editor can show (and write) the length a save actually produces.
+        /// </summary>
+        public static double MsPerFrameAt(IBeatmap beatmap, double timeMs)
+        {
+            var timingPoints = beatmap.ControlPointInfo.TimingPoints.OrderBy(p => p.Time).ToArray();
+            return DivaChartConstants.MsPerFrame(bpmAt(timeMs, timingPoints, resolveHeaderBpm(beatmap, timingPoints)));
+        }
+
+        /// <summary>
+        ///     Frame length an export would write for a hold of <paramref name="durationMs"/>.
+        /// </summary>
+        public static int FrameLengthAt(IBeatmap beatmap, double timeMs, double durationMs)
+            => DivaChartConstants.MsToFrameLength(durationMs, MsPerFrameAt(beatmap, timeMs));
+
+        /// <summary>
         ///     The <c>#WAV</c> slot a note exports with: its own value, else the source chart's value for the
         ///     same frame and button (which is how the PC editor's charts identify a note), else 0.
         /// </summary>

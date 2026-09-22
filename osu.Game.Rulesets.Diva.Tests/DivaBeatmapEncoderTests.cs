@@ -254,6 +254,46 @@ namespace osu.Game.Rulesets.Diva.Tests
             Assert.That(DivaChartFileWriter.ExportToString(chart), Does.Contain("0 8 8 8 0 0 0 48\r\n"));
         }
 
+        /// <summary>
+        ///     The inspector shows and edits hold lengths by chart frame, so its number has to be the one a save
+        ///     writes; a different rounding there would change the length on the next export.
+        /// </summary>
+        [Test]
+        public void Frame_length_helper_matches_what_the_writer_emits()
+        {
+            var beatmap = new DivaBeatmap { BeatmapInfo = { BPM = 120 } };
+            beatmap.ControlPointInfo.Add(0, new TimingControlPoint { BeatLength = 500 });
+
+            // 505 ms at 120 BPM is 48.48 frames; the writer rounds away from zero, and so must the editor.
+            Assert.That(DivaChartBuilder.FrameLengthAt(beatmap, 0, 505), Is.EqualTo(48));
+        }
+
+        [Test]
+        public void Frame_length_helper_keeps_a_hold_at_least_one_frame_wide()
+        {
+            var beatmap = new DivaBeatmap { BeatmapInfo = { BPM = 120 } };
+            beatmap.ControlPointInfo.Add(0, new TimingControlPoint { BeatLength = 500 });
+
+            Assert.That(DivaChartBuilder.FrameLengthAt(beatmap, 0, 1), Is.EqualTo(1), "a sub-frame hold still occupies a frame");
+            Assert.That(DivaChartBuilder.FrameLengthAt(beatmap, 0, 0), Is.Zero);
+        }
+
+        /// <summary>
+        ///     Writing a length back as <c>frames * frame duration</c> must land on the same frame count, i.e.
+        ///     editing the inspector's frame field and saving cannot drift the length.
+        /// </summary>
+        [Test]
+        public void Frame_length_round_trips_through_the_editor()
+        {
+            var beatmap = new DivaBeatmap { BeatmapInfo = { BPM = 150 } };
+            beatmap.ControlPointInfo.Add(0, new TimingControlPoint { BeatLength = 400 });
+
+            double msPerFrame = DivaChartBuilder.MsPerFrameAt(beatmap, 0);
+
+            for (int frames = 1; frames <= 8; frames++)
+                Assert.That(DivaChartBuilder.FrameLengthAt(beatmap, 0, frames * msPerFrame), Is.EqualTo(frames));
+        }
+
         [Test]
         public void Writer_rejects_more_notes_than_a_frame_holds()
         {

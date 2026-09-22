@@ -319,6 +319,9 @@ namespace osu.Game.Rulesets.Diva.Localization
         public static readonly LocalisableString EDITOR_INSPECTOR_DURATION =
             new DivaLocalizationManager.DivaLocalisableString("时长", "Duration");
 
+        public static readonly LocalisableString EDITOR_INSPECTOR_HOLD_FRAMES =
+            new DivaLocalizationManager.DivaLocalisableString("帧长（导出值）", "Frames (exported)");
+
         public static readonly LocalisableString EDITOR_INSPECTOR_WAV_KEY =
             new DivaLocalizationManager.DivaLocalisableString("Key 音 (#WAV)", "Key (#WAV)");
 

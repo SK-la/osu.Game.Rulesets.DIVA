@@ -307,6 +307,22 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
         }
 
         /// <summary>
+        ///     Chart-frame length an export writes for a hold of <paramref name="durationMs"/>: ProjectDIVA
+        ///     stores hold lengths as whole frames, and a hold shorter than one frame still occupies one.
+        /// </summary>
+        /// <remarks>
+        ///     The single source of that rounding, shared by the writer and the editor so the inspector can
+        ///     show the length a save would actually produce.
+        /// </remarks>
+        public static int MsToFrameLength(double durationMs, double msPerFrame)
+        {
+            if (durationMs <= 0 || msPerFrame <= 0)
+                return 0;
+
+            return Math.Max(1, (int)Math.Round(durationMs / msPerFrame, MidpointRounding.AwayFromZero));
+        }
+
+        /// <summary>
         /// ProjectDIVA <c>note_standing * singleTime</c>: how long a note approaches before hit.
         /// At 120 BPM this is 2000ms; at 150 BPM, 1600ms.
         /// </summary>

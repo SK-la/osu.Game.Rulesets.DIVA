@@ -160,13 +160,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
         ///     Inverts the parser's frame → ms duration conversion (ProjectDIVA stores hold length in chart frames).
         /// </summary>
         private static int toFrameLength(DivaChartNote note, DivaChart chart)
-        {
-            if (note.DurationMs <= 0)
-                return 0;
-
-            double frames = note.DurationMs / DivaChartConstants.MsPerFrame(activeBpmAt(chart, note.FrameIndex));
-            return Math.Max(1, (int)Math.Round(frames, MidpointRounding.AwayFromZero));
-        }
+            => DivaChartConstants.MsToFrameLength(note.DurationMs, DivaChartConstants.MsPerFrame(activeBpmAt(chart, note.FrameIndex)));
 
         /// <summary>Last timing point at or before <paramref name="frameIndex"/>, else the header BPM.</summary>
         private static double activeBpmAt(DivaChart chart, int frameIndex)

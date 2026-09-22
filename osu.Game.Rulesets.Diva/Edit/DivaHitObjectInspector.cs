@@ -9,6 +9,7 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Localisation;
 using osu.Game.Graphics.UserInterfaceV2;
+using osu.Game.Rulesets.Diva.Beatmaps;
 using osu.Game.Rulesets.Diva.Beatmaps.DivaFormat;
 using osu.Game.Rulesets.Diva.Localization;
 using osu.Game.Rulesets.Diva.Objects;
@@ -58,6 +59,16 @@ namespace osu.Game.Rulesets.Diva.Edit
             Precision = 1
         };
 
+        /// <summary>
+        ///     Hold length in the chart frames the export stores, i.e. the same value the file will hold.
+        ///     ProjectDIVA has no sub-frame resolution, so this is the number that survives a save.
+        /// </summary>
+        private readonly BindableInt holdFrames = new BindableInt
+        {
+            MinValue = 1,
+            MaxValue = 2000
+        };
+
         private readonly BindableInt wavKey = new BindableInt
         {
             MinValue = 0,
@@ -70,6 +81,7 @@ namespace osu.Game.Rulesets.Diva.Edit
         private FormSliderBar<float> approachXSlider = null!;
         private FormSliderBar<float> approachYSlider = null!;
         private FormSliderBar<double> durationSlider = null!;
+        private FormSliderBar<int> holdFramesSlider = null!;
         private FormSliderBar<int> wavKeySlider = null!;
 
         [Resolved]
@@ -100,6 +112,13 @@ namespace osu.Game.Rulesets.Diva.Edit
                         TransferValueOnCommit = true,
                         KeyboardStep = 50,
                     },
+                    holdFramesSlider = new FormSliderBar<int>
+                    {
+                        Caption = DivaStrings.EDITOR_INSPECTOR_HOLD_FRAMES,
+                        Current = holdFrames,
+                        TransferValueOnCommit = true,
+                        KeyboardStep = 1,
+                    },
                     wavKeySlider = new FormSliderBar<int>
                     {
                         Caption = DivaStrings.EDITOR_INSPECTOR_WAV_KEY,
@@ -121,6 +140,7 @@ namespace osu.Game.Rulesets.Diva.Edit
             approachX.BindValueChanged(_ => applyApproach());
             approachY.BindValueChanged(_ => applyApproach());
             duration.BindValueChanged(_ => applyDuration());
+            holdFrames.BindValueChanged(_ => applyHoldFrames());
             wavKey.BindValueChanged(_ => applyWavKey());
         }
 
@@ -174,11 +194,17 @@ namespace osu.Game.Rulesets.Diva.Edit
             if (diva is DivaHoldHitObject hold)
             {
                 durationSlider.Alpha = 1;
+                holdFramesSlider.Alpha = 1;
                 duration.Value = hold.Duration;
+
+                // What a save would write, so ms→frames rounding is visible while editing.
+                holdFrames.Value = Math.Clamp(DivaChartBuilder.FrameLengthAt(EditorBeatmap, hold.StartTime, hold.Duration),
+                    holdFrames.MinValue, holdFrames.MaxValue);
             }
             else
             {
                 durationSlider.Alpha = 0;
+                holdFramesSlider.Alpha = 0;
             }
 
             // Shows the value an export would write, i.e. including a key inherited from the source chart.
@@ -256,8 +282,30 @@ namespace osu.Game.Rulesets.Diva.Edit
             EditorBeatmap.EndChange();
         }
 
-        private void applyWavKey()
+        /// <summary>
+        ///     Writes the length by chart frame, i.e. the value the file itself stores: the milliseconds are
+        ///     derived back from the frame duration in play at the hold, so a save keeps exactly this length.
+        /// </summary>
+        private void applyHoldFrames()
         {
+            if (applyingFromSelection)
+                return;
+
+            if (EditorBeatmap.SelectedHitObjects.OfType<DivaHoldHitObject>().SingleOrDefault() is not DivaHoldHitObject hold)
+                return;
+
+            double length = holdFrames.Value * DivaChartBuilder.MsPerFrameAt(EditorBeatmap, hold.StartTime);
+
+            if (hold.Duration == length)
+                return;
+
+            EditorBeatmap.BeginChange();
+            hold.Duration = length;
+            EditorBeatmap.Update(hold);
+            EditorBeatmap.EndChange();
+        }
+
+        private void applyWavKey()        {
             if (applyingFromSelection)
                 return;
 
