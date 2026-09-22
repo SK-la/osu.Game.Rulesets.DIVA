@@ -8,8 +8,6 @@ using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.Textures;
-using osu.Framework.Input.Bindings;
-using osu.Framework.Input.Events;
 using osu.Game.Audio;
 using osu.Game.Beatmaps;
 using osu.Game.Rulesets.Diva.Beatmaps.DivaFormat;
@@ -28,7 +26,7 @@ using osuTK.Graphics;
 
 namespace osu.Game.Rulesets.Diva.Objects.Drawables
 {
-    public partial class DrawableDivaHitObject : DrawableHitObject<DivaHitObject>, IKeyBindingHandler<DivaAction>
+    public partial class DrawableDivaHitObject : DrawableHitObject<DivaHitObject>
     {
         public const float BASE_SIZE = 40;
         private const double fade_in_ratio = 0.24;
@@ -425,15 +423,21 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         {
         }
 
-        public virtual bool OnPressed(KeyBindingPressEvent<DivaAction> e)
+        public bool MatchesPressedAction(DivaAction action) => ComputeValidPress(action);
+
+        /// <summary>
+        ///     Applies this press if the note can use it. Returns true only when the press produced a
+        ///     judgement or started a hold — the playfield fans one key to every matching note.
+        /// </summary>
+        public virtual bool TryHandlePress(DivaAction action)
         {
             if (Judged || IsGameplayRewinding)
                 return false;
 
-            if (!AcceptsInput(e.Action))
+            if (!AcceptsInput(action))
                 return false;
 
-            bool validPress = ComputeValidPress(e.Action);
+            bool validPress = ComputeValidPress(action);
 
             // Standard mode (lock off): wrong keys do not consume the note.
             if (!validPress && !JudgementLock.Value)
@@ -443,7 +447,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             return UpdateResult(true);
         }
 
-        public virtual void OnReleased(KeyBindingReleaseEvent<DivaAction> e)
+        public virtual void TryHandleRelease(DivaAction action)
         {
         }
 

@@ -4,12 +4,12 @@
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Textures;
-using osu.Framework.Input.Events;
 using osu.Game.Rulesets.Diva.Audio;
 using osu.Game.Rulesets.Diva.Graphics;
 using osu.Game.Rulesets.Diva.Objects.Drawables.Pieces;
 using osu.Game.Rulesets.Diva.Scoring;
 using osu.Game.Rulesets.Diva.UI;
+using osu.Game.Rulesets.Objects;
 using osu.Game.Rulesets.Objects.Drawables;
 using osu.Game.Rulesets.Scoring;
 using osuTK;
@@ -37,7 +37,6 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         /// </summary>
         protected override bool UseApproachTrail => false;
 
-        private bool holding;
         private bool pendingRelease;
         private bool? pendingHeadPressValid;
         private HitResult headResult = HitResult.None;
@@ -124,30 +123,48 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         private bool isWithinDrawRange(Vector2 localPosition)
             => DivaPlayfieldSize.IsInsideDrawRange(HitObject.Position + localPosition, LogicalPlayfieldSize, (float)NoteSize.Value);
 
-        public override bool OnPressed(KeyBindingPressEvent<DivaAction> e)
+        public bool IsHolding { get; private set; }
+
+        public bool IsHoldingAction(DivaAction action) => IsHolding && !Judged && ComputeValidPress(action);
+
+        /// <summary>True when this strip should consume a release of its button (tail window / timeout).</summary>
+        public bool IsReleaseDue
         {
-            if (Judged || holding || IsGameplayRewinding)
+            get
+            {
+                if (!IsHolding || Judged)
+                    return false;
+
+                double endOffset = Time.Current - HitObject.GetEndTime() + InputOffset.Value;
+                return DivaHitJudgementEvaluator.GetHoldResultFor(endOffset) != HitResult.None
+                       || DivaHitJudgementEvaluator.ShouldMissHold(endOffset);
+            }
+        }
+
+        public override bool TryHandlePress(DivaAction action)
+        {
+            if (Judged || IsHolding || IsGameplayRewinding)
                 return false;
 
-            if (!AcceptsInput(e.Action))
+            if (!AcceptsInput(action))
                 return false;
 
             // PD strips do not participate in wrong-key cancel; ignore mismatched head presses.
-            if (!ComputeValidPress(e.Action))
+            if (!ComputeValidPress(action))
                 return false;
 
             pendingHeadPressValid = true;
             pendingRelease = false;
             UpdateResult(true);
-            return holding || Judged;
+            return IsHolding || Judged;
         }
 
-        public override void OnReleased(KeyBindingReleaseEvent<DivaAction> e)
+        public override void TryHandleRelease(DivaAction action)
         {
-            if (!holding || Judged || IsGameplayRewinding)
+            if (!IsHolding || Judged || IsGameplayRewinding)
                 return;
 
-            if (!ComputeValidPress(e.Action))
+            if (!ComputeValidPress(action))
                 return;
 
             pendingRelease = true;
@@ -162,7 +179,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             double startOffset = timeOffset + holdDuration;
             double endOffset = timeOffset;
 
-            if (!holding)
+            if (!IsHolding)
             {
                 // A release only counts while the head is held; anything parked here would be replayed as a release
                 // at the next press.
@@ -191,7 +208,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
                 if (!validPress)
                     return;
 
-                holding = true;
+                IsHolding = true;
                 headResult = result;
                 hideFlyingPieces();
                 // ProjectDIVA: head press also plays AddEffectNotePress (release plays again).
@@ -222,7 +239,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         {
             base.ResetTransientState();
 
-            holding = false;
+            IsHolding = false;
             pendingRelease = false;
             pendingHeadPressValid = null;
             headResult = HitResult.None;
