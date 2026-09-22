@@ -200,6 +200,7 @@ namespace osu.Game.Rulesets.Diva
                         new KeyBinding(InputKey.S, DivaAction.EditorButtonDown),
                         new KeyBinding(InputKey.D, DivaAction.EditorButtonRight),
                         new KeyBinding(InputKey.Number5, DivaAction.EditorToggleButtonFamily),
+                        new KeyBinding(new KeyCombination(InputKey.Control, InputKey.Delete), DivaAction.EditorDeleteAtCurrentTime),
                     ];
             }
         }

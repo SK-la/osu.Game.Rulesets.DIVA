@@ -414,8 +414,62 @@ namespace osu.Game.Rulesets.Diva.Tests.Editor
             AddAssert("the nudge was refused", () => editorBeatmap.HitObjects.Single().StartTime, () => Is.EqualTo(0).Within(0.01));
         }
 
-        private DivaBatchToolsToolbox batchToolBox() => composer.ChildrenOfType<DivaBatchToolsToolbox>().Single();
+        [Test]
+        public void Range_tools_delete_and_copy_by_frame()
+        {
+            AddStep("add notes on frames 0, 96 and 192", () =>
+            {
+                editorBeatmap.Add(noteAt(0));
+                editorBeatmap.Add(noteAt(1000)); // frame 96 at 120 BPM
+                editorBeatmap.Add(noteAt(2000)); // frame 192
+            });
 
+            AddStep("select frame 96", () =>
+            {
+                rangeSlider(0).Current.Value = 96;
+                rangeSlider(1).Current.Value = 96;
+            });
+
+            AddStep("delete the range", () => rangeToolButton(DivaStrings.EDITOR_DELETE_RANGE.ToString()).TriggerClick());
+
+            AddAssert("only the note on that frame went", () => editorBeatmap.HitObjects.Select(h => h.StartTime), () => Is.EquivalentTo(new double[] { 0, 2000 }));
+
+            AddStep("copy frame 0 onto frame 384", () =>
+            {
+                rangeSlider(0).Current.Value = 0;
+                rangeSlider(1).Current.Value = 0;
+                rangeSlider(2).Current.Value = 384;
+                rangeToolButton(DivaStrings.EDITOR_COPY_RANGE.ToString()).TriggerClick();
+            });
+
+            AddAssert("the copy landed on the target frame", () => editorBeatmap.HitObjects.Select(h => DivaChartBuilder.TimeToFrame(editorBeatmap, h.StartTime)), () => Is.EquivalentTo(new[] { 0, 192, 384 }));
+            AddAssert("the original is still there", () => editorBeatmap.HitObjects.Count(h => Math.Abs(h.StartTime) < 0.01), () => Is.EqualTo(1));
+
+            AddStep("seek to frame 192", () => EditorClock.Seek(2000));
+            AddStep("press the toolbar's delete-at-time-point button", () => composer.ChildrenOfType<DivaEditorActionButton>().Single().TriggerClick());
+
+            AddAssert("the toolbar deleted that frame", () => editorBeatmap.HitObjects.Select(h => DivaChartBuilder.TimeToFrame(editorBeatmap, h.StartTime)), () => Is.EquivalentTo(new[] { 0, 384 }));
+            AddAssert("Ctrl+Delete is bound to it", () => isBound(DivaAction.EditorDeleteAtCurrentTime, InputKey.Control, InputKey.Delete));
+        }
+
+        private DivaHitObject noteAt(double time) => new DivaHitObject
+        {
+            StartTime = time,
+            Position = DivaActionEncoding.ToPlayfieldPosition(4, 12),
+            ValidAction = DivaAction.Square
+        };
+
+        /// <summary>The range toolbox's frame inputs, in the order they are laid out: from, to, target.</summary>
+        private FormSliderBar<int> rangeSlider(int index)
+            => rangeToolBox().ChildrenOfType<FormSliderBar<int>>().ElementAt(index);
+
+        private DivaRangeToolsToolbox rangeToolBox() => composer.ChildrenOfType<DivaRangeToolsToolbox>().Single();
+
+        private RoundedButton rangeToolButton(string text)
+            => rangeToolBox().ChildrenOfType<RoundedButton>()
+                            .Single(button => button.Text.ToString() == text);
+
+        private DivaBatchToolsToolbox batchToolBox() => composer.ChildrenOfType<DivaBatchToolsToolbox>().Single();
         private RoundedButton batchToolButton(string text)
             => batchToolBox().ChildrenOfType<RoundedButton>()
                             .Single(button => button.Text.ToString() == text);
@@ -545,9 +599,9 @@ namespace osu.Game.Rulesets.Diva.Tests.Editor
         private static string glyphOf(DrawableTernaryButton button)
             => button.Icon.ChildrenOfType<SpriteText>().Single().Text.ToString();
 
-        private static bool isBound(DivaAction action, InputKey key)
+        private static bool isBound(DivaAction action, params InputKey[] keys)
             => new DivaRuleset().GetDefaultKeyBindings(Rulesets.Ruleset.EDITOR_VARIANT)
-                                .Any(b => action.Equals(b.Action) && b.KeyCombination.Keys.SequenceEqual(new[] { key }));
+                                .Any(b => action.Equals(b.Action) && b.KeyCombination.Keys.Order().SequenceEqual(keys.Order()));
 
         private void selectTool(string name)
             => composer.ChildrenOfType<EditorRadioButton>().First(b => b.Text.ToString() == name).TriggerClick();

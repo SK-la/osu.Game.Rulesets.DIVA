@@ -67,6 +67,14 @@ namespace osu.Game.Rulesets.Diva.Objects
             return hold;
         }
 
+        /// <summary>An independent copy of this note, as a tap.</summary>
+        public virtual DivaHitObject Clone()
+        {
+            var clone = new DivaHitObject();
+            CopyStateTo(clone);
+            return clone;
+        }
+
         /// <summary>
         ///     Copies everything that identifies the note — time, cell, button, flight vector and key sound —
         ///     leaving the concrete type (and thus tap/hold) to the caller.

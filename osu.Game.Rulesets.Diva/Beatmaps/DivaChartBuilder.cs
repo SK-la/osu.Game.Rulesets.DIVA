@@ -276,7 +276,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
         {
             int frame = TimeToFrame(beatmap, timeMs) + frameDelta;
 
-            if (frame < 0 || frame > DivaChartConstants.MAX_PERIOD_COUNT * DivaChartConstants.NOTE_PER_PERIOD - 1)
+            if (frame < 0 || frame > DivaChartConstants.MAX_FRAME_INDEX)
             {
                 time = 0;
                 return false;

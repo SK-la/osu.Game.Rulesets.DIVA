@@ -419,12 +419,14 @@ PV 区点击 `[ed:68806-69223]`：
 | 单键 ↔ 长条互转 | `Ctrl+X` / `toolStripButton17` `ui:L71870` | `DivaHitObject.AsHold` / `DivaHoldHitObject.AsTap`；`DivaNoteToolsToolbox`「转为长条」「转为单键」（有选中则作用于选中，否则整谱） |
 | 一键切换放置单键/长条 | 一个快捷键切换 `ui:L7` | `DivaAction.EditorToggleHoldTool`（默认 `X`）+「放置长条」三元开关；开关镜像实际工具（点工具栏 / 按 2·3 也会跟上），只换工具不写选中音符的按键 |
 | 批量「工具」菜单 | 6 项 `ui:L504-511` | `DivaBatchToolsToolbox`：简化至 ✕◯↓→ / ◯→ / 方向键→图形键 / 图形键→方向键 + 「微调音符」（按帧）；事件微调在 `DivaChartEventsToolbox`。重映射产生的同帧同键重复按 PC 语义去重（保留原本就在该键上的那条）；会移出谱面范围的微调整体拒绝 |
+| 删除当前时间点全部音符 | `Ctrl+Delete`，清空 `nowSelect` 帧的音符数 `ui:L66238` | `DivaAction.EditorDeleteAtCurrentTime`（默认 `Ctrl+Delete`）+ 工具栏按钮，走 `DivaRangeOperations.NotesAtFrame` |
+| 区间删除音符 | 区间对话框（`deleteInput`，起止以 1/192 记），清 `[起, 止]` 每个时间点的音符 `ui:L6.2` | `DivaRangeToolsToolbox`「删除区间内音符」，起止帧可输入；同样只按音符的**起始帧**判定，闭区间 |
+| 区间拷贝到指定偏移 | 区间对话框（`PasteInput`，源 `[起, 止]` + 目标起始，1/192 记）`ui:L6.1`；越界部分忽略 | `DivaRangeOperations.PlanRangeCopy` + 工具箱「复制区间到此帧」：音符（长条保持帧长）与 BGS/RES 事件整体平移，原内容保留，超出末帧的副本丢弃。**BPM/STOP 不随区间搬移**，理由见 §13.5 |
 
 ### 13.2 未实现（按需再排）
 
-- **时间点 / 区间级操作**：`Ctrl+Delete` 删除当前时间点全部音符 `ui:L66238`、区间删除对话框（`deleteInput`）、区间拷贝/剪切到指定偏移（`PasteInput`，1/192 为单位）。Ez 目前只有「选中删除 + 时间轴剪贴板」，区间删除与按偏移粘贴尚未提供。
 - **风格 / 首图显式输入**：`Style`（header line 5）目前从 tags 剥离规则集自身标记后推断，首图资源号（line 6）由 `metadata.BackgroundFile` 兜底；`DivaChartHeader` 已有 `Style` / `OverviewPicture` 字段，但「谱面属性」工具箱只暴露了难度槽 / 星级 / 小节数，这两个还只能靠推断值。
-- **快捷键对齐（低优先）**：PC 的 `F5–F8` 模式键、`F1–F4`/`Alt+F1–F4` 选键位、`Ctrl+Delete` 等未引入；Ez 现为方向键/WASD 选键位、`2`·`3` 切工具、`X` 切单键/长条。只补与放置直接相关者，不引入模式键。
+- **快捷键对齐（低优先）**：PC 的 `F5–F8` 模式键、`F1–F4`/`Alt+F1–F4` 选键位未引入；Ez 现为方向键/WASD 选键位、`2`·`3` 切工具、`X` 切单键/长条、`Ctrl+Delete` 删当前帧。只补与放置/编辑直接相关者，不引入模式键。
 
 ### 13.3 已覆盖，无需改动（避免重复投入）
 
@@ -438,3 +440,8 @@ PV 区点击 `[ed:68806-69223]`：
 
 - **同按键 tap 落在长条内是否可打**：Ez 的 tap 与 hold 各自独立判定（`DrawableDivaHitObject`），规则层没有互斥；PC 编辑器把它当冲突并提示清除。当前只做 Warning + 手动清理工具，**不**在放置时硬拦截、不删音符。
 - **单帧 8 音符上限的提示形式**：PC 与游戏都不钳制（§11-4）；Ez 选「Verify 面板 Warning/Error 提示而不禁止放置」，是否要改为放置即拒绝待实测（真实谱面是否会用到同帧 8 音符的极限写法）。
+
+### 13.5 有意保留的语义差异
+
+- **区间拷贝不搬 BPM / STOP**：PC 的区间对话框搬的是整条时间点记录（含 BPM / STOP / 音频槽 / 资源号）。Ez 的帧 ↔ 毫秒映射由 BPM 表推出（`DivaChartBuilder.FrameToTime`），先搬 BPM 点会让同一操作里已算好的落点漂移，因此只搬随帧记录走的音符与 BGS/RES 事件；要改 BPM 走上游时间轴。若日后要做「连 BPM 一起搬」，需要先在帧空间完成搬运再重新解算毫秒，且要能回滚。
+- **区间删除只清音符**：PC 的区间删除同样不动 BPM / STOP / 音频 / 资源列，这里一致。

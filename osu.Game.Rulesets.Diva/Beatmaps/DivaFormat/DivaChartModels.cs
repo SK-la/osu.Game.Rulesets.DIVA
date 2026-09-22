@@ -214,6 +214,9 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
         ///     values outside 1..1000.
         /// </summary>
         public const int MAX_PERIOD_COUNT = 1000;
+
+        /// <summary>Last frame index a chart can address: <see cref="MAX_PERIOD_COUNT"/> measures of <see cref="NOTE_PER_PERIOD"/> frames.</summary>
+        public const int MAX_FRAME_INDEX = MAX_PERIOD_COUNT * NOTE_PER_PERIOD - 1;
         public const int ORIGIN_X = 25;
         public const int ORIGIN_Y = 52;
         public const int DELTA_X = 12;

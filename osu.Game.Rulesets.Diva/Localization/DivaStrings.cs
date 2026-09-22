@@ -414,6 +414,39 @@ namespace osu.Game.Rulesets.Diva.Localization
             "按 Chart 帧（1/192 小节）整体平移所有 BGM / 资源事件时间。会移出谱面范围的微调不执行。",
             "Shifts every BGM and resource event by whole chart frames (1/192 measure). A nudge that would leave the chart's frame range is refused.");
 
+        public static readonly LocalisableString EDITOR_RANGE_TOOLS_GROUP =
+            new DivaLocalizationManager.DivaLocalisableString("区间工具", "range tools");
+
+        public static readonly LocalisableString EDITOR_RANGE_FROM =
+            new DivaLocalizationManager.DivaLocalisableString("起帧 (1/192)", "From frame (1/192)");
+
+        public static readonly LocalisableString EDITOR_RANGE_TO =
+            new DivaLocalizationManager.DivaLocalisableString("止帧 (1/192)", "To frame (1/192)");
+
+        public static readonly LocalisableString EDITOR_DELETE_AT_CURRENT_FRAME =
+            new DivaLocalizationManager.DivaLocalisableString("删除当前时间点音符", "Delete notes on this frame");
+
+        public static readonly LocalisableString EDITOR_DELETE_AT_CURRENT_FRAME_TOOLTIP = new DivaLocalizationManager.DivaLocalisableString(
+            "删掉播放头所在帧上的全部音符（等价 PC 编辑器的 Ctrl+Delete）。",
+            "Removes every note whose start frame is the playhead's frame — the reference editor's Ctrl+Delete.");
+
+        public static readonly LocalisableString EDITOR_DELETE_RANGE =
+            new DivaLocalizationManager.DivaLocalisableString("删除区间内音符", "Delete notes in range");
+
+        public static readonly LocalisableString EDITOR_DELETE_RANGE_TOOLTIP = new DivaLocalizationManager.DivaLocalisableString(
+            "删掉起始帧落在 [起帧, 止帧] 内的全部音符；长条只按起始帧算，跨进区间的部分不受影响（PC 的「删除NOTE」区间对话框同样只清时间点记录）。",
+            "Removes every note whose start frame lies in [from, to]. Holds count by their start frame only, so one starting before the range is untouched — the reference editor's delete-range dialog clears per-frame records the same way.");
+
+        public static readonly LocalisableString EDITOR_RANGE_TARGET =
+            new DivaLocalizationManager.DivaLocalisableString("目标起始帧 (1/192)", "Target start frame (1/192)");
+
+        public static readonly LocalisableString EDITOR_COPY_RANGE =
+            new DivaLocalizationManager.DivaLocalisableString("复制区间到此帧", "Copy range to this frame");
+
+        public static readonly LocalisableString EDITOR_COPY_RANGE_TOOLTIP = new DivaLocalizationManager.DivaLocalisableString(
+            "把 [起帧, 止帧] 的内容整体搬到「目标起始帧」：音符（长条保持帧长）与 BGM / 资源事件都会复制一份，原内容保留。BPM / STOP 是谱面级时间表，不随区间搬移；超出谱面末帧的副本会被丢掉。",
+            "Copies [from, to] so that the range's first frame lands on the target: notes (holds keep their frame length) plus BGM / resource events, leaving the originals in place. BPM and STOP are chart-wide tables and are not moved along; copies past the final frame are dropped.");
+
         public static readonly LocalisableString EDITOR_EXPORT_DIVA =
             new DivaLocalizationManager.DivaLocalisableString("导出 .diva", "Export .diva");
 

@@ -105,6 +105,12 @@ namespace osu.Game.Rulesets.Diva.Edit
         private readonly DivaTapCompositionTool tapTool = new DivaTapCompositionTool();
         private readonly DivaHoldCompositionTool holdTool = new DivaHoldCompositionTool();
 
+        /// <summary>
+        ///     The interval toolbox, held so the toolbar's delete button (and its <c>Ctrl+Delete</c>) runs the
+        ///     same command as the toolbox button instead of a second copy of it.
+        /// </summary>
+        private readonly DivaRangeToolsToolbox rangeTools = new DivaRangeToolsToolbox();
+
         protected override DrawableRuleset<DivaHitObject> CreateDrawableRuleset(Ruleset ruleset, IBeatmap beatmap, IReadOnlyList<Mod> mods)
             => new DrawableDivaEditorRuleset((DivaRuleset)ruleset, beatmap, mods);
 
@@ -145,6 +151,16 @@ namespace osu.Game.Rulesets.Diva.Edit
             };
 
             yield return new DivaNoteToggleGrid(this);
+
+            yield return new DivaEditorActionButton
+            {
+                Description = DivaStrings.EDITOR_DELETE_AT_CURRENT_FRAME,
+                TooltipText = DivaStrings.EDITOR_DELETE_AT_CURRENT_FRAME_TOOLTIP,
+                CreateIcon = () => new SpriteIcon { Icon = FontAwesome.Regular.TrashAlt },
+                Command = DivaAction.EditorDeleteAtCurrentTime,
+                Hotkey = HotkeyForAction(DivaAction.EditorDeleteAtCurrentTime),
+                Run = () => rangeTools.DeleteNotesAtCurrentTime()
+            };
         }
 
         /// <summary>The selection state backing one note button of the toggles grid.</summary>
@@ -174,6 +190,7 @@ namespace osu.Game.Rulesets.Diva.Edit
             RightToolbox.Add(new DivaChartEventsToolbox());
             RightToolbox.Add(new DivaNoteToolsToolbox());
             RightToolbox.Add(new DivaBatchToolsToolbox());
+            RightToolbox.Add(rangeTools);
             RightToolbox.Add(new DivaExportToolbox());
 
             gridSnapToggle.BindValueChanged(state =>

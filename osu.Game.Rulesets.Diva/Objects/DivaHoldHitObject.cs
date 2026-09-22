@@ -32,6 +32,14 @@ namespace osu.Game.Rulesets.Diva.Objects
             return tap;
         }
 
+        /// <summary>An independent copy of this hold, length included.</summary>
+        public override DivaHitObject Clone()
+        {
+            var clone = new DivaHoldHitObject { Duration = Duration };
+            CopyStateTo(clone);
+            return clone;
+        }
+
         public override double MaximumJudgementOffset => DivaHitJudgementEvaluator.HOLD_MISS_TIMEOUT;
     }
 }

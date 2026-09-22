@@ -87,5 +87,8 @@ namespace osu.Game.Rulesets.Diva
 
         [Description("Arrow / Symbol")]
         EditorToggleButtonFamily,
+
+        [Description("Delete at time point")]
+        EditorDeleteAtCurrentTime,
     }
 }
