@@ -27,9 +27,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             DivaChartEvents? events = DivaBeatmap.EventsOf(beatmap);
 
             var timingPoints = beatmap.ControlPointInfo.TimingPoints.OrderBy(p => p.Time).ToArray();
-            double headerBpm = beatmap.BeatmapInfo.BPM > 0
-                ? beatmap.BeatmapInfo.BPM
-                : timingPoints.FirstOrDefault()?.BPM ?? DivaChartConstants.BASE_BPM;
+            double headerBpm = resolveHeaderBpm(beatmap, timingPoints);
 
             var chartTiming = new List<DivaChartControlPoint>();
             foreach (TimingControlPoint point in timingPoints)
@@ -176,6 +174,21 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
 
             return null;
         }
+
+        /// <summary>
+        ///     Chart frame index of a playfield time under the beatmap's own header BPM and timing points —
+        ///     the same mapping the export uses, so the editor can tell which notes share a frame record.
+        /// </summary>
+        public static int TimeToFrame(IBeatmap beatmap, double timeMs)
+        {
+            var timingPoints = beatmap.ControlPointInfo.TimingPoints.OrderBy(p => p.Time).ToArray();
+            return timeToFrame(timeMs, timingPoints, resolveHeaderBpm(beatmap, timingPoints));
+        }
+
+        private static double resolveHeaderBpm(IBeatmap beatmap, TimingControlPoint[] timingPoints)
+            => beatmap.BeatmapInfo.BPM > 0
+                ? beatmap.BeatmapInfo.BPM
+                : timingPoints.FirstOrDefault()?.BPM ?? DivaChartConstants.BASE_BPM;
 
         private static int timeToFrame(double timeMs, TimingControlPoint[] timingPoints, double headerBpm)
         {

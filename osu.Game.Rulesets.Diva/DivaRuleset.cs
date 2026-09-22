@@ -64,6 +64,8 @@ namespace osu.Game.Rulesets.Diva
 
         public override HitObjectComposer CreateHitObjectComposer() => new DivaHitObjectComposer(this);
 
+        public override IBeatmapVerifier CreateBeatmapVerifier() => new DivaBeatmapVerifier();
+
 #if DIVA_EZ2LAZER
         public override IBeatmapEncoder CreateBeatmapEncoder(IBeatmap beatmap, ISkin? skin, Storyboard? storyboard)
             => new DivaBeatmapEncoder(beatmap, skin, storyboard);
