@@ -417,9 +417,9 @@ PV 区点击 `[ed:68806-69223]`：
 | 飞行点自由定位、长度按 BPM 恒定 | 精灵坐标为任意像素 `ui:L69150`；游戏只取方向，长度 `nowDistance = 60000/BPM` | `DivaActionEncoding.NormaliseApproachOrigin` 把存储向量规整成「方向 × 当前 BPM 距离」，手柄与检查器都按规整后的向量显示；拖拽只改方向、不吸附网格、不再得到零向量 |
 | 长条长度按帧可见可改 | 长度以 1/192 小节数值输入 `ui:L6.3` | 检查器同时给「时长 ms / 帧长」两个入口，换算走导出同一套 `DivaChartBuilder.FrameLengthAt`，显示值就是导出值 |
 | 同按键 tap 落在长条区间内的冲突 | 冲突时弹「强制放置（会清除冲突按键）」`ui:L68925` | `DivaChartBuilder.FindActionOverlaps` + `CheckDivaActionOverlap`（Warning）+「清除长条内单键」工具；放置不做硬拦截（见 §13.3） |
-| 单键 ↔ 长条互转 | `Ctrl+X` / `toolStripButton17` `ui:L71870` | `DivaHitObject.AsHold` / `DivaHoldHitObject.AsTap`；`DivaNoteToolsToolbox`「转为长条」「转为单键」（有选中则作用于选中，否则整谱） |
+| 单键 ↔ 长条互转 | `Ctrl+X` / `toolStripButton17` `ui:L71870`；「简化所有长条为单键」菜单项 `ui:L506` | `DivaHitObject.AsHold` / `DivaHoldHitObject.AsTap`；`DivaNoteToolsToolbox`「转为长条」「转为单键」（有选中则作用于选中，否则整谱 —— 整谱的「转为单键」即为 PC 的「简化所有长条为单键」） |
 | 一键切换放置单键/长条 | 一个快捷键切换 `ui:L7` | `DivaAction.EditorToggleHoldTool`（默认 `X`）+「放置长条」三元开关；开关镜像实际工具（点工具栏 / 按 2·3 也会跟上），只换工具不写选中音符的按键 |
-| 批量「工具」菜单 | 6 项 `ui:L504-511` | `DivaBatchToolsToolbox`：简化至 ✕◯↓→ / ◯→ / 方向键→图形键 / 图形键→方向键 + 「微调音符」（按帧）；事件微调在 `DivaChartEventsToolbox`。重映射产生的同帧同键重复按 PC 语义去重（保留原本就在该键上的那条）；会移出谱面范围的微调整体拒绝 |
+| 批量「工具」菜单 | 6 项：简化所有长条为单键 / 简化至 ✕◯↓→ / 简化至 ◯→ / 全部方向键→图形键 / 全部图形键→方向键 / 微调所有背景音频和视频时间点 + 微调所有音符时间点 `ui:L504-513` | `DivaBatchToolsToolbox`：简化至 ✕◯↓→ / ◯→ / 方向键→图形键 / 图形键→方向键 + 「微调音符」（按帧）；事件微调在 `DivaChartEventsToolbox`。重映射产生的同帧同键重复按 PC 语义去重（保留原本就在该键上的那条）；会移出谱面范围的微调整体拒绝 |
 | 删除当前时间点全部音符 | `Ctrl+Delete`，清空 `nowSelect` 帧的音符数 `ui:L66238` | `DivaAction.EditorDeleteAtCurrentTime`（默认 `Ctrl+Delete`）+ 工具栏按钮，走 `DivaRangeOperations.NotesAtFrame` |
 | 区间删除音符 | 区间对话框（`deleteInput`，起止以 1/192 记），清 `[起, 止]` 每个时间点的音符 `ui:L6.2` | `DivaRangeToolsToolbox`「删除区间内音符」，起止帧可输入；同样只按音符的**起始帧**判定，闭区间 |
 | 区间拷贝到指定偏移 | 区间对话框（`PasteInput`，源 `[起, 止]` + 目标起始，1/192 记）`ui:L6.1`；越界部分忽略 | `DivaRangeOperations.PlanRangeCopy` + 工具箱「复制区间到此帧」：音符（长条保持帧长）与 BGS/RES 事件整体平移，原内容保留，超出末帧的副本丢弃。**BPM/STOP 不随区间搬移**，理由见 §13.5 |
@@ -435,6 +435,7 @@ PV 区点击 `[ed:68806-69223]`：
 - 「跳至上一个 / 下一个有音符的时间点」`ui:L66318/66324` → 上游已有 `GlobalAction.EditorSeekToNextHitObject`。
 - 格线密度与加粗显示 `ui:L4` → 上游节拍细分 + 现有 grid snap 已覆盖意图。
 - ChanceTime `ui:L7` → Ez 用 EffectPoint + 事件工具箱表达；单位用 ms 是编辑器惯例，接受差异。
+- PC 的导入器（BMS `ui:L9.2`、osu! `ui:L9.3`）→ Ez 的谱面载体本身就是 `.osu`（`DivaBeatmapDecoder` / converter 直接读 osu! 文件），「导入 osu!」是原生路径而不是一条命令；BMS / `.divaproject` 导入不在范围内。
 - 格式侧对齐（`n5`/`n6`/首行/legacy BPM/小节数上限/单帧上限）见 §12。
 
 ### 13.4 待实测验证（不擅自改规则语义）
