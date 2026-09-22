@@ -295,6 +295,133 @@ namespace osu.Game.Rulesets.Diva.Tests
             Assert.That(string.CompareOrdinal(version, "1.0.4.7"), Is.GreaterThan(0), "at or below 1.0.4.7 the game rounds BPM values");
         }
 
+        [Test]
+        public void Chart_header_overrides_source_level_and_stars()
+        {
+            var beatmap = new DivaBeatmap
+            {
+                BeatmapInfo = { BPM = 120 },
+                ChartHeader = new DivaChartHeader { Level = 4, Hard = 9 }
+            };
+            beatmap.ControlPointInfo.Add(0, new TimingControlPoint { BeatLength = 500 });
+
+            var source = new DivaChart { Metadata = new DivaChartMetadata { Level = 1, Hard = 2 } };
+
+            DivaChart chart = DivaChartBuilder.FromBeatmap(beatmap, source);
+
+            Assert.That(chart.Metadata.Level, Is.EqualTo(4));
+            Assert.That(chart.Metadata.Hard, Is.EqualTo(9));
+        }
+
+        [Test]
+        public void Chart_header_seeds_level_and_stars_from_beatmap_info()
+        {
+            var info = new BeatmapInfo
+            {
+                DifficultyName = "★7 Hard",
+                Difficulty = { OverallDifficulty = 3 },
+                Metadata = { Tags = $"{DivaActionEncoding.NATIVE_TAG} diva-external Miku" }
+            };
+
+            DivaChartHeader header = DivaChartHeader.FromBeatmapInfo(info);
+
+            Assert.That(header.Level, Is.EqualTo(3));
+            Assert.That(header.Hard, Is.EqualTo(7));
+            Assert.That(header.Style, Is.EqualTo("Miku"));
+        }
+
+        [Test]
+        public void Level_name_parsing_ignores_level_names_inside_longer_words()
+        {
+            Assert.That(DivaChartConstants.TryParseLevelName("★7 Extreme", out int level), Is.True);
+            Assert.That(level, Is.EqualTo(5));
+
+            Assert.That(DivaChartConstants.TryParseLevelName("★5Hard", out level), Is.True);
+            Assert.That(level, Is.EqualTo(3));
+
+            Assert.That(DivaChartConstants.TryParseLevelName("NotEasy", out _), Is.False);
+            Assert.That(DivaChartConstants.TryParseLevelName("My Song", out _), Is.False);
+        }
+
+        [Test]
+        public void Chart_builder_extends_periods_to_cover_events_past_the_last_note()
+        {
+            var beatmap = new DivaBeatmap { BeatmapInfo = { BPM = 120 } };
+            beatmap.ControlPointInfo.Add(0, new TimingControlPoint { BeatLength = 500 });
+            beatmap.HitObjects.Add(new DivaHitObject
+            {
+                StartTime = 0,
+                Position = DivaActionEncoding.ToPlayfieldPosition(10, 12),
+                ValidAction = DivaAction.Circle
+            });
+
+            // The reading side clamps frames into the period array, so a BGS event at frame 500 has to pull
+            // the exported measure count up to 3 even though the only note sits in measure 1.
+            var source = new DivaChart
+            {
+                BgmEvents = [new DivaBgmEvent { FrameIndex = 500, TimeMs = 5208, Slot = 0, WavId = 1 }]
+            };
+
+            Assert.That(DivaChartBuilder.FromBeatmap(beatmap, source).PeriodCount, Is.EqualTo(3));
+        }
+
+        [Test]
+        public void Chart_builder_extends_periods_to_cover_chance_time()
+        {
+            var beatmap = new DivaBeatmap { BeatmapInfo = { BPM = 120 } };
+            beatmap.ControlPointInfo.Add(0, new TimingControlPoint { BeatLength = 500 });
+            beatmap.ControlPointInfo.Add(3000, new EffectControlPoint { KiaiMode = true });
+            beatmap.ControlPointInfo.Add(4000, new EffectControlPoint { KiaiMode = false });
+            beatmap.HitObjects.Add(new DivaHitObject
+            {
+                StartTime = 0,
+                Position = DivaActionEncoding.ToPlayfieldPosition(10, 12),
+                ValidAction = DivaAction.Circle
+            });
+
+            // Chance Time ends on frame 383 at 120 BPM, i.e. inside measure 2.
+            Assert.That(DivaChartBuilder.FromBeatmap(beatmap).PeriodCount, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void Chart_header_min_periods_extends_the_exported_chart()
+        {
+            var beatmap = new DivaBeatmap
+            {
+                BeatmapInfo = { BPM = 120 },
+                ChartHeader = new DivaChartHeader { MinPeriodCount = 12 }
+            };
+            beatmap.ControlPointInfo.Add(0, new TimingControlPoint { BeatLength = 500 });
+            beatmap.HitObjects.Add(new DivaHitObject
+            {
+                StartTime = 0,
+                Position = DivaActionEncoding.ToPlayfieldPosition(10, 12),
+                ValidAction = DivaAction.Circle
+            });
+
+            Assert.That(DivaChartBuilder.FromBeatmap(beatmap).PeriodCount, Is.EqualTo(12));
+        }
+
+        [Test]
+        public void Chart_header_min_periods_never_shrinks_the_chart()
+        {
+            var beatmap = new DivaBeatmap
+            {
+                BeatmapInfo = { BPM = 120 },
+                ChartHeader = new DivaChartHeader { MinPeriodCount = 1 }
+            };
+            beatmap.ControlPointInfo.Add(0, new TimingControlPoint { BeatLength = 500 });
+            beatmap.HitObjects.Add(new DivaHitObject
+            {
+                StartTime = 5000,
+                Position = DivaActionEncoding.ToPlayfieldPosition(10, 12),
+                ValidAction = DivaAction.Circle
+            });
+
+            // A note on frame 480 still needs measure 3, however small the lower bound is set.
+            Assert.That(DivaChartBuilder.FromBeatmap(beatmap).PeriodCount, Is.EqualTo(3));
+        }
+
         private static DivaChart minimalChart(int periodCount, IReadOnlyList<DivaChartNote> notes) => new DivaChart
         {
             Metadata = new DivaChartMetadata

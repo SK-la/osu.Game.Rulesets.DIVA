@@ -27,6 +27,12 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
         /// </summary>
         public DivaChartEvents? ChartEvents { get; set; }
 
+        /// <summary>
+        ///     Editor-owned <c>.diva</c> header values. <see langword="null"/> means "derive them from the
+        ///     source chart"; the editor creates it when its chart-properties toolbox first opens.
+        /// </summary>
+        public DivaChartHeader? ChartHeader { get; set; }
+
         public static DivaChartEvents? EventsOf(IBeatmap beatmap)
         {
             if (beatmap is DivaBeatmap diva)
@@ -39,6 +45,31 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                 return EventsOf(editor.PlayableBeatmap);
 
             return null;
+        }
+
+        public static DivaChartHeader? HeaderOf(IBeatmap beatmap)
+        {
+            if (beatmap is DivaBeatmap diva)
+                return diva.ChartHeader;
+
+            if (beatmap is EditorBeatmap editor)
+                return HeaderOf(editor.PlayableBeatmap);
+
+            return null;
+        }
+
+        /// <summary>
+        ///     Returns the editor's header values, seeding them from the beatmap info on first use so that
+        ///     opening the editor does not silently reset a chart's level and stars to the defaults.
+        /// </summary>
+        public static DivaChartHeader GetOrCreateHeader(IBeatmap beatmap)
+        {
+            IBeatmap target = beatmap is EditorBeatmap editor ? editor.PlayableBeatmap : beatmap;
+
+            if (target is DivaBeatmap diva)
+                return diva.ChartHeader ??= DivaChartHeader.FromBeatmapInfo(target.BeatmapInfo);
+
+            throw new InvalidOperationException("DIVA chart header requires a DivaBeatmap playable.");
         }
 
         public static DivaChartEvents GetOrCreateEvents(IBeatmap beatmap)

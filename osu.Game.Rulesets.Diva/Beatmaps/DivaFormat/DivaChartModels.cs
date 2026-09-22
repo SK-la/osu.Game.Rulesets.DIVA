@@ -267,6 +267,37 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
             return hard > 0 ? $"★{hard} {label}" : label;
         }
 
+        /// <summary>
+        ///     Inverse of the level half of <see cref="FormatDifficultyName"/>: recovers the difficulty slot
+        ///     from a name like <c>★7 Hard</c>.
+        /// </summary>
+        /// <remarks>
+        ///     The level name has to end the string and not be the tail of a longer word, so that a user-typed
+        ///     version such as <c>Hardcore</c> is not read as level 3.
+        /// </remarks>
+        public static bool TryParseLevelName(string? difficultyName, out int level)
+        {
+            level = 0;
+
+            string name = difficultyName?.Trim() ?? string.Empty;
+
+            for (int i = 0; i < LEVEL_NAMES.Length; i++)
+            {
+                string label = LEVEL_NAMES[i];
+                if (!name.EndsWith(label, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                int start = name.Length - label.Length;
+                if (start > 0 && char.IsLetter(name[start - 1]))
+                    continue;
+
+                level = i + 1;
+                return true;
+            }
+
+            return false;
+        }
+
         public static double MsPerFrame(double bpm)
         {
             if (bpm <= 0)

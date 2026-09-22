@@ -97,16 +97,31 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             if (chartTiming.Count > 0)
                 lastFrame = Math.Max(lastFrame, chartTiming.Max(t => t.FrameIndex));
 
-            int periodCount = Math.Max(1, (int)Math.Ceiling((lastFrame + 1) / (double)DivaChartConstants.NOTE_PER_PERIOD));
-            int frameCount = periodCount * DivaChartConstants.NOTE_PER_PERIOD;
-
             (int chanceStart, int chanceEnd, double chanceStartMs, double chanceEndMs) = resolveChanceTime(beatmap, timingPoints, headerBpm, source);
 
+            // Everything that is addressed by frame has to fit: the reading side clamps frames into the period
+            // array, so a count that only covers the notes would silently fold trailing BGS / Resource /
+            // ChanceTime data onto the last measure.
+            if (chanceEnd >= 0)
+                lastFrame = Math.Max(lastFrame, chanceEnd);
+
             var metadata = beatmap.Metadata;
-            string style = extractStyle(metadata.Tags, source?.Metadata.Style ?? string.Empty);
+            DivaChartHeader? header = DivaBeatmap.HeaderOf(beatmap);
+            string style = !string.IsNullOrEmpty(header?.Style)
+                ? header.Style
+                : DivaChartHeader.ExtractStyle(metadata.Tags, source?.Metadata.Style ?? string.Empty);
             (IReadOnlyDictionary<int, string> wavFiles, IReadOnlyDictionary<int, string> resourceFiles,
                 IReadOnlyList<DivaBgmEvent> bgmEvents, IReadOnlyList<DivaResourceEvent> resourceEvents) =
                 resolveEvents(events, source, timingPoints, headerBpm);
+
+            foreach (DivaBgmEvent bgm in bgmEvents)
+                lastFrame = Math.Max(lastFrame, bgm.FrameIndex);
+            foreach (DivaResourceEvent resource in resourceEvents)
+                lastFrame = Math.Max(lastFrame, resource.FrameIndex);
+
+            int requiredPeriodCount = Math.Max(1, (int)Math.Ceiling((lastFrame + 1) / (double)DivaChartConstants.NOTE_PER_PERIOD));
+            int periodCount = Math.Max(requiredPeriodCount, header?.MinPeriodCount ?? 1);
+            int frameCount = periodCount * DivaChartConstants.NOTE_PER_PERIOD;
 
             return new DivaChart
             {
@@ -116,10 +131,11 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                     Creator = metadata.Author.Username,
                     Artist = source?.Metadata.Artist ?? metadata.Artist,
                     Style = style,
-                    OverviewPicture = source?.Metadata.OverviewPicture
-                                      ?? Path.GetFileName(metadata.BackgroundFile),
-                    Level = source?.Metadata.Level ?? 1,
-                    Hard = source?.Metadata.Hard ?? (int)Math.Clamp(Math.Round(beatmap.Difficulty.OverallDifficulty), 1, 10),
+                    OverviewPicture = !string.IsNullOrEmpty(header?.OverviewPicture)
+                        ? header.OverviewPicture
+                        : source?.Metadata.OverviewPicture ?? Path.GetFileName(metadata.BackgroundFile),
+                    Level = header?.Level ?? source?.Metadata.Level ?? 1,
+                    Hard = header?.Hard ?? source?.Metadata.Hard ?? (int)Math.Clamp(Math.Round(beatmap.Difficulty.OverallDifficulty), 1, 10),
                     Bpm = headerBpm,
                     SourcePath = source?.Metadata.SourcePath ?? string.Empty,
                     SongFolder = source?.Metadata.SongFolder ?? string.Empty
@@ -268,19 +284,6 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                 bgm,
                 resources
             );
-        }
-
-        private static string extractStyle(string tags, string fallback)
-        {
-            if (string.IsNullOrWhiteSpace(tags))
-                return fallback;
-
-            var leftover = tags.Split(' ', StringSplitOptions.RemoveEmptyEntries)
-                               .Where(t => !t.Equals(DivaActionEncoding.NATIVE_TAG, StringComparison.OrdinalIgnoreCase)
-                                           && !t.Equals("diva-import", StringComparison.OrdinalIgnoreCase)
-                                           && !t.Equals("diva-external", StringComparison.OrdinalIgnoreCase));
-            string joined = string.Join(' ', leftover);
-            return joined.Length > 0 ? joined : fallback;
         }
     }
 }
