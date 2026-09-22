@@ -401,6 +401,54 @@ namespace osu.Game.Rulesets.Diva.Tests
         }
 
         [Test]
+        public void Chart_header_overrides_source_style_and_overview_picture()
+        {
+            var beatmap = new DivaBeatmap
+            {
+                BeatmapInfo = { BPM = 120 },
+                ChartHeader = new DivaChartHeader { Style = "Rin", OverviewPicture = "pv_alt.png" }
+            };
+            beatmap.ControlPointInfo.Add(0, new TimingControlPoint { BeatLength = 500 });
+
+            var source = new DivaChart { Metadata = new DivaChartMetadata { Style = "Miku", OverviewPicture = "pv.png" } };
+
+            DivaChart chart = DivaChartBuilder.FromBeatmap(beatmap, source);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(chart.Metadata.Style, Is.EqualTo("Rin"));
+                Assert.That(chart.Metadata.OverviewPicture, Is.EqualTo("pv_alt.png"));
+            });
+        }
+
+        [Test]
+        public void Unset_header_keeps_the_source_style_and_overview_picture()
+        {
+            var beatmap = new DivaBeatmap { BeatmapInfo = { BPM = 120 } };
+            beatmap.ControlPointInfo.Add(0, new TimingControlPoint { BeatLength = 500 });
+
+            var source = new DivaChart { Metadata = new DivaChartMetadata { Style = "Miku", OverviewPicture = "WAV/pv.png" } };
+
+            DivaChart chart = DivaChartBuilder.FromBeatmap(beatmap, source);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(chart.Metadata.Style, Is.EqualTo("Miku"));
+                Assert.That(chart.Metadata.OverviewPicture, Is.EqualTo("WAV/pv.png"), "an empty header value must not rewrite line 6");
+            });
+        }
+
+        [Test]
+        public void Beatmap_info_seeding_leaves_the_overview_picture_to_the_export()
+        {
+            // The decoder stores the resolved background path, so the picture name a chart declared cannot be
+            // read back from it — the header has to stay empty rather than guess a name an export would then use.
+            var info = new BeatmapInfo { Metadata = { BackgroundFile = "WAV/pv.png" } };
+
+            Assert.That(DivaChartHeader.FromBeatmapInfo(info).OverviewPicture, Is.Empty);
+        }
+
+        [Test]
         public void Chart_builder_extends_periods_to_cover_events_past_the_last_note()
         {
             var beatmap = new DivaBeatmap { BeatmapInfo = { BPM = 120 } };

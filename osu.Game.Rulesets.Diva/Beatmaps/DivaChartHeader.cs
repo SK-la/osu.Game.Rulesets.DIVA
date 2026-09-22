@@ -2,7 +2,6 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
-using System.IO;
 using System.Linq;
 using osu.Game.Beatmaps;
 using osu.Game.Rulesets.Diva.Beatmaps.DivaFormat;
@@ -57,8 +56,14 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
 
         /// <summary>
         ///     Seeds a header from what the decoder left on the beatmap info: the difficulty name carries
-        ///     level and stars, the tags carry the style, the background event carries the preview picture.
+        ///     level and stars, the tags carry the style.
         /// </summary>
+        /// <remarks>
+        ///     The preview picture is deliberately left unset: the decoder stores the <em>resolved</em> background
+        ///     path, so the exact name the chart declared cannot be recovered from it. An empty value keeps the
+        ///     export resolving the picture the way it always did (source chart first, background file second),
+        ///     and only an explicit value written here overrides it.
+        /// </remarks>
         public static DivaChartHeader FromBeatmapInfo(IBeatmapInfo info)
         {
             int hard = (int)Math.Round(DivaNativeStarRating.Resolve(info));
@@ -67,8 +72,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             {
                 Level = DivaChartConstants.TryParseLevelName(info.DifficultyName, out int level) ? level : 1,
                 Hard = hard > 0 ? hard : 1,
-                Style = ExtractStyle(info.Metadata.Tags, string.Empty),
-                OverviewPicture = Path.GetFileName(info.Metadata.BackgroundFile) ?? string.Empty
+                Style = ExtractStyle(info.Metadata.Tags, string.Empty)
             };
         }
 

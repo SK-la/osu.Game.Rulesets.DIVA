@@ -8,7 +8,6 @@ using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Localisation;
-using osu.Game.Graphics.UserInterface;
 using osu.Game.Graphics.UserInterfaceV2;
 using osu.Game.Rulesets.Diva.Beatmaps;
 using osu.Game.Rulesets.Diva.Beatmaps.DivaFormat;

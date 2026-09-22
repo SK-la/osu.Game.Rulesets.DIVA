@@ -411,6 +411,7 @@ PV 区点击 `[ed:68806-69223]`：
 |---|---|---|
 | 难度槽 / 星级可编辑 | 难度分类 `EASY/NORMAL/HARD/EXTRA/FUCK` + 两个星级输入框 `ui:L714`；`HardType[_level-1]`，新谱面否则永远落 EASY 槽 | `DivaChartHeader`（`Level`/`Hard`）存于游戏谱面，builder 优先取它再回退源谱面；`DivaChartPropertiesToolbox` 提供两个滑条，`MirrorToBeatmapInfo` 把难度名与 OD 写回 beatmap info 以便存取往返 |
 | 小节数下限可编辑 | `textBox7` + 「更改」，1–1000 `ui:L713` | 同上工具箱的「小节数下限」；builder 取 `max(内容推导值, 该值)`，只抬高不缩短（尾奏 / ChanceTime / BGS 不再被截断）。导出仍受 `MAX_PERIOD_COUNT` 校验 |
+| 风格 / 预览图可编辑 | header line 5 `_musicStyle`、line 6 预览图文件名（发布文件里是文件名，游戏不读） | 「谱面属性」工具箱加两个文本输入，写进 `DivaChartHeader.Style` / `OverviewPicture`，builder 优先取它；留空 = 继续按原规则推断（风格取 tags、预览图取源谱面再取封面文件名） |
 | 单帧 >8 音符在编辑期报错 | 8 槽结构、不钳制 `ui:L69011`；超出会覆盖该帧 `BGM[]`（§10-4） | `CheckDivaFrameCapacity` 进 `DivaBeatmapVerifier`，在 Verify 面板提示，不再等到导出才抛 |
 | `#WAV`（Key 音）可见可改 | 放置时写入当前选中下标 `ui:L69109` | `DivaHitObject.WavKey` 存盘往返（经 sample 文件名 `-k<n>` 走 `.osu` 通道）；检查器可改，`DivaNoteToolsToolbox`「还原 Key 音」按源谱面 `(帧, type)` 还原 |
 | 飞行点自由定位、长度按 BPM 恒定 | 精灵坐标为任意像素 `ui:L69150`；游戏只取方向，长度 `nowDistance = 60000/BPM` | `DivaActionEncoding.NormaliseApproachOrigin` 把存储向量规整成「方向 × 当前 BPM 距离」，手柄与检查器都按规整后的向量显示；拖拽只改方向、不吸附网格、不再得到零向量 |
@@ -425,7 +426,6 @@ PV 区点击 `[ed:68806-69223]`：
 
 ### 13.2 未实现（按需再排）
 
-- **风格 / 首图显式输入**：`Style`（header line 5）目前从 tags 剥离规则集自身标记后推断，首图资源号（line 6）由 `metadata.BackgroundFile` 兜底；`DivaChartHeader` 已有 `Style` / `OverviewPicture` 字段，但「谱面属性」工具箱只暴露了难度槽 / 星级 / 小节数，这两个还只能靠推断值。
 - **快捷键对齐（低优先）**：PC 的 `F5–F8` 模式键、`F1–F4`/`Alt+F1–F4` 选键位未引入；Ez 现为方向键/WASD 选键位、`2`·`3` 切工具、`X` 切单键/长条、`Ctrl+Delete` 删当前帧。只补与放置/编辑直接相关者，不引入模式键。
 
 ### 13.3 已覆盖，无需改动（避免重复投入）

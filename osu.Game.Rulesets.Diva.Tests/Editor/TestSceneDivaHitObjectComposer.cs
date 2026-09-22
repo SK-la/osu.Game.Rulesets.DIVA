@@ -452,6 +452,39 @@ namespace osu.Game.Rulesets.Diva.Tests.Editor
             AddAssert("Ctrl+Delete is bound to it", () => isBound(DivaAction.EditorDeleteAtCurrentTime, InputKey.Control, InputKey.Delete));
         }
 
+        [Test]
+        public void Chart_properties_edit_style_and_overview_picture()
+        {
+            AddStep("type a style and a preview picture name", () =>
+            {
+                chartPropertyTextBox(DivaStrings.EDITOR_CHART_STYLE.ToString()).Current.Value = "Rin";
+                chartPropertyTextBox(DivaStrings.EDITOR_CHART_OVERVIEW_PICTURE.ToString()).Current.Value = "pv_alt.png";
+            });
+
+            AddAssert("the header carries both", () =>
+            {
+                DivaChartHeader? header = DivaBeatmap.HeaderOf(editorBeatmap);
+                return header is { Style: "Rin", OverviewPicture: "pv_alt.png" };
+            });
+
+            AddStep("clear them again", () =>
+            {
+                chartPropertyTextBox(DivaStrings.EDITOR_CHART_STYLE.ToString()).Current.Value = string.Empty;
+                chartPropertyTextBox(DivaStrings.EDITOR_CHART_OVERVIEW_PICTURE.ToString()).Current.Value = string.Empty;
+            });
+
+            AddAssert("empty means the export keeps resolving them", () =>
+            {
+                DivaChartHeader? header = DivaBeatmap.HeaderOf(editorBeatmap);
+                return header is { Style: "", OverviewPicture: "" };
+            });
+        }
+
+        private FormTextBox chartPropertyTextBox(string caption)
+            => composer.ChildrenOfType<DivaChartPropertiesToolbox>().Single()
+                       .ChildrenOfType<FormTextBox>()
+                       .Single(box => box.Caption.ToString() == caption);
+
         private DivaHitObject noteAt(double time) => new DivaHitObject
         {
             StartTime = time,

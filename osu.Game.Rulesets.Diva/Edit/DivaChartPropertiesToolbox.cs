@@ -46,6 +46,10 @@ namespace osu.Game.Rulesets.Diva.Edit
             MaxValue = DivaChartConstants.MAX_PERIOD_COUNT
         };
 
+        private readonly Bindable<string> style = new Bindable<string>(string.Empty);
+
+        private readonly Bindable<string> overviewPicture = new Bindable<string>(string.Empty);
+
         private bool applyingFromModel;
 
         public DivaChartPropertiesToolbox()
@@ -87,6 +91,18 @@ namespace osu.Game.Rulesets.Diva.Edit
                         TransferValueOnCommit = true,
                         KeyboardStep = 1
                     },
+                    new FormTextBox
+                    {
+                        Caption = DivaStrings.EDITOR_CHART_STYLE,
+                        PlaceholderText = DivaStrings.EDITOR_CHART_INHERITED,
+                        Current = style
+                    },
+                    new FormTextBox
+                    {
+                        Caption = DivaStrings.EDITOR_CHART_OVERVIEW_PICTURE,
+                        PlaceholderText = DivaStrings.EDITOR_CHART_INHERITED,
+                        Current = overviewPicture
+                    },
                     new OsuTextFlowContainer(t => t.Font = OsuFont.Default.With(size: 12))
                     {
                         RelativeSizeAxes = Axes.X,
@@ -99,6 +115,8 @@ namespace osu.Game.Rulesets.Diva.Edit
             level.BindValueChanged(_ => applyLevelAndHard());
             hard.BindValueChanged(_ => applyLevelAndHard());
             minPeriodCount.BindValueChanged(_ => applyMinPeriodCount());
+            style.BindValueChanged(_ => applyStyle());
+            overviewPicture.BindValueChanged(_ => applyOverviewPicture());
         }
 
         protected override void LoadComplete()
@@ -111,6 +129,11 @@ namespace osu.Game.Rulesets.Diva.Edit
             level.Value = Math.Clamp(header.Level, (int)level.MinValue, (int)level.MaxValue);
             hard.Value = Math.Clamp(header.Hard, (int)hard.MinValue, (int)hard.MaxValue);
             minPeriodCount.Value = header.MinPeriodCount;
+
+            // The header is seeded from the beatmap info, so these show the value an export would use today
+            // (the source chart's style, the background file) rather than a blank.
+            style.Value = header.Style;
+            overviewPicture.Value = header.OverviewPicture;
 
             applyingFromModel = false;
         }
@@ -133,6 +156,23 @@ namespace osu.Game.Rulesets.Diva.Edit
                 return;
 
             DivaBeatmap.GetOrCreateHeader(editorBeatmap).MinPeriodCount = minPeriodCount.Value;
+        }
+
+        /// <summary>Empty means "keep inferring it", which is what an export does without a header value.</summary>
+        private void applyStyle()
+        {
+            if (applyingFromModel)
+                return;
+
+            DivaBeatmap.GetOrCreateHeader(editorBeatmap).Style = style.Value.Trim();
+        }
+
+        private void applyOverviewPicture()
+        {
+            if (applyingFromModel)
+                return;
+
+            DivaBeatmap.GetOrCreateHeader(editorBeatmap).OverviewPicture = overviewPicture.Value.Trim();
         }
     }
 }
