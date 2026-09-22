@@ -397,3 +397,44 @@ PV 区点击 `[ed:68806-69223]`：
 - PC 编辑器 `ReadDivaFile` 用同一组门（`1.0.1.0` / `1.0.4.2`）`[ed:69986,69991]`。
 
 故只写名称或以 `0.` 开头都会静默丢 ChanceTime 或触发 BPM 取整，`1.1.0.0` 是同时满足三者、且不再冒用 PC 编辑器版本号的最小取值。改动只有格式布局变化时才 bump（`DivaChartConstants.DIVA_CHART_FORMAT_VERSION`），并有单测把这三条排序约束钉住。
+
+---
+
+## 13. Ez 侧对齐状态（编辑器功能）
+
+前提：**不复刻 PC 的四模式工作流**，保留 lazer 的「工具 + 框选/拖拽 + 三元按钮」，只补 PC 编辑器能做
+而 Ez 做不到的能力。下表每条给出 PC 事实（`ui:L####`，源为本地 `_decompiled/NOTES-ui.md`）、Ez 落点与状态。
+
+### 13.1 已实现
+
+| 项 | PC 事实 | Ez 落点 |
+|---|---|---|
+| 难度槽 / 星级可编辑 | 难度分类 `EASY/NORMAL/HARD/EXTRA/FUCK` + 两个星级输入框 `ui:L714`；`HardType[_level-1]`，新谱面否则永远落 EASY 槽 | `DivaChartHeader`（`Level`/`Hard`）存于游戏谱面，builder 优先取它再回退源谱面；`DivaChartPropertiesToolbox` 提供两个滑条，`MirrorToBeatmapInfo` 把难度名与 OD 写回 beatmap info 以便存取往返 |
+| 小节数下限可编辑 | `textBox7` + 「更改」，1–1000 `ui:L713` | 同上工具箱的「小节数下限」；builder 取 `max(内容推导值, 该值)`，只抬高不缩短（尾奏 / ChanceTime / BGS 不再被截断）。导出仍受 `MAX_PERIOD_COUNT` 校验 |
+| 单帧 >8 音符在编辑期报错 | 8 槽结构、不钳制 `ui:L69011`；超出会覆盖该帧 `BGM[]`（§10-4） | `CheckDivaFrameCapacity` 进 `DivaBeatmapVerifier`，在 Verify 面板提示，不再等到导出才抛 |
+| `#WAV`（Key 音）可见可改 | 放置时写入当前选中下标 `ui:L69109` | `DivaHitObject.WavKey` 存盘往返（经 sample 文件名 `-k<n>` 走 `.osu` 通道）；检查器可改，`DivaNoteToolsToolbox`「还原 Key 音」按源谱面 `(帧, type)` 还原 |
+| 飞行点自由定位、长度按 BPM 恒定 | 精灵坐标为任意像素 `ui:L69150`；游戏只取方向，长度 `nowDistance = 60000/BPM` | `DivaActionEncoding.NormaliseApproachOrigin` 把存储向量规整成「方向 × 当前 BPM 距离」，手柄与检查器都按规整后的向量显示；拖拽只改方向、不吸附网格、不再得到零向量 |
+| 长条长度按帧可见可改 | 长度以 1/192 小节数值输入 `ui:L6.3` | 检查器同时给「时长 ms / 帧长」两个入口，换算走导出同一套 `DivaChartBuilder.FrameLengthAt`，显示值就是导出值 |
+| 同按键 tap 落在长条区间内的冲突 | 冲突时弹「强制放置（会清除冲突按键）」`ui:L68925` | `DivaChartBuilder.FindActionOverlaps` + `CheckDivaActionOverlap`（Warning）+「清除长条内单键」工具；放置不做硬拦截（见 §13.3） |
+| 单键 ↔ 长条互转 | `Ctrl+X` / `toolStripButton17` `ui:L71870` | `DivaHitObject.AsHold` / `DivaHoldHitObject.AsTap`；`DivaNoteToolsToolbox`「转为长条」「转为单键」（有选中则作用于选中，否则整谱） |
+| 一键切换放置单键/长条 | 一个快捷键切换 `ui:L7` | `DivaAction.EditorToggleHoldTool`（默认 `X`）+「放置长条」三元开关；开关镜像实际工具（点工具栏 / 按 2·3 也会跟上），只换工具不写选中音符的按键 |
+| 批量「工具」菜单 | 6 项 `ui:L504-511` | `DivaBatchToolsToolbox`：简化至 ✕◯↓→ / ◯→ / 方向键→图形键 / 图形键→方向键 + 「微调音符」（按帧）；事件微调在 `DivaChartEventsToolbox`。重映射产生的同帧同键重复按 PC 语义去重（保留原本就在该键上的那条）；会移出谱面范围的微调整体拒绝 |
+
+### 13.2 未实现（按需再排）
+
+- **时间点 / 区间级操作**：`Ctrl+Delete` 删除当前时间点全部音符 `ui:L66238`、区间删除对话框（`deleteInput`）、区间拷贝/剪切到指定偏移（`PasteInput`，1/192 为单位）。Ez 目前只有「选中删除 + 时间轴剪贴板」，区间删除与按偏移粘贴尚未提供。
+- **风格 / 首图显式输入**：`Style`（header line 5）目前从 tags 剥离规则集自身标记后推断，首图资源号（line 6）由 `metadata.BackgroundFile` 兜底；`DivaChartHeader` 已有 `Style` / `OverviewPicture` 字段，但「谱面属性」工具箱只暴露了难度槽 / 星级 / 小节数，这两个还只能靠推断值。
+- **快捷键对齐（低优先）**：PC 的 `F5–F8` 模式键、`F1–F4`/`Alt+F1–F4` 选键位、`Ctrl+Delete` 等未引入；Ez 现为方向键/WASD 选键位、`2`·`3` 切工具、`X` 切单键/长条。只补与放置直接相关者，不引入模式键。
+
+### 13.3 已覆盖，无需改动（避免重复投入）
+
+- PC 的「撤销 / 重做 / 粘贴 / 全部选择」在编辑器里 `Enabled=false` 未实现 `ui:L6.1`；Ez 有完整 undo/redo 与时间轴剪贴板 → Ez 更强，不对齐。
+- 「跳至上一个 / 下一个有音符的时间点」`ui:L66318/66324` → 上游已有 `GlobalAction.EditorSeekToNextHitObject`。
+- 格线密度与加粗显示 `ui:L4` → 上游节拍细分 + 现有 grid snap 已覆盖意图。
+- ChanceTime `ui:L7` → Ez 用 EffectPoint + 事件工具箱表达；单位用 ms 是编辑器惯例，接受差异。
+- 格式侧对齐（`n5`/`n6`/首行/legacy BPM/小节数上限/单帧上限）见 §12。
+
+### 13.4 待实测验证（不擅自改规则语义）
+
+- **同按键 tap 落在长条内是否可打**：Ez 的 tap 与 hold 各自独立判定（`DrawableDivaHitObject`），规则层没有互斥；PC 编辑器把它当冲突并提示清除。当前只做 Warning + 手动清理工具，**不**在放置时硬拦截、不删音符。
+- **单帧 8 音符上限的提示形式**：PC 与游戏都不钳制（§11-4）；Ez 选「Verify 面板 Warning/Error 提示而不禁止放置」，是否要改为放置即拒绝待实测（真实谱面是否会用到同帧 8 音符的极限写法）。
