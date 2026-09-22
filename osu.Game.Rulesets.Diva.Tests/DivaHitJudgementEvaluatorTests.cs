@@ -12,14 +12,14 @@ namespace osu.Game.Rulesets.Diva.Tests
     public class DivaHitJudgementEvaluatorTests
     {
         [TestCase(0, HitResult.Perfect)]
-        [TestCase(32.0, HitResult.Perfect)]
-        [TestCase(32.01, HitResult.Great)]
-        [TestCase(50.0, HitResult.Great)]
-        [TestCase(50.01, HitResult.Good)]
-        [TestCase(80.0, HitResult.Good)]
-        [TestCase(80.01, HitResult.Ok)]
-        [TestCase(120.0, HitResult.Ok)]
-        [TestCase(120.01, HitResult.None)]
+        [TestCase(50.0, HitResult.Perfect)]
+        [TestCase(50.01, HitResult.Great)]
+        [TestCase(100.0, HitResult.Great)]
+        [TestCase(100.01, HitResult.Good)]
+        [TestCase(200.0, HitResult.Good)]
+        [TestCase(200.01, HitResult.Ok)]
+        [TestCase(300.0, HitResult.Ok)]
+        [TestCase(300.01, HitResult.None)]
         public void GetResultFor_uses_expected_windows(double timeOffset, HitResult expected)
         {
             Assert.That(DivaHitJudgementEvaluator.GetResultFor(timeOffset), Is.EqualTo(expected));
@@ -27,20 +27,20 @@ namespace osu.Game.Rulesets.Diva.Tests
         }
 
         [TestCase(true, 0, HitResult.Perfect)]
-        [TestCase(true, 32.0, HitResult.Perfect)]
-        [TestCase(true, 32.01, HitResult.Great)]
-        [TestCase(true, 50.0, HitResult.Great)]
-        [TestCase(true, 50.01, HitResult.Good)]
-        [TestCase(true, 80.0, HitResult.Good)]
-        [TestCase(true, 80.01, HitResult.Ok)]
-        [TestCase(true, 120.0, HitResult.Ok)]
-        [TestCase(true, 120.01, HitResult.None)]
+        [TestCase(true, 50.0, HitResult.Perfect)]
+        [TestCase(true, 50.01, HitResult.Great)]
+        [TestCase(true, 100.0, HitResult.Great)]
+        [TestCase(true, 100.01, HitResult.Good)]
+        [TestCase(true, 200.0, HitResult.Good)]
+        [TestCase(true, 200.01, HitResult.Ok)]
+        [TestCase(true, 300.0, HitResult.Ok)]
+        [TestCase(true, 300.01, HitResult.None)]
         [TestCase(false, 0, HitResult.Meh)]
-        [TestCase(false, 32.0, HitResult.Meh)]
         [TestCase(false, 50.0, HitResult.Meh)]
-        [TestCase(false, 80.0, HitResult.Meh)]
-        [TestCase(false, 120.0, HitResult.Meh)]
-        [TestCase(false, 120.01, HitResult.None)]
+        [TestCase(false, 100.0, HitResult.Meh)]
+        [TestCase(false, 200.0, HitResult.Meh)]
+        [TestCase(false, 300.0, HitResult.Meh)]
+        [TestCase(false, 300.01, HitResult.None)]
         public void GetPressResult_uses_timing_and_key_correctness(bool validPress, double timeOffset, HitResult expected)
         {
             Assert.That(DivaHitJudgementEvaluator.GetPressResult(validPress, timeOffset), Is.EqualTo(expected));
@@ -69,9 +69,9 @@ namespace osu.Game.Rulesets.Diva.Tests
             Assert.That(hitWindows.WindowFor(HitResult.Miss), Is.EqualTo(DivaHitJudgementEvaluator.SAD_WINDOW));
         }
 
-        [TestCase(120.0, false)]
-        [TestCase(120.01, true)]
-        [TestCase(200.0, true)]
+        [TestCase(300.0, false)]
+        [TestCase(300.01, true)]
+        [TestCase(400.0, true)]
         public void ShouldMiss_matches_the_ok_boundary(double timeOffset, bool expected)
         {
             Assert.That(DivaHitJudgementEvaluator.ShouldMiss(timeOffset), Is.EqualTo(expected));
