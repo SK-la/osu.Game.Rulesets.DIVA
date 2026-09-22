@@ -75,6 +75,9 @@ namespace osu.Game.Rulesets.Diva.UI
             // After HitObjectContainer: reversed KeyBindingInputQueue hits us first (taiko/mania pattern).
             AddInternal(hitSamplePlayer);
 
+            // Notes no longer bind keys themselves; every press/release is fanned out from here.
+            AddInternal(new DivaPlayfieldInputHub(this));
+
             if (AddResultVoicePlayer)
                 AddInternal(new DivaResultVoicePlayer());
         }
