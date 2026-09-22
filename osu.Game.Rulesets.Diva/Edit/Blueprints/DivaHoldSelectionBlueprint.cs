@@ -77,10 +77,13 @@ namespace osu.Game.Rulesets.Diva.Edit.Blueprints
             if (!IsSelected || e.Button != MouseButton.Left)
                 return false;
 
-            if (approachHandle.ReceivePositionalInputAt(e.ScreenSpaceMousePosition))
+            // Hit-tested at the mouse-down point, not the current one: the drag only starts once the cursor has
+            // travelled past the framework's drag threshold, which is already further than these handles are wide,
+            // so testing where the cursor ended up would refuse the drag and hand it to the selection instead.
+            if (approachHandle.ReceivePositionalInputAt(e.ScreenSpaceMouseDownPosition))
                 return false;
 
-            if (!durationHandle.ReceivePositionalInputAt(e.ScreenSpaceMousePosition))
+            if (!durationHandle.ReceivePositionalInputAt(e.ScreenSpaceMouseDownPosition))
                 return false;
 
             editorBeatmap.BeginChange();

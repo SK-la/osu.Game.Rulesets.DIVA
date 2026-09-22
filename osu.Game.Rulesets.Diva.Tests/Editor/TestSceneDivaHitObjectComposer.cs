@@ -22,6 +22,7 @@ using osu.Game.Rulesets.Diva.Edit.Blueprints.Components;
 using osu.Game.Rulesets.Diva.Edit.Tools;
 using osu.Game.Rulesets.Diva.Localization;
 using osu.Game.Rulesets.Diva.Objects;
+using osu.Game.Rulesets.Diva.Objects.Drawables.Pieces;
 using osu.Game.Rulesets.Edit;
 using osu.Game.Graphics.UserInterfaceV2;
 using osu.Game.Graphics.UserInterface;
@@ -208,19 +209,20 @@ namespace osu.Game.Rulesets.Diva.Tests.Editor
         private DivaHitObject approachNote = null!;
         private DivaApproachHandle approachHandle = null!;
 
-        private void addApproachNote(float approachX, float approachY)
+        private void addApproachNote(float approachX, float approachY, bool hold = false)
         {
             DivaApproachHandle? handle = null;
 
             AddStep("add selected note with an approach origin", () =>
             {
-                approachNote = new DivaHitObject
-                {
-                    StartTime = 1000,
-                    Position = DivaActionEncoding.ToPlayfieldPosition(5, 5),
-                    ValidAction = DivaAction.Circle,
-                    ApproachPieceOriginPosition = new Vector2(approachX, approachY),
-                };
+                approachNote = hold
+                    ? new DivaHoldHitObject { Duration = 500 }
+                    : new DivaHitObject();
+
+                approachNote.StartTime = 1000;
+                approachNote.Position = DivaActionEncoding.ToPlayfieldPosition(5, 5);
+                approachNote.ValidAction = DivaAction.Circle;
+                approachNote.ApproachPieceOriginPosition = new Vector2(approachX, approachY);
 
                 editorBeatmap.Add(approachNote);
                 editorBeatmap.SelectedHitObjects.Add(approachNote);
@@ -251,6 +253,113 @@ namespace osu.Game.Rulesets.Diva.Tests.Editor
 
             AddAssert("vector is the dragged direction at the BPM flight distance", () =>
                 Vector2.Distance(approachNote.ApproachPieceOriginPosition, expected) < 0.05f);
+        }
+
+        [Test]
+        public void Hold_handles_drag_the_flight_and_the_length()
+        {
+            addApproachNote(400, 0, hold: true);
+
+            AddAssert("far handle sits on the flight start", farHandleDistance, () => Is.LessThan(1.5f));
+            AddAssert("path origin sits on the note", pathOriginDistance, () => Is.LessThan(1.5f));
+
+            // The drag target is deliberately off the note grid and further away than the note flies.
+            var dragDelta = new Vector2(310, 400);
+            Vector2 expected = DivaActionEncoding.NormaliseApproachOrigin(dragDelta, 120);
+
+            AddStep("drag the flight handle there", () => dragInSteps(currentFar(), approachNote.Position + dragDelta));
+
+            AddAssert("hold took the dragged direction, at the BPM flight distance", () =>
+                Vector2.Distance(approachNote.ApproachPieceOriginPosition, expected) < 0.05f);
+
+            AddStep("drag the length handle two cells out", () =>
+                dragInSteps(approachNote.Position + new Vector2(DivaChartConstants.DELTA_X, 0),
+                    approachNote.Position + new Vector2(DivaChartConstants.DELTA_X * 2, 0)));
+
+            AddAssert("length grew to two beats", () => ((DivaHoldHitObject)approachNote).Duration, () => Is.EqualTo(1000).Within(1));
+        }
+
+        [Test]
+        public void Hold_length_handle_drag_survives_a_coarse_mouse_move()
+        {
+            addApproachNote(400, 0, hold: true);
+
+            // One move instead of a smooth trail: the drag threshold is crossed far from the press point, which is
+            // what a fast drag at a low polling rate looks like. The handle still has to claim the drag.
+            AddStep("press on the length handle and jump two cells out", () =>
+            {
+                InputManager.MoveMouseTo(composer.Playfield.ToScreenSpace(approachNote.Position + new Vector2(DivaChartConstants.DELTA_X, 0)));
+                InputManager.PressButton(MouseButton.Left);
+                InputManager.MoveMouseTo(composer.Playfield.ToScreenSpace(approachNote.Position + new Vector2(DivaChartConstants.DELTA_X * 3, 0)));
+                InputManager.ReleaseButton(MouseButton.Left);
+            });
+
+            AddAssert("length grew instead of the note moving", () =>
+                ((DivaHoldHitObject)approachNote).Duration, () => Is.EqualTo(1500).Within(1));
+            AddAssert("the note stayed put", () => approachNote.Position, () => Is.EqualTo(DivaActionEncoding.ToPlayfieldPosition(5, 5)));
+        }
+
+        [Test]
+        public void Hold_body_follows_an_edited_flight_vector()
+        {
+            addApproachNote(400, 0, hold: true);
+
+            AddStep("bring the hold under the playhead", () => EditorClock.Seek(1000));
+            AddUntilStep("hold body drawn", () => this.ChildrenOfType<HoldStripPiece>().Any());
+
+            AddAssert("body starts on the flight the note has", () =>
+                Vector2.Distance(this.ChildrenOfType<HoldStripPiece>().Single().StartPos, approachNote.ApproachPieceOriginPosition) < 0.05f);
+
+            var dragDelta = new Vector2(-300, -240);
+            AddStep("drag the flight handle the other way", () => dragInSteps(currentFar(), approachNote.Position + dragDelta));
+
+            AddUntilStep("body followed the edit", () =>
+                Vector2.Distance(this.ChildrenOfType<HoldStripPiece>().Single().StartPos,
+                    DivaActionEncoding.NormaliseApproachOrigin(dragDelta, 120)) < 0.05f);
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void Flight_handle_follows_the_drag_in_every_direction(bool hold)
+        {
+            addApproachNote(400, 0, hold);
+
+            // Deliberately includes targets that sit behind the note and off the note grid: the flight vector is a
+            // direction, so the far handle has to land on whichever side the drag names.
+            foreach (var target in new[]
+                     {
+                         new Vector2(-310, 0), new Vector2(0, -280), new Vector2(0, 280),
+                         new Vector2(240, 240), new Vector2(-240, -240), new Vector2(-240, 240)
+                     })
+            {
+                Vector2 direction = target;
+                Vector2 expected = DivaActionEncoding.NormaliseApproachOrigin(direction, 120);
+
+                AddStep($"drag the flight handle to {direction}", () => dragInSteps(currentFar(), approachNote.Position + direction));
+
+                AddAssert($"flight points at {direction}", () =>
+                    Vector2.Distance(approachNote.ApproachPieceOriginPosition, expected) < 0.05f);
+                AddAssert("far handle sits on the flight start", farHandleDistance, () => Is.LessThan(1.5f));
+            }
+        }
+
+        /// <summary>Far end of the flight vector the note currently flies along, in playfield space.</summary>
+        private Vector2 currentFar()
+            => approachNote.Position + DivaActionEncoding.NormaliseApproachOrigin(approachNote.ApproachPieceOriginPosition, 120);
+
+        /// <summary>
+        ///     Drags in small steps, the way a real mouse reports movement: the drag only starts once the cursor has
+        ///     moved far enough, so a handle's hit test has to use the mouse-down position rather than the current one.
+        /// </summary>
+        private void dragInSteps(Vector2 fromLocal, Vector2 toLocal, int steps = 24)
+        {
+            InputManager.MoveMouseTo(composer.Playfield.ToScreenSpace(fromLocal));
+            InputManager.PressButton(MouseButton.Left);
+
+            for (int i = 1; i <= steps; i++)
+                InputManager.MoveMouseTo(composer.Playfield.ToScreenSpace(Vector2.Lerp(fromLocal, toLocal, i / (float)steps)));
+
+            InputManager.ReleaseButton(MouseButton.Left);
         }
 
         [Test]

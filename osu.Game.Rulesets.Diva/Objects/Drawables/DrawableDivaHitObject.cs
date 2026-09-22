@@ -338,6 +338,10 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
         {
             Position = HitObject.Position;
 
+            // Also re-read per frame: the editor edits the flight vector in place, and a piece that kept its
+            // load-time value would keep flying in from wherever the chart started with.
+            ApproachPiece.StartPos = HitObject.ApproachPieceOriginPosition;
+
             // Replay playback can run gameplay time backwards. Stars spawned on the abandoned timeline keep their
             // absolute spawn times, so drop them instead of letting them be re-shown over the fixed target.
             if (Time.Current < lastUpdateTime)

@@ -54,7 +54,6 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables.Pieces
         private const double flicker_min = 55;
         private const double flicker_max = 120;
 
-        private readonly Vector2 startPos;
         private readonly Color4 colour;
         private readonly double durationMs;
 
@@ -77,6 +76,13 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables.Pieces
         /// <summary>Lateral multiplier; 1.0 is the curve's ProjectDIVA-matching baseline.</summary>
         public float Amplitude = 1f;
 
+        /// <summary>
+        ///     Note-local far end of the flight the body is drawn along. The owning drawable re-reads it from the hit
+        ///     object every frame: the editor edits the flight vector in place, and a strip that kept its load-time
+        ///     value would keep drawing the body along the vector the chart started with.
+        /// </summary>
+        public Vector2 StartPos;
+
         /// <summary>Star density multiplier (1.0 = <see cref="star_spacing" />); 0 hides the stars.</summary>
         public float StarDensity = 1f;
 
@@ -97,7 +103,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables.Pieces
 
         public HoldStripPiece(Vector2 startPos, Color4 colour, double durationMs, double approachDurationMs)
         {
-            this.startPos = startPos;
+            StartPos = startPos;
             this.colour = colour;
             this.durationMs = Math.Max(durationMs, 1);
             double approachDurationMs1 = Math.Max(approachDurationMs, 1);
@@ -297,7 +303,7 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables.Pieces
         private Vector2 sampleCurve(float t)
         {
             // t=0 far, t=1 note. Allow t<0 to extend past the far end (tail behind head).
-            return DivaFlightPath.Sample(Curve, startPos, 1f - t, Amplitude);
+            return DivaFlightPath.Sample(Curve, StartPos, 1f - t, Amplitude);
         }
 
         /// <summary>

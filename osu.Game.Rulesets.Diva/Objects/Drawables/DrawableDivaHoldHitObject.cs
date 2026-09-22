@@ -106,6 +106,12 @@ namespace osu.Game.Rulesets.Diva.Objects.Drawables
             if (strip == null || tailPiece == null)
                 return;
 
+            // Re-read the flight vector instead of the one captured at load: the editor edits it in place, and a
+            // body that kept the load-time value would keep drawing itself along a vector the chart no longer has.
+            Vector2 approach = HitObject.ApproachPieceOriginPosition;
+            strip.StartPos = approach;
+            tailPiece.StartPos = approach;
+
             double offset = Time.Current - HitObject.StartTime;
             strip.UpdateStrip(blend, offset);
 
