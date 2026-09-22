@@ -366,6 +366,54 @@ namespace osu.Game.Rulesets.Diva.Localization
             "丢掉编辑器改过的 #WAV 槽位，让音符回到源谱面的 Key 音。有选中就只处理选中项，否则处理整张谱面。",
             "Drops the editor's #WAV overrides so notes fall back to the source chart's keys. Applies to the selection, or to the whole chart when nothing is selected.");
 
+        public static readonly LocalisableString EDITOR_BATCH_TOOLS_GROUP =
+            new DivaLocalizationManager.DivaLocalisableString("批量工具", "batch tools");
+
+        public static readonly LocalisableString EDITOR_SIMPLIFY_CROSS_CIRCLE_DOWN_RIGHT =
+            new DivaLocalizationManager.DivaLocalisableString("简化至 叉圈下右", "Simplify to cross/circle/down/right");
+
+        public static readonly LocalisableString EDITOR_SIMPLIFY_CROSS_CIRCLE_DOWN_RIGHT_TOOLTIP = new DivaLocalizationManager.DivaLocalisableString(
+            "全谱按键改为只剩 叉、圈、下、右：方块→圈，三角→叉，左→右，上→下。简化后同一帧同一按键重复的音符会删掉（PC「简化按键种类至只有叉、圈、下、右」）。",
+            "Rewrites every button to cross/circle/down/right: square→circle, triangle→cross, left→right, up→down. Duplicates the rewrite creates in a frame are dropped, as in the reference editor's equivalent.");
+
+        public static readonly LocalisableString EDITOR_SIMPLIFY_CIRCLE_RIGHT =
+            new DivaLocalizationManager.DivaLocalisableString("简化至 圈右", "Simplify to circle/right");
+
+        public static readonly LocalisableString EDITOR_SIMPLIFY_CIRCLE_RIGHT_TOOLTIP = new DivaLocalizationManager.DivaLocalisableString(
+            "全谱按键改为只剩 圈、右：方块 / 三角 / 叉→圈，左 / 下 / 上→右。同帧同一按键重复的音符会删掉（PC「简化按键种类至只有圈、右」）。",
+            "Rewrites every button to circle/right: square/triangle/cross→circle, left/down/up→right. Duplicates the rewrite creates in a frame are dropped, as in the reference editor's equivalent.");
+
+        public static readonly LocalisableString EDITOR_SIMPLIFY_ARROWS_TO_SYMBOLS =
+            new DivaLocalizationManager.DivaLocalisableString("方向键→图形键", "Arrows to symbols");
+
+        public static readonly LocalisableString EDITOR_SIMPLIFY_ARROWS_TO_SYMBOLS_TOOLTIP = new DivaLocalizationManager.DivaLocalisableString(
+            "全谱方向键换成同一对里的图形键：右→圈，左→方块，下→叉，上→三角。",
+            "Rewrites every arrow to the symbol of its pair: right→circle, left→square, down→cross, up→triangle.");
+
+        public static readonly LocalisableString EDITOR_SIMPLIFY_SYMBOLS_TO_ARROWS =
+            new DivaLocalizationManager.DivaLocalisableString("图形键→方向键", "Symbols to arrows");
+
+        public static readonly LocalisableString EDITOR_SIMPLIFY_SYMBOLS_TO_ARROWS_TOOLTIP = new DivaLocalizationManager.DivaLocalisableString(
+            "全谱图形键换成同一对里的方向键：圈→右，方块→左，叉→下，三角→上。",
+            "Rewrites every symbol to the arrow of its pair: circle→right, square→left, cross→down, triangle→up.");
+
+        public static readonly LocalisableString EDITOR_NUDGE_FRAMES =
+            new DivaLocalizationManager.DivaLocalisableString("微调帧数 (1/192)", "Nudge frames (1/192)");
+
+        public static readonly LocalisableString EDITOR_NUDGE_NOTES =
+            new DivaLocalizationManager.DivaLocalisableString("微调全部音符", "Nudge all notes");
+
+        public static readonly LocalisableString EDITOR_NUDGE_EVENTS =
+            new DivaLocalizationManager.DivaLocalisableString("微调全部音频/视频", "Nudge all audio/video");
+
+        public static readonly LocalisableString EDITOR_NUDGE_NOTES_TOOLTIP = new DivaLocalizationManager.DivaLocalisableString(
+            "按 Chart 帧（1/192 小节）整体平移所有音符时间，长条长度不变。会移出谱面范围的微调不执行（PC 的「微调所有音符时间点」会把越界音符丢掉）。",
+            "Shifts every note time by whole chart frames (1/192 measure), keeping hold lengths. A nudge that would leave the chart's frame range is refused (the reference editor's \"nudge all note times\" drops what leaves the range).");
+
+        public static readonly LocalisableString EDITOR_NUDGE_EVENTS_TOOLTIP = new DivaLocalizationManager.DivaLocalisableString(
+            "按 Chart 帧（1/192 小节）整体平移所有 BGM / 资源事件时间。会移出谱面范围的微调不执行。",
+            "Shifts every BGM and resource event by whole chart frames (1/192 measure). A nudge that would leave the chart's frame range is refused.");
+
         public static readonly LocalisableString EDITOR_EXPORT_DIVA =
             new DivaLocalizationManager.DivaLocalisableString("导出 .diva", "Export .diva");
 

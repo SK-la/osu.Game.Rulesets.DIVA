@@ -173,6 +173,7 @@ namespace osu.Game.Rulesets.Diva.Edit
             RightToolbox.Add(new DivaChartPropertiesToolbox());
             RightToolbox.Add(new DivaChartEventsToolbox());
             RightToolbox.Add(new DivaNoteToolsToolbox());
+            RightToolbox.Add(new DivaBatchToolsToolbox());
             RightToolbox.Add(new DivaExportToolbox());
 
             gridSnapToggle.BindValueChanged(state =>

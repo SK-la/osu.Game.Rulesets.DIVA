@@ -343,6 +343,83 @@ namespace osu.Game.Rulesets.Diva.Tests.Editor
             });
         }
 
+        [Test]
+        public void Batch_tools_simplify_the_chart_and_nudge_note_times()
+        {
+            AddStep("add a square and a circle on one frame", () =>
+            {
+                var square = new DivaHitObject
+                {
+                    StartTime = 1000,
+                    Position = DivaActionEncoding.ToPlayfieldPosition(4, 12),
+                    ValidAction = DivaAction.Square
+                };
+
+                var circle = new DivaHitObject
+                {
+                    StartTime = 1000,
+                    Position = DivaActionEncoding.ToPlayfieldPosition(6, 12),
+                    ValidAction = DivaAction.Circle
+                };
+
+                editorBeatmap.Add(square);
+                editorBeatmap.Add(circle);
+            });
+
+            AddStep("simplify to ✕◯↓→", () => batchToolButton(DivaStrings.EDITOR_SIMPLIFY_CROSS_CIRCLE_DOWN_RIGHT.ToString()).TriggerClick());
+
+            AddAssert("the □ collapsed onto the ◯ that was already there", () =>
+            {
+                var remaining = editorBeatmap.HitObjects.OfType<DivaHitObject>().ToArray();
+
+                // □ and ◯ share a frame and a button after the rewrite, and a frame holds one slot per button.
+                return remaining.Length == 1
+                       && remaining[0].ValidAction == DivaAction.Circle
+                       && Math.Abs(remaining[0].Position.X - DivaActionEncoding.ToPlayfieldPosition(6, 12).X) < 0.001f;
+            });
+
+            AddStep("nudge one frame later", () =>
+            {
+                batchToolBox().ChildrenOfType<FormSliderBar<int>>().Single().Current.Value = 1;
+                batchToolButton(DivaStrings.EDITOR_NUDGE_NOTES.ToString()).TriggerClick();
+            });
+
+            AddAssert("the note moved one chart frame", () =>
+            {
+                double expected = DivaChartBuilder.FrameToTime(editorBeatmap, DivaChartBuilder.TimeToFrame(editorBeatmap, 1000) + 1);
+                return Math.Abs(editorBeatmap.HitObjects.Single().StartTime - expected) < 0.01;
+            });
+
+            AddStep("nudge back onto the frame it started on", () =>
+            {
+                batchToolBox().ChildrenOfType<FormSliderBar<int>>().Single().Current.Value = -1;
+                batchToolButton(DivaStrings.EDITOR_NUDGE_NOTES.ToString()).TriggerClick();
+            });
+
+            AddAssert("the note is back", () => editorBeatmap.HitObjects.Single().StartTime, () => Is.EqualTo(1000).Within(0.01));
+
+            AddStep("move the note onto the first frame", () =>
+            {
+                var note = (DivaHitObject)editorBeatmap.HitObjects.Single();
+                note.StartTime = 0;
+                editorBeatmap.Update(note);
+            });
+
+            AddStep("nudge before the chart start", () =>
+            {
+                batchToolBox().ChildrenOfType<FormSliderBar<int>>().Single().Current.Value = -1;
+                batchToolButton(DivaStrings.EDITOR_NUDGE_NOTES.ToString()).TriggerClick();
+            });
+
+            AddAssert("the nudge was refused", () => editorBeatmap.HitObjects.Single().StartTime, () => Is.EqualTo(0).Within(0.01));
+        }
+
+        private DivaBatchToolsToolbox batchToolBox() => composer.ChildrenOfType<DivaBatchToolsToolbox>().Single();
+
+        private RoundedButton batchToolButton(string text)
+            => batchToolBox().ChildrenOfType<RoundedButton>()
+                            .Single(button => button.Text.ToString() == text);
+
         private RoundedButton noteToolButton(string text)
             => composer.ChildrenOfType<DivaNoteToolsToolbox>().Single()
                        .ChildrenOfType<RoundedButton>()

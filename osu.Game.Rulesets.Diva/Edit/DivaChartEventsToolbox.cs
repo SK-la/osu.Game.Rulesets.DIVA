@@ -61,6 +61,12 @@ namespace osu.Game.Rulesets.Diva.Edit
         private readonly BindableDouble resId = new BindableDouble { MinValue = 0, MaxValue = 99, Precision = 1 };
         private readonly BindableDouble resSeek = new BindableDouble { MinValue = 0, MaxValue = 600000, Precision = 1 };
 
+        private readonly BindableInt nudgeFrames = new BindableInt
+        {
+            MinValue = -DivaChartConstants.NOTE_PER_PERIOD,
+            MaxValue = DivaChartConstants.NOTE_PER_PERIOD
+        };
+
         private int selectedBgs = -1;
         private int selectedRes = -1;
         private bool applyingFromModel;
@@ -117,11 +123,21 @@ namespace osu.Game.Rulesets.Diva.Edit
                         ]
                     },
                     new OsuSpriteText { Text = DivaStrings.EDITOR_WAV_HEADER, Font = OsuFont.Default.With(size: 14, weight: FontWeight.Bold), Margin = new MarginPadding { Top = 6 } },
+
                     wavList = createList(),
                     createButton(DivaStrings.EDITOR_ADD_FILE, () => addFile(true)),
                     new OsuSpriteText { Text = DivaStrings.EDITOR_RESOURCE_FILES_HEADER, Font = OsuFont.Default.With(size: 14, weight: FontWeight.Bold), Margin = new MarginPadding { Top = 6 } },
                     resourceFileList = createList(),
-                    createButton(DivaStrings.EDITOR_ADD_FILE, () => addFile(false))
+                    createButton(DivaStrings.EDITOR_ADD_FILE, () => addFile(false)),
+                    new FormSliderBar<int>
+                    {
+                        Caption = DivaStrings.EDITOR_NUDGE_FRAMES,
+                        Current = nudgeFrames,
+                        TransferValueOnCommit = true,
+                        KeyboardStep = 1,
+                        Margin = new MarginPadding { Top = 6 }
+                    },
+                    createButton(DivaStrings.EDITOR_NUDGE_EVENTS, nudgeEvents, DivaStrings.EDITOR_NUDGE_EVENTS_TOOLTIP)
                 ]
             };
 
@@ -299,6 +315,24 @@ namespace osu.Game.Rulesets.Diva.Edit
             rebuildResList(events);
         }
 
+        /// <summary>
+        ///     Shifts every BGM and resource event by whole chart frames, the reference editor's "nudge all
+        ///     background audio and video times". Refused when it would move an event out of the chart.
+        /// </summary>
+        private void nudgeEvents()
+        {
+            if (DivaChartBuilder.PlanTimeNudge(editorBeatmap, nudgeFrames.Value) is not { } nudge)
+                return;
+
+            foreach ((DivaBgmEvent e, double time) in nudge.Bgm)
+                e.TimeMs = time;
+
+            foreach ((DivaResourceEvent e, double time) in nudge.Resources)
+                e.TimeMs = time;
+
+            reloadFromBeatmap();
+        }
+
         private void addFile(bool wav)
         {
             DivaChartEvents events = DivaBeatmap.GetOrCreateEvents(editorBeatmap);
@@ -472,6 +506,15 @@ namespace osu.Game.Rulesets.Diva.Edit
             RelativeSizeAxes = Axes.X,
             Height = 28,
             Text = text,
+            Action = action
+        };
+
+        private static RoundedButton createButton(LocalisableString text, Action action, LocalisableString tooltip) => new RoundedButton
+        {
+            RelativeSizeAxes = Axes.X,
+            Height = 28,
+            Text = text,
+            TooltipText = tooltip,
             Action = action
         };
 

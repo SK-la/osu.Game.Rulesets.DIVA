@@ -192,6 +192,101 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
         }
 
         /// <summary>
+        ///     Time of a chart frame — the inverse of <see cref="TimeToFrame" /> under the same timing points,
+        ///     used to move a chart by whole frames (the reference editor expresses every nudge in frames).
+        ///     Frame 0 sits on the first timing point, exactly as the forward mapping assumes.
+        /// </summary>
+        public static double FrameToTime(IBeatmap beatmap, int frame)
+        {
+            var timingPoints = beatmap.ControlPointInfo.TimingPoints.OrderBy(p => p.Time).ToArray();
+            double headerBpm = resolveHeaderBpm(beatmap, timingPoints);
+            frame = Math.Max(0, frame);
+
+            if (timingPoints.Length == 0)
+                return frame * DivaChartConstants.MsPerFrame(headerBpm);
+
+            TimingControlPoint active = timingPoints[0];
+            double cursor = active.Time;
+            int framesAtCursor = 0;
+
+            for (int i = 1; i < timingPoints.Length; i++)
+            {
+                TimingControlPoint next = timingPoints[i];
+                int span = (int)Math.Round((next.Time - cursor) / DivaChartConstants.MsPerFrame(active.BPM));
+
+                if (framesAtCursor + span > frame)
+                    break;
+
+                framesAtCursor += span;
+                cursor = next.Time;
+                active = next;
+            }
+
+            return cursor + (frame - framesAtCursor) * DivaChartConstants.MsPerFrame(active.BPM);
+        }
+
+        /// <summary>
+        ///     Where a whole-chart nudge of <paramref name="frameDelta" /> frames would move every note and
+        ///     event, or <see langword="null" /> when that would push something out of the chart's frame range.
+        /// </summary>
+        /// <remarks>
+        ///     The reference editor drops whatever leaves the range; the editor here refuses the whole nudge
+        ///     instead, so a mistaken offset cannot silently delete notes.
+        /// </remarks>
+        public static DivaTimeNudge? PlanTimeNudge(IBeatmap beatmap, int frameDelta)
+        {
+            if (frameDelta == 0)
+                return null;
+
+            var notes = new Dictionary<DivaHitObject, double>();
+            var bgm = new Dictionary<DivaBgmEvent, double>();
+            var resources = new Dictionary<DivaResourceEvent, double>();
+
+            foreach (DivaHitObject note in beatmap.HitObjects.OfType<DivaHitObject>())
+            {
+                if (!tryTargetTime(beatmap, note.StartTime, frameDelta, out double time))
+                    return null;
+
+                notes[note] = time;
+            }
+
+            if (DivaBeatmap.EventsOf(beatmap) is { } events)
+            {
+                foreach (DivaBgmEvent e in events.BgmEvents)
+                {
+                    if (!tryTargetTime(beatmap, e.TimeMs, frameDelta, out double time))
+                        return null;
+
+                    bgm[e] = time;
+                }
+
+                foreach (DivaResourceEvent e in events.ResourceEvents)
+                {
+                    if (!tryTargetTime(beatmap, e.TimeMs, frameDelta, out double time))
+                        return null;
+
+                    resources[e] = time;
+                }
+            }
+
+            return new DivaTimeNudge(notes, bgm, resources);
+        }
+
+        private static bool tryTargetTime(IBeatmap beatmap, double timeMs, int frameDelta, out double time)
+        {
+            int frame = TimeToFrame(beatmap, timeMs) + frameDelta;
+
+            if (frame < 0 || frame > DivaChartConstants.MAX_PERIOD_COUNT * DivaChartConstants.NOTE_PER_PERIOD - 1)
+            {
+                time = 0;
+                return false;
+            }
+
+            time = FrameToTime(beatmap, frame);
+            return true;
+        }
+
+        /// <summary>
         ///     Same-button notes whose spans over the chart's frames overlap, earlier note first. ProjectDIVA
         ///     keeps a hold as one record plus a frame length, so its button is busy for the whole span and a
         ///     note starting inside it cannot be pressed on its own — the reference editor refuses such a
