@@ -69,5 +69,20 @@ namespace osu.Game.Rulesets.Diva
 
         [Description("Replace on same time")]
         EditorToggleReplaceOnSameTime,
+
+        [Description("Note ↑")]
+        EditorButtonUp,
+
+        [Description("Note ←")]
+        EditorButtonLeft,
+
+        [Description("Note ↓")]
+        EditorButtonDown,
+
+        [Description("Note →")]
+        EditorButtonRight,
+
+        [Description("Arrow / Symbol")]
+        EditorToggleButtonFamily,
     }
 }

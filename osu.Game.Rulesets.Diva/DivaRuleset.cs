@@ -65,7 +65,7 @@ namespace osu.Game.Rulesets.Diva
         public override HitObjectComposer CreateHitObjectComposer() => new DivaHitObjectComposer(this);
 
 #if DIVA_EZ2LAZER
-        public override IBeatmapEncoder? CreateBeatmapEncoder(IBeatmap beatmap, ISkin? skin, Storyboard? storyboard)
+        public override IBeatmapEncoder CreateBeatmapEncoder(IBeatmap beatmap, ISkin? skin, Storyboard? storyboard)
             => new DivaBeatmapEncoder(beatmap, skin, storyboard);
 #endif
 
@@ -192,6 +192,11 @@ namespace osu.Game.Rulesets.Diva
                         new KeyBinding(InputKey.Number3, DivaAction.EditorHoldTool),
                         new KeyBinding(InputKey.T, DivaAction.EditorToggleGridSnap),
                         new KeyBinding(InputKey.R, DivaAction.EditorToggleReplaceOnSameTime),
+                        new KeyBinding(InputKey.W, DivaAction.EditorButtonUp),
+                        new KeyBinding(InputKey.A, DivaAction.EditorButtonLeft),
+                        new KeyBinding(InputKey.S, DivaAction.EditorButtonDown),
+                        new KeyBinding(InputKey.D, DivaAction.EditorButtonRight),
+                        new KeyBinding(InputKey.Number5, DivaAction.EditorToggleButtonFamily),
                     ];
             }
         }

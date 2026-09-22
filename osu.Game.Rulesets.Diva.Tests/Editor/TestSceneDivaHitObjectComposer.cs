@@ -5,8 +5,11 @@ using System;
 using System.Linq;
 using NUnit.Framework;
 using osu.Framework.Allocation;
+using osu.Framework.Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Cursor;
+using osu.Framework.Graphics.Sprites;
+using osu.Framework.Input.Bindings;
 using osu.Framework.Testing;
 using osu.Game.Beatmaps;
 using osu.Game.Beatmaps.ControlPoints;
@@ -18,6 +21,7 @@ using osu.Game.Rulesets.Diva.Objects;
 using osu.Game.Rulesets.Edit;
 using osu.Game.Screens.Edit;
 using osu.Game.Screens.Edit.Components.RadioButtons;
+using osu.Game.Screens.Edit.Components.TernaryButtons;
 using osu.Game.Tests.Visual;
 using osuTK;
 using osuTK.Input;
@@ -71,7 +75,7 @@ namespace osu.Game.Rulesets.Diva.Tests.Editor
             AddStep("place", () => InputManager.Click(MouseButton.Left));
 
             AddAssert("one tap placed", () => editorBeatmap.HitObjects.Count, () => Is.EqualTo(1));
-            AddAssert("is tap", () => editorBeatmap.HitObjects.Single(), () => Is.TypeOf<DivaHitObject>());
+            AddAssert("is tap", () => editorBeatmap.HitObjects.Single(), Is.TypeOf<DivaHitObject>);
             AddAssert("not hold", () => editorBeatmap.HitObjects.Single(), () => Is.Not.TypeOf<DivaHoldHitObject>());
             AddAssert("time snapped to beat", () => editorBeatmap.HitObjects.Single().StartTime, () => Is.EqualTo(1000));
             AddAssert("action is current", () => ((DivaHitObject)editorBeatmap.HitObjects.Single()).ValidAction, () => Is.EqualTo(DivaAction.Circle));
@@ -147,6 +151,89 @@ namespace osu.Game.Rulesets.Diva.Tests.Editor
                        && Vector2.Distance(note.Position, roundTripped) < 0.01f;
             });
         }
+
+        [Test]
+        public void Editor_bindings_cover_wasd_and_family_toggle()
+        {
+            AddAssert("W/A/S/D pick a direction", () =>
+                isBound(DivaAction.EditorButtonUp, InputKey.W)
+                && isBound(DivaAction.EditorButtonLeft, InputKey.A)
+                && isBound(DivaAction.EditorButtonDown, InputKey.S)
+                && isBound(DivaAction.EditorButtonRight, InputKey.D));
+
+            AddAssert("5 toggles the family", () => isBound(DivaAction.EditorToggleButtonFamily, InputKey.Number5));
+        }
+
+        [Test]
+        public void Note_buttons_are_four_rows_of_two_columns()
+        {
+            AddUntilStep("eight note buttons laid out in two columns", () =>
+            {
+                var buttons = noteButtons();
+
+                if (buttons.Length != 8)
+                    return false;
+
+                // Rows and columns only need to be distinguishable, so round away sub-pixel drift.
+                static int bucket(float value) => (int)MathF.Round(value / 5f);
+
+                var rows = buttons.GroupBy(b => bucket(b.ScreenSpaceDrawQuad.Centre.Y)).ToArray();
+                var columns = buttons.Select(b => bucket(b.ScreenSpaceDrawQuad.Centre.X)).Distinct().ToArray();
+
+                return rows.Length == 4
+                       && rows.All(r => r.Count() == 2)
+                       && columns.Length == 2;
+            });
+        }
+
+        [Test]
+        public void Note_buttons_use_the_arrow_and_symbol_glyphs()
+        {
+            AddUntilStep("each button shows its own note glyph", () =>
+            {
+                var glyphs = noteButtons().Select(glyphOf).ToArray();
+
+                // These are the same strings the key binding settings caption each action with.
+                var expected = DivaNoteToggleGrid.NoteActions.Select(a => a.GetLocalisableDescription().ToString()).ToArray();
+
+                return glyphs.Length == 8
+                       && glyphs.All(g => !string.IsNullOrEmpty(g))
+                       && glyphs.Distinct().Count() == 8
+                       && glyphs.OrderBy(g => g).SequenceEqual(expected.OrderBy(g => g));
+            });
+        }
+
+        [Test]
+        public void Direction_keys_follow_the_arrow_or_symbol_family()
+        {
+            AddAssert("starts on a symbol", () => composer.CurrentAction, () => Is.EqualTo(DivaAction.Circle));
+
+            AddStep("press W", () => grid().HandleAction(DivaAction.EditorButtonUp));
+            AddAssert("triangle picked", () => composer.CurrentAction, () => Is.EqualTo(DivaAction.Triangle));
+
+            AddStep("press 5", () => grid().HandleAction(DivaAction.EditorToggleButtonFamily));
+            AddAssert("family swap keeps the row", () => composer.CurrentAction, () => Is.EqualTo(DivaAction.Up));
+
+            AddStep("press S", () => grid().HandleAction(DivaAction.EditorButtonDown));
+            AddAssert("down picked", () => composer.CurrentAction, () => Is.EqualTo(DivaAction.Down));
+
+            AddStep("press 5 again", () => grid().HandleAction(DivaAction.EditorToggleButtonFamily));
+            AddAssert("back to the symbol half", () => composer.CurrentAction, () => Is.EqualTo(DivaAction.Cross));
+
+            AddAssert("unrelated action is not handled", () => grid().HandleAction(DivaAction.EditorTapTool), () => Is.False);
+        }
+
+        private DivaNoteToggleGrid grid() => composer.ChildrenOfType<DivaNoteToggleGrid>().Single();
+
+        private DrawableTernaryButton[] noteButtons() => grid().ChildrenOfType<DrawableTernaryButton>().ToArray();
+
+        /// <summary>The glyph a note button draws as its icon.</summary>
+        private static string glyphOf(DrawableTernaryButton button)
+            => button.Icon.ChildrenOfType<SpriteText>().Single().Text.ToString();
+
+        private static bool isBound(DivaAction action, InputKey key)
+            => new DivaRuleset().GetDefaultKeyBindings(Rulesets.Ruleset.EDITOR_VARIANT)
+                                .Any(b => action.Equals(b.Action) && b.KeyCombination.Keys.SequenceEqual(new[] { key }));
 
         private void selectTool(string name)
             => composer.ChildrenOfType<EditorRadioButton>().First(b => b.Text.ToString() == name).TriggerClick();

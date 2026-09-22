@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
-using osu.Framework.Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Sprites;
 using osu.Game.Beatmaps;
@@ -29,17 +28,7 @@ namespace osu.Game.Rulesets.Diva.Edit
     [Cached]
     public partial class DivaHitObjectComposer : HitObjectComposer<DivaHitObject, DivaAction>
     {
-        public static readonly DivaAction[] PLAY_ACTIONS =
-        [
-            DivaAction.Square,
-            DivaAction.Triangle,
-            DivaAction.Circle,
-            DivaAction.Cross,
-            DivaAction.Left,
-            DivaAction.Up,
-            DivaAction.Right,
-            DivaAction.Down
-        ];
+        public static readonly DivaAction[] PLAY_ACTIONS = DivaNoteToggleGrid.NoteActions.ToArray();
 
         private readonly Bindable<TernaryState> gridSnapToggle = new Bindable<TernaryState>(TernaryState.True);
         private readonly Bindable<TernaryState> replaceOnSameTimeToggle = new Bindable<TernaryState>(TernaryState.False);
@@ -101,22 +90,14 @@ namespace osu.Game.Rulesets.Diva.Edit
                 Hotkey = HotkeyForAction(DivaAction.EditorToggleReplaceOnSameTime)
             };
 
-            foreach (var action in PLAY_ACTIONS)
-            {
-                var captured = action;
-                yield return new DrawableTernaryButton
-                {
-                    Current = actionStates[captured],
-                    Description = captured.GetDescription(),
-                    TooltipText = DivaStrings.EDITOR_BUTTONS_GROUP,
-                    CreateIcon = () => new SpriteIcon
-                    {
-                        Icon = FontAwesome.Regular.Circle,
-                        Colour = Graphics.DivaProjectDivaAtlas.GetUnitColor(captured)
-                    }
-                };
-            }
+            yield return new DivaNoteToggleGrid(this);
         }
+
+        /// <summary>The selection state backing one note button of the toggles grid.</summary>
+        public Bindable<TernaryState> StateFor(DivaAction action) => actionStates[action];
+
+        /// <summary>Selects a note action as if its button had been clicked.</summary>
+        public void SelectAction(DivaAction action) => actionStates[action].Value = TernaryState.True;
 
         [BackgroundDependencyLoader]
         private void load()

@@ -297,6 +297,16 @@ namespace osu.Game.Rulesets.Diva.Localization
         public static readonly LocalisableString EDITOR_BUTTONS_GROUP =
             new DivaLocalizationManager.DivaLocalisableString("按键", "buttons");
 
+        public static readonly LocalisableString EDITOR_BUTTONS_ARROW =
+            new DivaLocalizationManager.DivaLocalisableString("箭头", "Arrows");
+
+        public static readonly LocalisableString EDITOR_BUTTONS_SYMBOL =
+            new DivaLocalizationManager.DivaLocalisableString("符号", "Symbols");
+
+        public static readonly LocalisableString EDITOR_BUTTONS_FAMILY_TOOLTIP = new DivaLocalizationManager.DivaLocalisableString(
+            "按 WASD 选方向，点这里或按 5 切换 WASD 放置箭头还是符号。",
+            "WASD picks a direction; click here or press 5 to switch whether WASD places arrows or symbols.");
+
         public static readonly LocalisableString EDITOR_INSPECTOR_ACTION =
             new DivaLocalizationManager.DivaLocalisableString("按键", "Action");
 
