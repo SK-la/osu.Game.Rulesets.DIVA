@@ -17,6 +17,7 @@ using osu.Framework.Platform;
 using osu.Framework.Screens;
 using osu.Game.Beatmaps;
 using osu.Game.Database;
+using osu.Game.Graphics.UserInterfaceV2;
 using osu.Game.Overlays;
 using osu.Game.Overlays.Notifications;
 using osu.Game.Overlays.Settings;
@@ -70,7 +71,7 @@ namespace osu.Game.Rulesets.Diva.UI
             if (divaConfig == null)
                 return;
 
-            Bindable<bool>? importBindable = divaConfig.GetBindable<bool>(DivaRulesetSettings.ImportToRealm);
+            Bindable<bool> importBindable = divaConfig.GetBindable<bool>(DivaRulesetSettings.ImportToRealm);
 #if !DIVA_EZ2LAZER
             importBindable.Value = true;
             importBindable.Disabled = true;
@@ -93,86 +94,90 @@ namespace osu.Game.Rulesets.Diva.UI
                         RelativeSizeAxes = Axes.X
                     }
                 },
-                new SettingsCheckbox
+                new SettingsItemV2(new FormCheckBox
                 {
-                    LabelText = DivaStrings.SETTINGS_IMPORT_TO_REALM,
-                    TooltipText = DivaStrings.SETTINGS_IMPORT_TO_REALM_TOOLTIP,
+                    Caption = DivaStrings.SETTINGS_IMPORT_TO_REALM,
+                    HintText = DivaStrings.SETTINGS_IMPORT_TO_REALM_TOOLTIP,
                     Current = importBindable
-                },
-                new SettingsCheckbox
+                }),
+                new SettingsItemV2(new FormCheckBox
                 {
-                    LabelText = DivaStrings.SETTINGS_USE_XBOX_BUTTON_ICONS,
+                    Caption = DivaStrings.SETTINGS_USE_XBOX_BUTTON_ICONS,
                     Current = divaConfig.GetBindable<bool>(DivaRulesetSettings.UseXBoxButtons)
-                },
-                new SettingsCheckbox
+                }),
+                new SettingsItemV2(new FormCheckBox
                 {
-                    LabelText = DivaStrings.SETTINGS_ENABLE_VISUAL_BURSTS,
+                    Caption = DivaStrings.SETTINGS_ENABLE_VISUAL_BURSTS,
                     Current = divaConfig.GetBindable<bool>(DivaRulesetSettings.EnableVisualBursts)
-                },
-                new SettingsCheckbox
+                }),
+                new SettingsItemV2(new FormCheckBox
                 {
-                    LabelText = DivaStrings.SETTINGS_ENABLE_BUILTIN_HIT_SOUNDS,
-                    TooltipText = DivaStrings.SETTINGS_ENABLE_BUILTIN_HIT_SOUNDS_TOOLTIP,
+                    Caption = DivaStrings.SETTINGS_ENABLE_BUILTIN_HIT_SOUNDS,
+                    HintText = DivaStrings.SETTINGS_ENABLE_BUILTIN_HIT_SOUNDS_TOOLTIP,
                     Current = divaConfig.GetBindable<bool>(DivaRulesetSettings.EnableBuiltinHitSounds)
-                },
-                new SettingsCheckbox
+                }),
+                new SettingsItemV2(new FormCheckBox
                 {
-                    LabelText = DivaStrings.SETTINGS_JUDGEMENT_LOCK,
-                    TooltipText = DivaStrings.SETTINGS_JUDGEMENT_LOCK_TOOLTIP,
+                    Caption = DivaStrings.SETTINGS_JUDGEMENT_LOCK,
+                    HintText = DivaStrings.SETTINGS_JUDGEMENT_LOCK_TOOLTIP,
                     Current = divaConfig.GetBindable<bool>(DivaRulesetSettings.JudgementLock)
-                },
-                new SettingsSlider<double>
+                }),
+                new SettingsItemV2(new FormSliderBar<double>
                 {
-                    LabelText = DivaStrings.SETTINGS_INPUT_OFFSET,
-                    TooltipText = DivaStrings.SETTINGS_INPUT_OFFSET_TOOLTIP,
-                    Current = divaConfig.GetBindable<double>(DivaRulesetSettings.InputOffset)
-                },
-                new SettingsSlider<double>
+                    Caption = DivaStrings.SETTINGS_INPUT_OFFSET,
+                    HintText = DivaStrings.SETTINGS_INPUT_OFFSET_TOOLTIP,
+                    Current = divaConfig.GetBindable<double>(DivaRulesetSettings.InputOffset),
+                    KeyboardStep = 1
+                }),
+                new SettingsItemV2(new FormSliderBar<double>
                 {
-                    LabelText = DivaStrings.SETTINGS_NOTE_SIZE,
-                    Current = divaConfig.GetBindable<double>(DivaRulesetSettings.NoteSize)
-                },
-                new SettingsSlider<double>
+                    Caption = DivaStrings.SETTINGS_NOTE_SIZE,
+                    Current = divaConfig.GetBindable<double>(DivaRulesetSettings.NoteSize),
+                    KeyboardStep = 1
+                }),
+                new SettingsItemV2(new FormSliderBar<double>
                 {
-                    LabelText = DivaStrings.SETTINGS_PLAYFIELD_SCALE,
-                    TooltipText = DivaStrings.SETTINGS_PLAYFIELD_SCALE_TOOLTIP,
-                    Current = divaConfig.GetBindable<double>(DivaRulesetSettings.PlayfieldScale)
-                },
-                new SettingsSlider<double>
+                    Caption = DivaStrings.SETTINGS_PLAYFIELD_SCALE,
+                    HintText = DivaStrings.SETTINGS_PLAYFIELD_SCALE_TOOLTIP,
+                    Current = divaConfig.GetBindable<double>(DivaRulesetSettings.PlayfieldScale),
+                    KeyboardStep = 0.01f
+                }),
+                new SettingsItemV2(new FormSliderBar<double>
                 {
-                    LabelText = DivaStrings.SETTINGS_APPROACH_PREEMPT_SCALE,
-                    TooltipText = DivaStrings.SETTINGS_APPROACH_PREEMPT_SCALE_TOOLTIP,
+                    Caption = DivaStrings.SETTINGS_APPROACH_PREEMPT_SCALE,
+                    HintText = DivaStrings.SETTINGS_APPROACH_PREEMPT_SCALE_TOOLTIP,
                     Current = divaConfig.GetBindable<double>(DivaRulesetSettings.ApproachPreemptScale)
-                },
-                new SettingsEnumDropdown<DivaNoteAppearance>
+                }),
+                new SettingsItemV2(new FormEnumDropdown<DivaNoteAppearance>
                 {
-                    LabelText = DivaStrings.SETTINGS_NOTE_APPEARANCE,
-                    TooltipText = DivaStrings.SETTINGS_NOTE_APPEARANCE_TOOLTIP,
+                    Caption = DivaStrings.SETTINGS_NOTE_APPEARANCE,
+                    HintText = DivaStrings.SETTINGS_NOTE_APPEARANCE_TOOLTIP,
                     Current = divaConfig.GetBindable<DivaNoteAppearance>(DivaRulesetSettings.NoteAppearance)
-                },
-                new SettingsEnumDropdown<DivaNoteFlightCurve>
+                }),
+                new SettingsItemV2(new FormEnumDropdown<DivaNoteFlightCurve>
                 {
-                    LabelText = DivaStrings.SETTINGS_FLIGHT_CURVE,
-                    TooltipText = DivaStrings.SETTINGS_FLIGHT_CURVE_TOOLTIP,
+                    Caption = DivaStrings.SETTINGS_FLIGHT_CURVE,
+                    HintText = DivaStrings.SETTINGS_FLIGHT_CURVE_TOOLTIP,
                     Current = divaConfig.GetBindable<DivaNoteFlightCurve>(DivaRulesetSettings.FlightCurve)
-                },
-                new SettingsSlider<double>
+                }),
+                new SettingsItemV2(new FormSliderBar<double>
                 {
-                    LabelText = DivaStrings.SETTINGS_FLIGHT_AMPLITUDE,
-                    TooltipText = DivaStrings.SETTINGS_FLIGHT_AMPLITUDE_TOOLTIP,
-                    Current = divaConfig.GetBindable<double>(DivaRulesetSettings.FlightAmplitude)
-                },
-                new SettingsSlider<double>
+                    Caption = DivaStrings.SETTINGS_FLIGHT_AMPLITUDE,
+                    HintText = DivaStrings.SETTINGS_FLIGHT_AMPLITUDE_TOOLTIP,
+                    Current = divaConfig.GetBindable<double>(DivaRulesetSettings.FlightAmplitude),
+                    KeyboardStep = 5
+                }),
+                new SettingsItemV2(new FormSliderBar<double>
                 {
-                    LabelText = DivaStrings.SETTINGS_HOLD_STAR_DENSITY,
-                    TooltipText = DivaStrings.SETTINGS_HOLD_STAR_DENSITY_TOOLTIP,
+                    Caption = DivaStrings.SETTINGS_HOLD_STAR_DENSITY,
+                    HintText = DivaStrings.SETTINGS_HOLD_STAR_DENSITY_TOOLTIP,
                     Current = divaConfig.GetBindable<double>(DivaRulesetSettings.HoldStarDensity)
-                },
-                new SettingsSlider<double>
+                }),
+                new SettingsItemV2(new FormSliderBar<double>
                 {
-                    LabelText = DivaStrings.SETTINGS_HIT_EXPLOSION_ALPHA,
+                    Caption = DivaStrings.SETTINGS_HIT_EXPLOSION_ALPHA,
                     Current = divaConfig.GetBindable<double>(DivaRulesetSettings.HitExplosionAlpha)
-                }
+                })
             ];
 
             updatePathStatus();

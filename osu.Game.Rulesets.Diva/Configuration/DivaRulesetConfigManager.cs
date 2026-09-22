@@ -85,7 +85,7 @@ namespace osu.Game.Rulesets.Diva.Configuration
             SetDefault(DivaRulesetSettings.UseXBoxButtons, false);
             SetDefault(DivaRulesetSettings.EnableVisualBursts, true);
             SetDefault(DivaRulesetSettings.EnableBuiltinHitSounds, true);
-            SetDefault(DivaRulesetSettings.NoteSize, 40.0, 10.0, 64.0);
+            SetDefault(DivaRulesetSettings.NoteSize, 40.0, 10.0, 64.0, 1.0);
             // Fraction of the max contain-fit for this beatmap's logical field (≤1 keeps content on-screen on any aspect).
             SetDefault(DivaRulesetSettings.PlayfieldScale, 0.92, 0.5, 1.0, 0.01);
             // Multiplier on PD note_standing×MsPerFrame(BPM); 1.0 = ProjectDIVA baseline.
@@ -93,7 +93,7 @@ namespace osu.Game.Rulesets.Diva.Configuration
             SetDefault(DivaRulesetSettings.HitExplosionAlpha, 1.0, 0.0, 1.0, 0.05);
             // PD Strict (on): wrong key within window consumes the note; Standard (off): ignore wrong key.
             SetDefault(DivaRulesetSettings.JudgementLock, true);
-            SetDefault(DivaRulesetSettings.InputOffset, 0.0, -200.0, 200);
+            SetDefault(DivaRulesetSettings.InputOffset, 0.0, -200.0, 200, 1.0);
             SetDefault(DivaRulesetSettings.DivaRootPath, string.Empty);
             SetDefault(DivaRulesetSettings.DivaLibraryPaths, "[]");
             SetDefault(DivaRulesetSettings.ImportToRealm, true);
