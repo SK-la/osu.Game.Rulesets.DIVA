@@ -21,6 +21,17 @@ namespace osu.Game.Rulesets.Diva.Objects
 
         public double Duration { get; set; }
 
+        /// <summary>
+        ///     The same note without a length, i.e. the tap the reference editor's <c>Ctrl+X</c> switch turns
+        ///     this hold back into.
+        /// </summary>
+        public DivaHitObject AsTap()
+        {
+            var tap = new DivaHitObject();
+            CopyStateTo(tap);
+            return tap;
+        }
+
         public override double MaximumJudgementOffset => DivaHitJudgementEvaluator.HOLD_MISS_TIMEOUT;
     }
 }

@@ -1,12 +1,15 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Game.Graphics.UserInterfaceV2;
 using osu.Game.Rulesets.Diva.Beatmaps;
+using osu.Game.Rulesets.Diva.Beatmaps.DivaFormat;
 using osu.Game.Rulesets.Diva.Localization;
 using osu.Game.Rulesets.Diva.Objects;
 using osu.Game.Rulesets.Edit;
@@ -55,6 +58,22 @@ namespace osu.Game.Rulesets.Diva.Edit
                         Text = DivaStrings.EDITOR_CLEAR_OVERLAPPING_TAPS,
                         TooltipText = DivaStrings.EDITOR_CLEAR_OVERLAPPING_TAPS_TOOLTIP,
                         Action = clearOverlappingTaps
+                    },
+                    new RoundedButton
+                    {
+                        RelativeSizeAxes = Axes.X,
+                        Height = 28,
+                        Text = DivaStrings.EDITOR_CONVERT_TO_HOLD,
+                        TooltipText = DivaStrings.EDITOR_CONVERT_TO_HOLD_TOOLTIP,
+                        Action = () => convert(toHold: true)
+                    },
+                    new RoundedButton
+                    {
+                        RelativeSizeAxes = Axes.X,
+                        Height = 28,
+                        Text = DivaStrings.EDITOR_CONVERT_TO_TAP,
+                        TooltipText = DivaStrings.EDITOR_CONVERT_TO_TAP_TOOLTIP,
+                        Action = () => convert(toHold: false)
                     }
                 ]
             };
@@ -107,6 +126,60 @@ namespace osu.Game.Rulesets.Diva.Edit
                 editorBeatmap.Remove(hitObject);
 
             editorBeatmap.EndChange();
+        }
+
+        /// <summary>
+        ///     Switches the selected notes (or the whole chart) between tap and hold, the conversion the
+        ///     reference editor's <c>Ctrl+X</c> performs on the note being placed. The replacement keeps every
+        ///     field, so the note stays where it was and keeps its button, flight and key.
+        /// </summary>
+        private void convert(bool toHold)
+        {
+            var targets = editorBeatmap.SelectedHitObjects.OfType<DivaHitObject>().ToArray();
+
+            if (targets.Length == 0)
+                targets = editorBeatmap.HitObjects.OfType<DivaHitObject>().ToArray();
+
+            var converted = new List<DivaHitObject>();
+
+            editorBeatmap.BeginChange();
+
+            foreach (DivaHitObject note in targets)
+            {
+                DivaHitObject? replacement = null;
+
+                if (toHold && note is not DivaHoldHitObject)
+                    replacement = note.AsHold(beatAlignedDuration(note));
+                else if (!toHold && note is DivaHoldHitObject hold)
+                    replacement = hold.AsTap();
+
+                if (replacement == null)
+                    continue;
+
+                editorBeatmap.Remove(note);
+                editorBeatmap.Add(replacement);
+                converted.Add(replacement);
+            }
+
+            editorBeatmap.EndChange();
+
+            if (converted.Count == 0)
+                return;
+
+            editorBeatmap.SelectedHitObjects.Clear();
+            editorBeatmap.SelectedHitObjects.AddRange(converted);
+        }
+
+        /// <summary>
+        ///     One beat at the note's time, rounded to the whole chart frame a save stores: ProjectDIVA has no
+        ///     sub-frame hold lengths, so a converted hold would otherwise change length on the next export.
+        /// </summary>
+        private double beatAlignedDuration(DivaHitObject note)
+        {
+            double beatLength = editorBeatmap.ControlPointInfo.TimingPointAt(note.StartTime).BeatLength;
+            double msPerFrame = DivaChartBuilder.MsPerFrameAt(editorBeatmap, note.StartTime);
+
+            return Math.Max(1, DivaChartConstants.MsToFrameLength(beatLength, msPerFrame)) * msPerFrame;
         }
     }
 }

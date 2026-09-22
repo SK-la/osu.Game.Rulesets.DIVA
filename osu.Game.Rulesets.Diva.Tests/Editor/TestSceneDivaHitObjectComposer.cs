@@ -283,6 +283,64 @@ namespace osu.Game.Rulesets.Diva.Tests.Editor
             AddAssert("only the hold is left", () => editorBeatmap.HitObjects, () => Is.EqualTo(new[] { hold }));
         }
 
+        [Test]
+        public void Selecting_a_note_does_not_rewrite_its_action()
+        {
+            AddStep("add a square note", () => editorBeatmap.Add(new DivaHitObject
+            {
+                StartTime = 500,
+                Position = DivaActionEncoding.ToPlayfieldPosition(4, 12),
+                ValidAction = DivaAction.Square
+            }));
+
+            AddStep("select it while the tool still places circles", () => editorBeatmap.SelectedHitObjects.Add(editorBeatmap.HitObjects.Single()));
+
+            AddAssert("note keeps its button", () => ((DivaHitObject)editorBeatmap.HitObjects.Single()).ValidAction, () => Is.EqualTo(DivaAction.Square));
+        }
+
+        [Test]
+        public void Note_tools_convert_selected_notes_between_tap_and_hold()
+        {
+            AddStep("add a selected tap", () =>
+            {
+                var tap = new DivaHitObject
+                {
+                    StartTime = 500,
+                    Position = DivaActionEncoding.ToPlayfieldPosition(4, 12),
+                    ValidAction = DivaAction.Square
+                };
+
+                editorBeatmap.Add(tap);
+                editorBeatmap.SelectedHitObjects.Add(tap);
+            });
+
+            AddStep("convert to hold", () => noteToolButton(DivaStrings.EDITOR_CONVERT_TO_HOLD.ToString()).TriggerClick());
+
+            AddAssert("hold keeps the note and takes one beat", () =>
+            {
+                var hold = editorBeatmap.HitObjects.OfType<DivaHoldHitObject>().Single();
+
+                // One beat at 120 BPM is 500 ms, i.e. exactly 48 frames: the length survives the export.
+                return hold.StartTime == 500
+                       && hold.ValidAction == DivaAction.Square
+                       && Math.Abs(hold.Duration - 500) < 0.01
+                       && DivaChartBuilder.FrameLengthAt(editorBeatmap, hold.StartTime, hold.Duration) == 48;
+            });
+
+            AddAssert("the replacement is selected", () => editorBeatmap.SelectedHitObjects.Single(), () => Is.TypeOf<DivaHoldHitObject>());
+
+            AddStep("convert back to tap", () => noteToolButton(DivaStrings.EDITOR_CONVERT_TO_TAP.ToString()).TriggerClick());
+
+            AddAssert("tap is back where it was", () =>
+            {
+                var converted = editorBeatmap.HitObjects.Single();
+
+                return converted is not DivaHoldHitObject
+                       && converted.StartTime == 500
+                       && ((DivaHitObject)converted).ValidAction == DivaAction.Square;
+            });
+        }
+
         private RoundedButton noteToolButton(string text)
             => composer.ChildrenOfType<DivaNoteToolsToolbox>().Single()
                        .ChildrenOfType<RoundedButton>()

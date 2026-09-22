@@ -339,6 +339,22 @@ namespace osu.Game.Rulesets.Diva.Localization
                 "删除同一按键上落在长条区间内的单键（ProjectDIVA 视为冲突放置）。长条与长条重叠需手动处理。",
                 "Deletes taps that start inside a hold of the same button, which ProjectDIVA treats as a placement conflict. Overlapping holds are left for manual fixing.");
 
+        public static readonly LocalisableString EDITOR_CONVERT_TO_HOLD =
+            new DivaLocalizationManager.DivaLocalisableString("转成长条", "Convert to holds");
+
+        public static readonly LocalisableString EDITOR_CONVERT_TO_HOLD_TOOLTIP =
+            new DivaLocalizationManager.DivaLocalisableString(
+                "把单键换成长条，长度给一拍（取整到导出帧长）。未选中任何音符时作用于全谱。",
+                "Replaces taps with holds one beat long, rounded to whole exported frames. Applies to the whole chart when nothing is selected.");
+
+        public static readonly LocalisableString EDITOR_CONVERT_TO_TAP =
+            new DivaLocalizationManager.DivaLocalisableString("转为单键", "Convert to taps");
+
+        public static readonly LocalisableString EDITOR_CONVERT_TO_TAP_TOOLTIP =
+            new DivaLocalizationManager.DivaLocalisableString(
+                "把长条换成单键（即 PC 的「简化所有长条为单键」）。未选中任何音符时作用于全谱。",
+                "Replaces holds with taps, the reference editor's \"simplify every hold to a tap\". Applies to the whole chart when nothing is selected.");
+
         public static readonly LocalisableString EDITOR_RESTORE_WAV_KEY_TOOLTIP = new DivaLocalizationManager.DivaLocalisableString(
             "丢掉编辑器改过的 #WAV 槽位，让音符回到源谱面的 Key 音。有选中就只处理选中项，否则处理整张谱面。",
             "Drops the editor's #WAV overrides so notes fall back to the source chart's keys. Applies to the selection, or to the whole chart when nothing is selected.");

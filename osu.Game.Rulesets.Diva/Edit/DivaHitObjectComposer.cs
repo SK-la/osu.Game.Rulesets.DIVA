@@ -80,6 +80,9 @@ namespace osu.Game.Rulesets.Diva.Edit
             actionStates[DivaAction.Circle].Value = TernaryState.True;
         }
 
+        /// <summary>True while <see cref="UpdateTernaryStates"/> writes the note buttons in bulk.</summary>
+        private bool syncingActionStates;
+
         public override Bindable<TernaryState>? SelectionNewComboState => null;
 
         protected override IReadOnlyList<CompositionTool<DivaAction>> CompositionTools =>
@@ -158,6 +161,12 @@ namespace osu.Game.Rulesets.Diva.Edit
                 var captured = action;
                 bindable.ValueChanged += state =>
                 {
+                    // Only a click (or hotkey) on a note button may change the placement action or push it
+                    // onto the selection; the state sync below writes these bindables in bulk and would
+                    // otherwise be read as a click.
+                    if (syncingActionStates)
+                        return;
+
                     if (state.NewValue != TernaryState.True)
                     {
                         if (actionStates.Values.All(b => b.Value != TernaryState.True))
@@ -185,8 +194,20 @@ namespace osu.Game.Rulesets.Diva.Edit
             if (selected.Length == 0)
                 return;
 
-            foreach (var action in PLAY_ACTIONS)
-                actionStates[action].Value = selected.GetTernaryState(h => h.ValidAction == action);
+            // Writing the buttons one at a time leaves the group momentarily without a pressed button, which
+            // the handlers above would "repair" by pressing whichever button they reach first — rewriting the
+            // selected notes' action to it. Sync under a flag so only a real click can do that.
+            syncingActionStates = true;
+
+            try
+            {
+                foreach (var action in PLAY_ACTIONS)
+                    actionStates[action].Value = selected.GetTernaryState(h => h.ValidAction == action);
+            }
+            finally
+            {
+                syncingActionStates = false;
+            }
         }
 
         public SnapResult FindSnappedPositionAndTime(Vector2 screenSpacePosition)

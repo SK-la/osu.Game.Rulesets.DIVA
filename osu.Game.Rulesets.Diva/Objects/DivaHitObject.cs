@@ -2,6 +2,7 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System.Collections.Generic;
+using osu.Game.Audio;
 using osu.Game.Rulesets.Judgements;
 using osu.Game.Rulesets.Objects;
 using osu.Game.Rulesets.Objects.Types;
@@ -54,5 +55,31 @@ namespace osu.Game.Rulesets.Diva.Objects
         ///     defined in one unit (grid) and converted once.
         /// </remarks>
         public List<Vector2>? ApproachPathNodes;
+
+        /// <summary>
+        ///     The same note as a hold of <paramref name="duration"/> ms. The reference editor treats tap and
+        ///     hold as one record with an optional length, so nothing but the length changes.
+        /// </summary>
+        public DivaHoldHitObject AsHold(double duration)
+        {
+            var hold = new DivaHoldHitObject { Duration = duration };
+            CopyStateTo(hold);
+            return hold;
+        }
+
+        /// <summary>
+        ///     Copies everything that identifies the note — time, cell, button, flight vector and key sound —
+        ///     leaving the concrete type (and thus tap/hold) to the caller.
+        /// </summary>
+        private protected void CopyStateTo(DivaHitObject target)
+        {
+            target.StartTime = StartTime;
+            target.Position = Position;
+            target.ValidAction = ValidAction;
+            target.ApproachPieceOriginPosition = ApproachPieceOriginPosition;
+            target.ApproachPathNodes = ApproachPathNodes;
+            target.WavKey = WavKey;
+            target.Samples = new List<HitSampleInfo>(Samples);
+        }
     }
 }
