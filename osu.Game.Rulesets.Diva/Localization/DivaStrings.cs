@@ -312,6 +312,69 @@ namespace osu.Game.Rulesets.Diva.Localization
         public static readonly LocalisableString EDITOR_EXPORT_DIVA =
             new DivaLocalizationManager.DivaLocalisableString("导出 .diva", "Export .diva");
 
+        public static readonly LocalisableString EDITOR_EVENTS_GROUP =
+            new DivaLocalizationManager.DivaLocalisableString("谱面事件", "chart events");
+
+        public static readonly LocalisableString EDITOR_CHANCE_TIME =
+            new DivaLocalizationManager.DivaLocalisableString("Chance Time", "Chance Time");
+
+        public static readonly LocalisableString EDITOR_CHANCE_ENABLED =
+            new DivaLocalizationManager.DivaLocalisableString("启用 Chance Time", "Enable Chance Time");
+
+        public static readonly LocalisableString EDITOR_CHANCE_START =
+            new DivaLocalizationManager.DivaLocalisableString("开始 (ms)", "Start (ms)");
+
+        public static readonly LocalisableString EDITOR_CHANCE_END =
+            new DivaLocalizationManager.DivaLocalisableString("结束 (ms)", "End (ms)");
+
+        public static readonly LocalisableString EDITOR_SET_FROM_CLOCK =
+            new DivaLocalizationManager.DivaLocalisableString("用当前时间", "Use clock");
+
+        public static readonly LocalisableString EDITOR_BGS_HEADER =
+            new DivaLocalizationManager.DivaLocalisableString("BGS", "BGS");
+
+        public static readonly LocalisableString EDITOR_RES_HEADER =
+            new DivaLocalizationManager.DivaLocalisableString("RES", "RES");
+
+        public static readonly LocalisableString EDITOR_WAV_HEADER =
+            new DivaLocalizationManager.DivaLocalisableString("WAV 文件", "WAV files");
+
+        public static readonly LocalisableString EDITOR_RESOURCE_FILES_HEADER =
+            new DivaLocalizationManager.DivaLocalisableString("资源文件", "Resource files");
+
+        public static readonly LocalisableString EDITOR_ADD_AT_CLOCK =
+            new DivaLocalizationManager.DivaLocalisableString("在当前时间添加", "Add at clock");
+
+        public static readonly LocalisableString EDITOR_REMOVE_SELECTED =
+            new DivaLocalizationManager.DivaLocalisableString("删除选中", "Remove selected");
+
+        public static readonly LocalisableString EDITOR_EVENT_TIME =
+            new DivaLocalizationManager.DivaLocalisableString("时间 (ms)", "Time (ms)");
+
+        public static readonly LocalisableString EDITOR_EVENT_SLOT =
+            new DivaLocalizationManager.DivaLocalisableString("槽", "Slot");
+
+        public static readonly LocalisableString EDITOR_EVENT_WAV_ID =
+            new DivaLocalizationManager.DivaLocalisableString("WAV ID", "WAV ID");
+
+        public static readonly LocalisableString EDITOR_EVENT_RESOURCE_ID =
+            new DivaLocalizationManager.DivaLocalisableString("资源 ID", "Resource ID");
+
+        public static readonly LocalisableString EDITOR_EVENT_SEEK =
+            new DivaLocalizationManager.DivaLocalisableString("音源偏移 (ms)", "Source seek (ms)");
+
+        public static readonly LocalisableString EDITOR_FILE_ID =
+            new DivaLocalizationManager.DivaLocalisableString("ID", "ID");
+
+        public static readonly LocalisableString EDITOR_FILE_PATH =
+            new DivaLocalizationManager.DivaLocalisableString("路径", "Path");
+
+        public static readonly LocalisableString EDITOR_ADD_FILE =
+            new DivaLocalizationManager.DivaLocalisableString("添加", "Add");
+
+        public static readonly LocalisableString EDITOR_NO_SELECTION =
+            new DivaLocalizationManager.DivaLocalisableString("未选中", "None selected");
+
         public static string Editor_ExportDivaComplete(string path) =>
             editor_export_diva_complete_template.Format(path);
 

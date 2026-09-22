@@ -49,6 +49,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
         {
             var beatmap = (DivaBeatmap)base.ConvertBeatmap(original, cancellationToken);
             beatmap.LogicalPlayfieldSize = DivaPlayfieldSize.Compute(beatmap.HitObjects);
+            beatmap.ChartEvents = DivaBeatmap.EventsOf(original)?.Clone();
             return beatmap;
         }
 

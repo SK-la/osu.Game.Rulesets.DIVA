@@ -85,31 +85,31 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
 
     public sealed class DivaBgmEvent
     {
-        public int Sequence { get; init; }
-        public int FrameIndex { get; init; }
-        public double TimeMs { get; init; }
-        public int Slot { get; init; }
-        public int WavId { get; init; }
+        public int Sequence { get; set; }
+        public int FrameIndex { get; set; }
+        public double TimeMs { get; set; }
+        public int Slot { get; set; }
+        public int WavId { get; set; }
 
         /// <summary>
         /// Source seek declared by a negative BGS position, in milliseconds.
         /// ProjectDIVA stores the final value globally per WAV id.
         /// </summary>
-        public double? DeclaredSourceOffsetMs { get; init; }
+        public double? DeclaredSourceOffsetMs { get; set; }
     }
 
     public sealed class DivaResourceEvent
     {
-        public int Sequence { get; init; }
-        public int FrameIndex { get; init; }
-        public double TimeMs { get; init; }
-        public int ResourceId { get; init; }
+        public int Sequence { get; set; }
+        public int FrameIndex { get; set; }
+        public double TimeMs { get; set; }
+        public int ResourceId { get; set; }
 
         /// <summary>
         /// Source seek declared by a negative Resource position, in milliseconds.
         /// ProjectDIVA stores only the final declared value in <c>videoEngine.m_pTime</c>.
         /// </summary>
-        public double? DeclaredSourceOffsetMs { get; init; }
+        public double? DeclaredSourceOffsetMs { get; set; }
     }
 
     public sealed class DivaChart

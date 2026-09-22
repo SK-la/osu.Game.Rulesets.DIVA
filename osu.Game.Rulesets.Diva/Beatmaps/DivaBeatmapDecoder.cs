@@ -27,11 +27,16 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             DivaStoryboardDecoder.Register();
         }
 
+        protected override Beatmap CreateTemplateObject() => new DivaDecodedBeatmap();
+
         protected override void ParseStreamInto(LineBufferedReader stream, bool isPrimaryStream, Beatmap beatmap)
         {
             // Prefer FileStream path / raw bytes — LineBufferedReader is always UTF-8 and corrupts ANSI charts.
             DivaChart chart = DivaChartStreamDecode.Parse(stream).Chart;
             DivaPlaybackTimeline timeline = DivaPlaybackTimeline.Create(chart);
+
+            if (beatmap is DivaDecodedBeatmap decoded)
+                decoded.ChartEvents = DivaChartEvents.FromChart(chart, timeline);
 
             beatmap.BeatmapInfo.DifficultyName = DivaChartConstants.FormatDifficultyName(chart.Metadata.Level, chart.Metadata.Hard);
             beatmap.BeatmapInfo.Difficulty.OverallDifficulty = Math.Clamp(chart.Metadata.Hard, 1, 10);
@@ -125,5 +130,14 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
 
             return bpm;
         }
+    }
+
+    /// <summary>
+    ///     Decoder output is typed as non-generic <see cref="Beatmap"/>, so events ride on this
+    ///     subclass until <see cref="DivaBeatmapConverter"/> copies them onto the playable.
+    /// </summary>
+    public class DivaDecodedBeatmap : Beatmap
+    {
+        public DivaChartEvents? ChartEvents { get; set; }
     }
 }

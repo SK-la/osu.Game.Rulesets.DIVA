@@ -515,6 +515,19 @@ namespace osu.Game.Rulesets.Diva.Tests
 
             Vector2 approach = DivaActionEncoding.ComputeApproachOrigin(parsed.Notes[0], 120);
             Assert.That(approach.Length, Is.EqualTo(DivaChartConstants.DISTANCE).Within(0.5f));
+
+            using var stream = new MemoryStream(Encoding.UTF8.GetBytes(chart));
+            using var lineReader = new LineBufferedReader(stream);
+            var decoded = new DivaBeatmapDecoder().Decode(lineReader);
+            Assert.That(decoded, Is.TypeOf<DivaDecodedBeatmap>());
+            DivaChartEvents? events = ((DivaDecodedBeatmap)decoded).ChartEvents;
+            Assert.That(events, Is.Not.Null);
+            Assert.That(events!.WavFiles[0], Is.EqualTo("song.mp3"));
+            Assert.That(events.ResourceFiles[0], Is.EqualTo("cover.jpg"));
+
+            var converted = (DivaBeatmap)new DivaBeatmapConverter(decoded, new DivaRuleset()).Convert();
+            Assert.That(converted.ChartEvents, Is.Not.Null);
+            Assert.That(converted.ChartEvents!.WavFiles[0], Is.EqualTo("song.mp3"));
         }
 
         [Test]

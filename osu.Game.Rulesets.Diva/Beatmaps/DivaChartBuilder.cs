@@ -16,13 +16,15 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
 {
     /// <summary>
     /// Rebuilds a ProjectDIVA chart from a playable DIVA beatmap.
-    /// BGS/video events are copied from the source .diva when it is still on disk.
+    /// BGS/video events come from <see cref="DivaBeatmap.ChartEvents"/> when present,
+    /// otherwise from the source <c>.diva</c> still on disk.
     /// </summary>
     public static class DivaChartBuilder
     {
         public static DivaChart FromBeatmap(IBeatmap beatmap, DivaChart? source = null)
         {
             source ??= tryLoadSource(beatmap);
+            DivaChartEvents? events = DivaBeatmap.EventsOf(beatmap);
 
             var timingPoints = beatmap.ControlPointInfo.TimingPoints.OrderBy(p => p.Time).ToArray();
             double headerBpm = beatmap.BeatmapInfo.BPM > 0
@@ -87,6 +89,9 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
 
             var metadata = beatmap.Metadata;
             string style = extractStyle(metadata.Tags, source?.Metadata.Style ?? string.Empty);
+            (IReadOnlyDictionary<int, string> wavFiles, IReadOnlyDictionary<int, string> resourceFiles,
+                IReadOnlyList<DivaBgmEvent> bgmEvents, IReadOnlyList<DivaResourceEvent> resourceEvents) =
+                resolveEvents(events, source, timingPoints, headerBpm);
 
             return new DivaChart
             {
@@ -109,10 +114,10 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                 FrameCount = frameCount,
                 TimingPoints = chartTiming,
                 Notes = notes,
-                WavFiles = source?.WavFiles ?? new Dictionary<int, string>(),
-                ResourceFiles = source?.ResourceFiles ?? new Dictionary<int, string>(),
-                BgmEvents = source?.BgmEvents ?? [],
-                ResourceEvents = source?.ResourceEvents ?? [],
+                WavFiles = wavFiles,
+                ResourceFiles = resourceFiles,
+                BgmEvents = bgmEvents,
+                ResourceEvents = resourceEvents,
                 ChanceTimeStart = chanceStart,
                 ChanceTimeEnd = chanceEnd,
                 ChanceTimeStartMs = chanceStartMs,
@@ -198,6 +203,57 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             int exclusiveEnd = timeToFrame(endMs, timingPoints, headerBpm);
             int end = Math.Max(start, exclusiveEnd - 1);
             return (start, end, startMs, endMs);
+        }
+
+        private static (IReadOnlyDictionary<int, string> Wav, IReadOnlyDictionary<int, string> Resources,
+            IReadOnlyList<DivaBgmEvent> Bgm, IReadOnlyList<DivaResourceEvent> ResourceEvents)
+            resolveEvents(DivaChartEvents? events, DivaChart? source, TimingControlPoint[] timingPoints, double headerBpm)
+        {
+            if (events == null)
+            {
+                return (
+                    source?.WavFiles ?? new Dictionary<int, string>(),
+                    source?.ResourceFiles ?? new Dictionary<int, string>(),
+                    source?.BgmEvents ?? [],
+                    source?.ResourceEvents ?? []
+                );
+            }
+
+            var bgm = new List<DivaBgmEvent>(events.BgmEvents.Count);
+            for (int i = 0; i < events.BgmEvents.Count; i++)
+            {
+                DivaBgmEvent e = events.BgmEvents[i];
+                bgm.Add(new DivaBgmEvent
+                {
+                    Sequence = i,
+                    FrameIndex = timeToFrame(e.TimeMs, timingPoints, headerBpm),
+                    TimeMs = e.TimeMs,
+                    Slot = e.Slot,
+                    WavId = e.WavId,
+                    DeclaredSourceOffsetMs = e.DeclaredSourceOffsetMs
+                });
+            }
+
+            var resources = new List<DivaResourceEvent>(events.ResourceEvents.Count);
+            for (int i = 0; i < events.ResourceEvents.Count; i++)
+            {
+                DivaResourceEvent e = events.ResourceEvents[i];
+                resources.Add(new DivaResourceEvent
+                {
+                    Sequence = i,
+                    FrameIndex = timeToFrame(e.TimeMs, timingPoints, headerBpm),
+                    TimeMs = e.TimeMs,
+                    ResourceId = e.ResourceId,
+                    DeclaredSourceOffsetMs = e.DeclaredSourceOffsetMs
+                });
+            }
+
+            return (
+                new Dictionary<int, string>(events.WavFiles),
+                new Dictionary<int, string>(events.ResourceFiles),
+                bgm,
+                resources
+            );
         }
 
         private static string extractStyle(string tags, string fallback)
