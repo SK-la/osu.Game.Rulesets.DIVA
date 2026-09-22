@@ -9,7 +9,6 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
 {
     public sealed class DivaChartMetadata
     {
-        public string EditorVersion { get; init; } = string.Empty;
         public string Title { get; init; } = string.Empty;
 
         /// <summary>ProjectDIVA <c>_noterName</c> / song-select "Noter" (谱师).</summary>
@@ -182,10 +181,12 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
     public static class DivaChartConstants
     {
         /// <summary>
-        ///     <c>EditorVer</c> written by the PC editor for charts it authors from scratch. Charts read from
-        ///     disk keep their own version, which gates the ChanceTime line and the legacy BPM rounding.
+        ///     First line of every <c>.diva</c> file. The original format puts the editor version there and
+        ///     the game gates the ChanceTime line on <c>&gt;= 1.0.1.0</c>, but the reference editor stopped
+        ///     at this revision, so the value carries no information and is written as a constant. It must
+        ///     keep the <c>"1."</c> prefix — that is what <c>DivaBeatmapDecoder</c> recognises charts by.
         /// </summary>
-        public const string EDITOR_VERSION = "1.0.4.7";
+        public const string CHART_MAGIC = "1.0.4.7";
 
         public const int NOTE_TYPE_COUNT = 8;
         public const int NOTE_PER_PERIOD = 192;

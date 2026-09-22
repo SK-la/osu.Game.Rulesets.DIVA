@@ -531,6 +531,40 @@ namespace osu.Game.Rulesets.Diva.Tests
         }
 
         [Test]
+        public void Parses_legacy_chart_that_ends_before_the_chance_time_line()
+        {
+            // Charts written before the ChanceTime line existed simply end after the #RES terminator;
+            // the version line no longer gates the read, so the missing line must stay "unset".
+            string chart = """
+                           1.0.0.5
+                           Legacy Song
+                           Mapper
+                           Artist
+                           Style
+                           bg.png
+                           1
+                           3
+                           120
+                           1
+                           0 120
+                           -1
+                           -1
+                           -1
+                           0 0 10 12 0 0 0
+                           -1
+                           0 song.mp3
+                           -1
+                           -1
+                           """;
+
+            using var reader = new StringReader(chart);
+            DivaChart parsed = DivaChartFileParser.Parse(reader, "legacy.diva", @"C:\songs\legacy");
+
+            Assert.That(parsed.Notes.Count, Is.EqualTo(1));
+            Assert.That(parsed.HasChanceTime, Is.False);
+        }
+
+        [Test]
         public void ResolveDisplayArtist_falls_back_to_singer_when_musician_empty()
         {
             Assert.That(new DivaChartMetadata { Artist = "", Style = "初音ミク" }.ResolveDisplayArtist(), Is.EqualTo("初音ミク"));
@@ -738,7 +772,6 @@ namespace osu.Game.Rulesets.Diva.Tests
 
         private static void assertChartsEquivalent(DivaChart expected, DivaChart actual)
         {
-            Assert.That(actual.Metadata.EditorVersion, Is.EqualTo(expected.Metadata.EditorVersion));
             Assert.That(actual.Metadata.Title, Is.EqualTo(expected.Metadata.Title));
             Assert.That(actual.Metadata.Creator, Is.EqualTo(expected.Metadata.Creator));
             Assert.That(actual.Metadata.Artist, Is.EqualTo(expected.Metadata.Artist));

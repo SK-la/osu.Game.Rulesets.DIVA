@@ -112,7 +112,6 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             {
                 Metadata = new DivaChartMetadata
                 {
-                    EditorVersion = source?.Metadata.EditorVersion is { Length: > 0 } version ? version : DivaChartConstants.EDITOR_VERSION,
                     Title = metadata.TitleUnicode.Length > 0 ? metadata.TitleUnicode : metadata.Title,
                     Creator = metadata.Author.Username,
                     Artist = source?.Metadata.Artist ?? metadata.Artist,

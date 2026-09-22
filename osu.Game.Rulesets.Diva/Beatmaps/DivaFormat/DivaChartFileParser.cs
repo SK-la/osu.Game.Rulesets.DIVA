@@ -22,7 +22,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
 
         public static DivaChart Parse(TextReader reader, string sourcePath, string songFolder)
         {
-            string editorVer = readLineRequired(reader);
+            readLineRequired(reader); // editor version line; carries no information, see CHART_MAGIC
             string title = readLineRequired(reader);
             string creator = readLineRequired(reader);
             string artist = readLineRequired(reader);
@@ -155,11 +155,9 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
             int chanceStart = -1;
             int chanceEnd = -1;
 
-            if (string.CompareOrdinal(editorVer, "1.0.1.0") >= 0)
-            {
-                if (tryReadIntToken(reader, out chanceStart))
-                    tryReadIntToken(reader, out chanceEnd);
-            }
+            // Read unconditionally: charts predating the ChanceTime line simply end here.
+            if (tryReadIntToken(reader, out chanceStart))
+                tryReadIntToken(reader, out chanceEnd);
 
             double[] frameTimes = buildFrameTimes(frameBpms, headerBpm, frameCount);
             var resourceEvents = new List<DivaResourceEvent>(rawResourceEvents.Count);
@@ -269,7 +267,6 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
             {
                 Metadata = new DivaChartMetadata
                 {
-                    EditorVersion = editorVer,
                     Title = title,
                     Creator = creator,
                     Artist = artist,
@@ -299,7 +296,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
         public static DivaChartMetadata ReadMetadata(string path)
         {
             using var reader = DivaChartTextEncoding.OpenReader(path);
-            string editorVer = readLineRequired(reader);
+            readLineRequired(reader); // editor version line; carries no information, see CHART_MAGIC
             string title = readLineRequired(reader);
             string creator = readLineRequired(reader);
             string artist = readLineRequired(reader);
@@ -311,7 +308,6 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
 
             return new DivaChartMetadata
             {
-                EditorVersion = editorVer,
                 Title = title,
                 Creator = creator,
                 Artist = artist,

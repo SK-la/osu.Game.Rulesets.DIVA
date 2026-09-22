@@ -30,7 +30,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
 
             validate(chart);
 
-            sb.Append(meta.EditorVersion).Append(newline);
+            sb.Append(DivaChartConstants.CHART_MAGIC).Append(newline);
             sb.Append(meta.Title).Append(newline);
             sb.Append(meta.Creator).Append(newline);
             sb.Append(meta.Artist).Append(newline);
@@ -90,8 +90,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
 
             appendTerminator(sb);
 
-            if (string.CompareOrdinal(meta.EditorVersion, "1.0.1.0") >= 0)
-                sb.Append(formatInt(chart.ChanceTimeStart)).Append(' ').Append(formatInt(chart.ChanceTimeEnd)).Append(newline);
+            sb.Append(formatInt(chart.ChanceTimeStart)).Append(' ').Append(formatInt(chart.ChanceTimeEnd)).Append(newline);
 
             return sb.ToString();
         }

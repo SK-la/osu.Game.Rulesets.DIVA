@@ -272,11 +272,19 @@ namespace osu.Game.Rulesets.Diva.Tests
             Assert.Throws<InvalidDataException>(() => DivaChartFileWriter.ExportToString(chart));
         }
 
+        [Test]
+        public void Writer_emits_fixed_magic_and_chance_time_line()
+        {
+            string written = DivaChartFileWriter.ExportToString(minimalChart(1, []));
+
+            Assert.That(written, Does.StartWith(DivaChartConstants.CHART_MAGIC + "\r\n"));
+            Assert.That(written, Does.EndWith("-1 -1\r\n"));
+        }
+
         private static DivaChart minimalChart(int periodCount, IReadOnlyList<DivaChartNote> notes) => new DivaChart
         {
             Metadata = new DivaChartMetadata
             {
-                EditorVersion = DivaChartConstants.EDITOR_VERSION,
                 Title = "Chart Song",
                 Creator = "Mapper",
                 Artist = "Artist",
