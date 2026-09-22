@@ -2,7 +2,6 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -30,7 +29,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
 
             validate(chart);
 
-            sb.Append(DivaChartConstants.CHART_MAGIC).Append(newline);
+            sb.Append(DivaChartConstants.DIVA_CHART_FORMAT_VERSION).Append(newline);
             sb.Append(meta.Title).Append(newline);
             sb.Append(meta.Creator).Append(newline);
             sb.Append(meta.Artist).Append(newline);

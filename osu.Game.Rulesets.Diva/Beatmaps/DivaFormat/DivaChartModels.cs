@@ -181,12 +181,23 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
     public static class DivaChartConstants
     {
         /// <summary>
-        ///     First line of every <c>.diva</c> file. The original format puts the editor version there and
-        ///     the game gates the ChanceTime line on <c>&gt;= 1.0.1.0</c>, but the reference editor stopped
-        ///     at this revision, so the value carries no information and is written as a constant. It must
-        ///     keep the <c>"1."</c> prefix — that is what <c>DivaBeatmapDecoder</c> recognises charts by.
+        ///     First line of every <c>.diva</c> file: this ruleset's own chart format version, not the
+        ///     version of whichever tool produced the chart. Charts authored here are not PC editor output,
+        ///     so the reference editor's revision is deliberately not echoed.
         /// </summary>
-        public const string CHART_MAGIC = "1.0.4.7";
+        /// <remarks>
+        ///     Three readers string-compare this line, so the value is constrained:
+        ///     <list type="bullet">
+        ///         <item>it must start with <c>"1."</c> — the prefix <c>DivaBeatmapDecoder</c>,
+        ///         <c>DivaStoryboardDecoder</c> and <c>DivaTextChartFormat</c> recognise charts by;</item>
+        ///         <item>it must sort at or above <c>"1.0.1.0"</c>, below which the game skips the
+        ///         ChanceTime line (<c>notemap.cpp:276</c>);</item>
+        ///         <item>it must sort above <c>"1.0.4.7"</c>, at or below which the game rounds BPM values
+        ///         (<c>notemap.cpp:161</c>).</item>
+        ///     </list>
+        ///     Bump it only when the on-disk layout changes.
+        /// </remarks>
+        public const string DIVA_CHART_FORMAT_VERSION = "1.1.0.0";
 
         public const int NOTE_TYPE_COUNT = 8;
         public const int NOTE_PER_PERIOD = 192;

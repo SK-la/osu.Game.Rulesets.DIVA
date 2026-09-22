@@ -18,7 +18,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
     {
         public static void Register()
         {
-            // Same EditorVer magic as <see cref="DivaBeatmapDecoder"/> ("1.0.x.x").
+            // Same format-version magic as <see cref="DivaBeatmapDecoder"/> ("1.").
             AddDecoder<Storyboard>("1.", _ => new DivaStoryboardDecoder());
         }
 

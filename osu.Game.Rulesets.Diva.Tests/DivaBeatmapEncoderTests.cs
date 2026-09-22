@@ -273,12 +273,26 @@ namespace osu.Game.Rulesets.Diva.Tests
         }
 
         [Test]
-        public void Writer_emits_fixed_magic_and_chance_time_line()
+        public void Writer_emits_format_version_and_chance_time_line()
         {
             string written = DivaChartFileWriter.ExportToString(minimalChart(1, []));
 
-            Assert.That(written, Does.StartWith(DivaChartConstants.CHART_MAGIC + "\r\n"));
+            Assert.That(written, Does.StartWith(DivaChartConstants.DIVA_CHART_FORMAT_VERSION + "\r\n"));
             Assert.That(written, Does.EndWith("-1 -1\r\n"));
+        }
+
+        /// <summary>
+        ///     The game and the reference editor string-compare the format version, so where it sorts is part
+        ///     of the on-disk contract rather than a cosmetic choice.
+        /// </summary>
+        [Test]
+        public void Format_version_sorts_above_the_reference_editor_revision()
+        {
+            string version = DivaChartConstants.DIVA_CHART_FORMAT_VERSION;
+
+            Assert.That(version, Does.StartWith("1."), "the decoders and the chart sniff test match on the \"1.\" prefix");
+            Assert.That(string.CompareOrdinal(version, "1.0.1.0"), Is.GreaterThanOrEqualTo(0), "below 1.0.1.0 the game skips the ChanceTime line");
+            Assert.That(string.CompareOrdinal(version, "1.0.4.7"), Is.GreaterThan(0), "at or below 1.0.4.7 the game rounds BPM values");
         }
 
         private static DivaChart minimalChart(int periodCount, IReadOnlyList<DivaChartNote> notes) => new DivaChart

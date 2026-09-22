@@ -22,7 +22,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
 
         public static DivaChart Parse(TextReader reader, string sourcePath, string songFolder)
         {
-            readLineRequired(reader); // editor version line; carries no information, see CHART_MAGIC
+            readLineRequired(reader); // format version line; carries no information, see DIVA_CHART_FORMAT_VERSION
             string title = readLineRequired(reader);
             string creator = readLineRequired(reader);
             string artist = readLineRequired(reader);
@@ -44,10 +44,10 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
                 if (pos == -1)
                     break;
 
-                // The legacy BPM rounding (fraction >0.8 up, <0.2 down) is deliberately not applied: the
-                // game only runs it when EditorVer compares <= "1.0.4.7", and the PC editor writes CRLF,
-                // so the game sees "1.0.4.7\r" and never takes that branch. Rounding here would silently
-                // change BPM values the game plays back unrounded.
+                // The legacy BPM rounding (fraction >0.8 up, <0.2 down) is deliberately not applied. It is
+                // legacy-chart behaviour: the game runs it only when EditorVer compares <= "1.0.4.7" without
+                // a stray '\r', and this ruleset writes a format version above that, so its own charts never
+                // hit the branch. Rounding here would silently change BPM values the game plays unrounded.
                 double bpm = readDoubleToken(reader);
 
                 if (pos >= 0 && pos < frameBpms.Length)
@@ -296,7 +296,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
         public static DivaChartMetadata ReadMetadata(string path)
         {
             using var reader = DivaChartTextEncoding.OpenReader(path);
-            readLineRequired(reader); // editor version line; carries no information, see CHART_MAGIC
+            readLineRequired(reader); // format version line; carries no information, see DIVA_CHART_FORMAT_VERSION
             string title = readLineRequired(reader);
             string creator = readLineRequired(reader);
             string artist = readLineRequired(reader);

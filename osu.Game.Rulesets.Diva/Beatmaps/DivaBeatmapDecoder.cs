@@ -22,7 +22,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
     {
         public static void Register()
         {
-            // EditorVer lines are typically "1.0.x.x".
+            // .diva files open with the chart format version, e.g. "1.1.0.0".
             AddDecoder<Beatmap>("1.", _ => new DivaBeatmapDecoder());
             DivaStoryboardDecoder.Register();
         }
