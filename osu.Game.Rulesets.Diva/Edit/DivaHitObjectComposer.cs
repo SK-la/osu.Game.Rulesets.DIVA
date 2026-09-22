@@ -1,6 +1,7 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using osu.Framework.Allocation;
@@ -29,6 +30,22 @@ namespace osu.Game.Rulesets.Diva.Edit
     public partial class DivaHitObjectComposer : HitObjectComposer<DivaHitObject, DivaAction>
     {
         public static readonly DivaAction[] PLAY_ACTIONS = DivaNoteToggleGrid.NoteActions.ToArray();
+
+        private const double min_playfield_zoom = -1; // 0.1x
+        private const double max_playfield_zoom = 1; // 10x
+        private const double playfield_zoom_step = 0.05;
+
+        /// <summary>
+        ///     Editor-only playfield zoom, as log10 of the multiplier applied on top of the fitted field (so 0 = 1x,
+        ///     1 = 10x, -1 = 0.1x). Flight start points sit well outside the logical field, so the editor has to be
+        ///     able to zoom out to reach them. Gameplay keeps using <see cref="DivaRulesetSettings.PlayfieldScale"/>.
+        /// </summary>
+        public readonly BindableDouble PlayfieldZoom = new BindableDouble(0)
+        {
+            MinValue = min_playfield_zoom,
+            MaxValue = max_playfield_zoom,
+            Precision = 0.01
+        };
 
         private readonly Bindable<TernaryState> gridSnapToggle = new Bindable<TernaryState>(TernaryState.True);
         private readonly Bindable<TernaryState> replaceOnSameTimeToggle = new Bindable<TernaryState>(TernaryState.False);
@@ -103,6 +120,7 @@ namespace osu.Game.Rulesets.Diva.Edit
         private void load()
         {
             PlayfieldContentContainer.Padding = new MarginPadding(10);
+            PlayfieldZoom.BindValueChanged(_ => applyPlayfieldZoom(), true);
 
             positionSnapGrid = new RectangularPositionSnapGrid
             {
@@ -112,6 +130,7 @@ namespace osu.Game.Rulesets.Diva.Edit
             };
 
             LayerBelowRuleset.Add(positionSnapGrid);
+            RightToolbox.Add(new DivaEditorViewToolbox(PlayfieldZoom));
             RightToolbox.Add(new DivaChartEventsToolbox());
             RightToolbox.Add(new DivaExportToolbox());
 
@@ -180,6 +199,29 @@ namespace osu.Game.Rulesets.Diva.Edit
                 return playfieldLocal;
 
             return DivaActionEncoding.SnapToGrid(playfieldLocal);
+        }
+
+        /// <summary>Steps <see cref="PlayfieldZoom"/>; driven by the Alt+wheel shortcut over the play area.</summary>
+        public void AdjustPlayfieldZoom(int direction)
+        {
+            if (direction == 0)
+                return;
+
+            PlayfieldZoom.Value += Math.Sign(direction) * playfield_zoom_step;
+        }
+
+        /// <remarks>
+        ///     Scales the shared parent of the playfield layers rather than a
+        ///     <see cref="PlayfieldAdjustmentContainer"/>: hit objects, the snap grid and the blueprints each live in
+        ///     their own adjustment container, and those are created by <c>DrawableRuleset</c>'s constructor before
+        ///     the composer can hand anything to them.
+        /// </remarks>
+        private void applyPlayfieldZoom()
+        {
+            if (PlayfieldContentContainer == null)
+                return;
+
+            PlayfieldContentContainer.Scale = new Vector2((float)Math.Pow(10, PlayfieldZoom.Value));
         }
 
         public Vector2 ComputeDefaultApproach(Vector2 position, double time)

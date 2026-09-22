@@ -385,6 +385,16 @@ namespace osu.Game.Rulesets.Diva.Localization
         public static readonly LocalisableString EDITOR_NO_SELECTION =
             new DivaLocalizationManager.DivaLocalisableString("未选中", "None selected");
 
+        public static readonly LocalisableString EDITOR_VIEW_GROUP =
+            new DivaLocalizationManager.DivaLocalisableString("视图", "View");
+
+        public static readonly LocalisableString EDITOR_PLAYFIELD_ZOOM =
+            new DivaLocalizationManager.DivaLocalisableString("游玩区域缩放", "Playfield zoom");
+
+        public static readonly LocalisableString EDITOR_PLAYFIELD_ZOOM_TOOLTIP = new DivaLocalizationManager.DivaLocalisableString(
+            "只影响编辑器视图，范围 0.1×–10×。飞入起点常在场地之外，缩小后才够得着。快捷键：鼠标在游玩区域上时按住 Alt 滚轮。",
+            "Editor view only, 0.1x-10x. Flight start points sit outside the field, so zoom out to reach them. Shortcut: hold Alt and scroll over the play area.");
+
         public static string Editor_ExportDivaComplete(string path) =>
             editor_export_diva_complete_template.Format(path);
 

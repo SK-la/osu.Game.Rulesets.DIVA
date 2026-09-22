@@ -8,6 +8,8 @@ using osu.Framework.Allocation;
 using osu.Framework.Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Cursor;
+using osu.Framework.Graphics.Lines;
+using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Input.Bindings;
 using osu.Framework.Testing;
@@ -16,6 +18,7 @@ using osu.Game.Beatmaps.ControlPoints;
 using osu.Game.Rulesets.Diva.Beatmaps;
 using osu.Game.Rulesets.Diva.Beatmaps.DivaFormat;
 using osu.Game.Rulesets.Diva.Edit;
+using osu.Game.Rulesets.Diva.Edit.Blueprints.Components;
 using osu.Game.Rulesets.Diva.Localization;
 using osu.Game.Rulesets.Diva.Objects;
 using osu.Game.Rulesets.Edit;
@@ -150,6 +153,92 @@ namespace osu.Game.Rulesets.Diva.Tests.Editor
                        && isIntegerCell(grid.Y)
                        && Vector2.Distance(note.Position, roundTripped) < 0.01f;
             });
+        }
+
+        [TestCase(400f, 0f)]
+        [TestCase(-400f, 120f)]
+        [TestCase(0f, -300f)]
+        public void Approach_handle_matches_the_flight_geometry(float approachX, float approachY)
+        {
+            addApproachNote(approachX, approachY);
+
+            AddAssert("far handle sits on the flight start", farHandleDistance, () => Is.LessThan(1.5f));
+            AddAssert("path origin sits on the note", pathOriginDistance, () => Is.LessThan(1.5f));
+        }
+
+        [TestCase(-1d)]
+        [TestCase(1d)]
+        public void Playfield_zoom_keeps_blueprints_aligned(double zoom)
+        {
+            addApproachNote(400, 0);
+
+            float widthBeforeZoom = 0;
+
+            AddStep("remember field size", () => widthBeforeZoom = composer.Playfield.ScreenSpaceDrawQuad.Width);
+            AddStep($"zoom to 10^{zoom}", () => composer.PlayfieldZoom.Value = zoom);
+            AddUntilStep("field resized", () => Math.Abs(composer.Playfield.ScreenSpaceDrawQuad.Width - widthBeforeZoom) > 1);
+
+            // Blueprints are drawn in their own adjustment container, so a zoom that only reaches the playfield
+            // would leave the handle (and every dragged note) at the unscaled position.
+            AddAssert("far handle follows the zoomed field", farHandleDistance, () => Is.LessThan(1.5f));
+            AddAssert("path origin follows the zoomed field", pathOriginDistance, () => Is.LessThan(1.5f));
+        }
+
+        [Test]
+        public void Alt_scroll_over_the_playfield_zooms_the_view()
+        {
+            addApproachNote(400, 0);
+
+            AddStep("move mouse onto the play area", () => InputManager.MoveMouseTo(composer.Playfield));
+            AddStep("hold alt", () => InputManager.PressKey(Key.LAlt));
+            AddStep("scroll up", () => InputManager.ScrollVerticalBy(1));
+            AddUntilStep("zoomed in", () => composer.PlayfieldZoom.Value, () => Is.GreaterThan(0));
+
+            AddStep("scroll down", () => InputManager.ScrollVerticalBy(-1));
+            AddUntilStep("back to 1x", () => composer.PlayfieldZoom.Value, () => Is.EqualTo(0).Within(0.001));
+
+            AddStep("release alt", () => InputManager.ReleaseKey(Key.LAlt));
+            AddStep("scroll down without alt", () => InputManager.ScrollVerticalBy(-1));
+            AddAssert("scroll without alt leaves zoom alone", () => composer.PlayfieldZoom.Value, () => Is.EqualTo(0).Within(0.001));
+        }
+
+        private DivaHitObject approachNote = null!;
+        private DivaApproachHandle approachHandle = null!;
+
+        private void addApproachNote(float approachX, float approachY)
+        {
+            DivaApproachHandle? handle = null;
+
+            AddStep("add selected note with an approach origin", () =>
+            {
+                approachNote = new DivaHitObject
+                {
+                    StartTime = 1000,
+                    Position = DivaActionEncoding.ToPlayfieldPosition(5, 5),
+                    ValidAction = DivaAction.Circle,
+                    ApproachPieceOriginPosition = new Vector2(approachX, approachY),
+                };
+
+                editorBeatmap.Add(approachNote);
+                editorBeatmap.SelectedHitObjects.Add(approachNote);
+            });
+
+            AddUntilStep("approach handle drawn", () => (handle = this.ChildrenOfType<DivaApproachHandle>().SingleOrDefault()) != null);
+            AddStep("keep handle", () => approachHandle = handle!);
+        }
+
+        /// <summary>Screen-space distance from the far handle to the point gameplay spawns the flying piece at.</summary>
+        private float farHandleDistance()
+        {
+            Vector2 flightStart = composer.Playfield.ToScreenSpace(approachNote.Position + approachNote.ApproachPieceOriginPosition);
+            return Vector2.Distance(approachHandle.ChildrenOfType<Circle>().Single().ScreenSpaceDrawQuad.Centre, flightStart);
+        }
+
+        /// <summary>Screen-space distance from the drawn path's note end to the note itself.</summary>
+        private float pathOriginDistance()
+        {
+            var path = approachHandle.ChildrenOfType<SmoothPath>().Single();
+            return Vector2.Distance(approachHandle.ToScreenSpace(path.Vertices[0]), composer.Playfield.ToScreenSpace(approachNote.Position));
         }
 
         [Test]

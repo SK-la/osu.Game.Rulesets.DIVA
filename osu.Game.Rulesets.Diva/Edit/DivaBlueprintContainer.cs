@@ -1,6 +1,7 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using osu.Framework.Input.Events;
@@ -51,6 +52,19 @@ namespace osu.Game.Rulesets.Diva.Edit
                 ApplySnapResultTime(result, referenceBlueprint.Item.StartTime);
 
             return moved;
+        }
+
+        /// <remarks>
+        ///     The editor's own scroll handling gives up when Alt is held, and this container already receives
+        ///     positional input across the whole play area, so the zoom shortcut can live here.
+        /// </remarks>
+        protected override bool OnScroll(ScrollEvent e)
+        {
+            if (!e.AltPressed || e.ScrollDelta.Y == 0)
+                return false;
+
+            Composer.AdjustPlayfieldZoom(Math.Sign(e.ScrollDelta.Y));
+            return true;
         }
     }
 }
