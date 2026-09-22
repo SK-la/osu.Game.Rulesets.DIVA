@@ -58,12 +58,19 @@ namespace osu.Game.Rulesets.Diva.Edit
             Precision = 1
         };
 
+        private readonly BindableInt wavKey = new BindableInt
+        {
+            MinValue = 0,
+            MaxValue = 99
+        };
+
         private FillFlowContainer editors = null!;
         private FormSliderBar<float> gridXSlider = null!;
         private FormSliderBar<float> gridYSlider = null!;
         private FormSliderBar<float> approachXSlider = null!;
         private FormSliderBar<float> approachYSlider = null!;
         private FormSliderBar<double> durationSlider = null!;
+        private FormSliderBar<int> wavKeySlider = null!;
 
         [Resolved]
         private DivaHitObjectComposer composer { get; set; } = null!;
@@ -92,6 +99,13 @@ namespace osu.Game.Rulesets.Diva.Edit
                         Current = duration,
                         TransferValueOnCommit = true,
                         KeyboardStep = 50,
+                    },
+                    wavKeySlider = new FormSliderBar<int>
+                    {
+                        Caption = DivaStrings.EDITOR_INSPECTOR_WAV_KEY,
+                        Current = wavKey,
+                        TransferValueOnCommit = true,
+                        KeyboardStep = 1,
                     }
                 }
             });
@@ -107,6 +121,7 @@ namespace osu.Game.Rulesets.Diva.Edit
             approachX.BindValueChanged(_ => applyApproach());
             approachY.BindValueChanged(_ => applyApproach());
             duration.BindValueChanged(_ => applyDuration());
+            wavKey.BindValueChanged(_ => applyWavKey());
         }
 
         protected override void AddInspectorValues(HitObject[] objects)
@@ -156,6 +171,9 @@ namespace osu.Game.Rulesets.Diva.Edit
             {
                 durationSlider.Alpha = 0;
             }
+
+            // Shows the value an export would write, i.e. including a key inherited from the source chart.
+            wavKey.Value = composer.ResolveWavKey(diva);
 
             applyingFromSelection = false;
         }
@@ -221,6 +239,24 @@ namespace osu.Game.Rulesets.Diva.Edit
             EditorBeatmap.BeginChange();
             hold.Duration = duration.Value;
             EditorBeatmap.Update(hold);
+            EditorBeatmap.EndChange();
+        }
+
+        private void applyWavKey()
+        {
+            if (applyingFromSelection)
+                return;
+
+            var selected = EditorBeatmap.SelectedHitObjects.OfType<DivaHitObject>().ToArray();
+            if (selected.Length != 1)
+                return;
+
+            if (composer.ResolveWavKey(selected[0]) == wavKey.Value)
+                return;
+
+            EditorBeatmap.BeginChange();
+            selected[0].WavKey = wavKey.Value;
+            EditorBeatmap.Update(selected[0]);
             EditorBeatmap.EndChange();
         }
 

@@ -23,7 +23,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
     {
         public static DivaChart FromBeatmap(IBeatmap beatmap, DivaChart? source = null)
         {
-            source ??= tryLoadSource(beatmap);
+            source ??= LoadSource(beatmap);
             DivaChartEvents? events = DivaBeatmap.EventsOf(beatmap);
 
             var timingPoints = beatmap.ControlPointInfo.TimingPoints.OrderBy(p => p.Time).ToArray();
@@ -53,15 +53,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             // The #WAV slot chosen for each note in the PC editor. It is display/audio metadata only —
             // action resolution uses Type — but must survive a round trip, so notes are matched on the
             // (frame, type) pair that identifies them in the file.
-            Dictionary<(int Frame, int Type), int>? sourceKeys = null;
-
-            if (source != null)
-            {
-                sourceKeys = new Dictionary<(int, int), int>();
-
-                foreach (DivaChartNote sourceNote in source.Notes)
-                    sourceKeys[(sourceNote.FrameIndex, sourceNote.Type)] = sourceNote.Key;
-            }
+            Dictionary<(int Frame, int Type), int>? sourceKeys = source != null ? buildSourceKeys(source) : null;
 
             var notes = new List<DivaChartNote>();
             foreach (var hitObject in beatmap.HitObjects.OfType<DivaHitObject>().OrderBy(h => h.StartTime))
@@ -84,7 +76,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                     Y = grid.Y,
                     TailX = tailX,
                     TailY = tailY,
-                    Key = sourceKeys != null && sourceKeys.TryGetValue((frame, type), out int sourceKey) ? sourceKey : 0,
+                    Key = hitObject.WavKey ?? (sourceKeys != null && sourceKeys.TryGetValue((frame, type), out int sourceKey) ? sourceKey : 0),
                     DurationMs = isHold ? ((DivaHoldHitObject)hitObject).Duration : 0
                 });
             }
@@ -153,7 +145,11 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             };
         }
 
-        private static DivaChart? tryLoadSource(IBeatmap beatmap)
+        /// <summary>
+        ///     The <c>.diva</c> the beatmap points at, if it is still on disk. Used as the fallback source for
+        ///     everything the editor does not own; returns <see langword="null"/> for a chart with no file yet.
+        /// </summary>
+        public static DivaChart? LoadSource(IBeatmap beatmap)
         {
             string? path = beatmap.BeatmapInfo.Path;
 #if DIVA_EZ2LAZER
@@ -183,6 +179,37 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
         {
             var timingPoints = beatmap.ControlPointInfo.TimingPoints.OrderBy(p => p.Time).ToArray();
             return timeToFrame(timeMs, timingPoints, resolveHeaderBpm(beatmap, timingPoints));
+        }
+
+        /// <summary>
+        ///     The <c>#WAV</c> slot a note exports with: its own value, else the source chart's value for the
+        ///     same frame and button (which is how the PC editor's charts identify a note), else 0.
+        /// </summary>
+        public static int ResolveWavKey(IBeatmap beatmap, DivaHitObject hitObject, DivaChart? source = null)
+        {
+            if (hitObject.WavKey is { } key)
+                return key;
+
+            source ??= LoadSource(beatmap);
+
+            if (source == null)
+                return 0;
+
+            int type = DivaActionEncoding.ToUnitIndex(hitObject.ValidAction);
+            if (hitObject is DivaHoldHitObject)
+                type += DivaChartConstants.NOTE_TYPE_COUNT;
+
+            return buildSourceKeys(source).TryGetValue((TimeToFrame(beatmap, hitObject.StartTime), type), out int sourceKey) ? sourceKey : 0;
+        }
+
+        private static Dictionary<(int Frame, int Type), int> buildSourceKeys(DivaChart source)
+        {
+            var keys = new Dictionary<(int, int), int>();
+
+            foreach (DivaChartNote note in source.Notes)
+                keys[(note.FrameIndex, note.Type)] = note.Key;
+
+            return keys;
         }
 
         private static double resolveHeaderBpm(IBeatmap beatmap, TimingControlPoint[] timingPoints)

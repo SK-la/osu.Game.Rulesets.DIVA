@@ -11,6 +11,7 @@ using osu.Framework.Graphics.Sprites;
 using osu.Game.Beatmaps;
 using osu.Game.Graphics;
 using osu.Game.Graphics.UserInterface;
+using osu.Game.Rulesets.Diva.Beatmaps;
 using osu.Game.Rulesets.Diva.Beatmaps.DivaFormat;
 using osu.Game.Rulesets.Diva.Edit.Tools;
 using osu.Game.Rulesets.Diva.Localization;
@@ -54,6 +55,15 @@ namespace osu.Game.Rulesets.Diva.Edit
         private RectangularPositionSnapGrid? positionSnapGrid;
 
         public DivaAction CurrentAction { get; private set; } = DivaAction.Circle;
+
+        /// <summary>
+        ///     The <c>.diva</c> this session was opened from, read once on load. Source of the export's
+        ///     defaults and of the <c>#WAV</c> keys for notes the editor has not touched.
+        /// </summary>
+        public DivaChart? SourceChart { get; private set; }
+
+        /// <summary>Effective <c>#WAV</c> slot of a note, i.e. what an export would write for it.</summary>
+        public int ResolveWavKey(DivaHitObject hitObject) => DivaChartBuilder.ResolveWavKey(EditorBeatmap, hitObject, SourceChart);
 
         public bool ReplaceOnSameTime => replaceOnSameTimeToggle.Value == TernaryState.True;
 
@@ -122,6 +132,8 @@ namespace osu.Game.Rulesets.Diva.Edit
             PlayfieldContentContainer.Padding = new MarginPadding(10);
             PlayfieldZoom.BindValueChanged(_ => applyPlayfieldZoom(), true);
 
+            SourceChart = DivaChartBuilder.LoadSource(EditorBeatmap);
+
             positionSnapGrid = new RectangularPositionSnapGrid
             {
                 RelativeSizeAxes = Axes.Both,
@@ -133,6 +145,7 @@ namespace osu.Game.Rulesets.Diva.Edit
             RightToolbox.Add(new DivaEditorViewToolbox(PlayfieldZoom));
             RightToolbox.Add(new DivaChartPropertiesToolbox());
             RightToolbox.Add(new DivaChartEventsToolbox());
+            RightToolbox.Add(new DivaNoteToolsToolbox());
             RightToolbox.Add(new DivaExportToolbox());
 
             gridSnapToggle.BindValueChanged(state =>

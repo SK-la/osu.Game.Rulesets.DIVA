@@ -68,7 +68,8 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             bool newCombo = comboData?.NewCombo ?? true;
             Vector2 position = positionData?.Position ?? Vector2.Zero;
 
-            if (DivaActionEncoding.TryParseFromHitObject(original, out DivaAction encodedAction, out bool isHold, out double durationMs, out Vector2? encodedApproach))
+            if (DivaActionEncoding.TryParseFromHitObject(original, out DivaAction encodedAction, out bool isHold, out double durationMs, out Vector2? encodedApproach,
+                    out int? encodedWavKey))
             {
                 Vector2 approach = encodedApproach ?? getApproachPieceOriginPos(position);
 
@@ -81,7 +82,8 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                         Duration = durationMs,
                         Position = position,
                         ValidAction = encodedAction,
-                        ApproachPieceOriginPosition = approach
+                        ApproachPieceOriginPosition = approach,
+                        WavKey = encodedWavKey
                     };
                 }
                 else
@@ -92,7 +94,8 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                         StartTime = original.StartTime,
                         Position = position,
                         ValidAction = encodedAction,
-                        ApproachPieceOriginPosition = approach
+                        ApproachPieceOriginPosition = approach,
+                        WavKey = encodedWavKey
                     };
                 }
 

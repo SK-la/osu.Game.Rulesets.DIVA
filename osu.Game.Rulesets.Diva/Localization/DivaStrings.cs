@@ -319,6 +319,19 @@ namespace osu.Game.Rulesets.Diva.Localization
         public static readonly LocalisableString EDITOR_INSPECTOR_DURATION =
             new DivaLocalizationManager.DivaLocalisableString("时长", "Duration");
 
+        public static readonly LocalisableString EDITOR_INSPECTOR_WAV_KEY =
+            new DivaLocalizationManager.DivaLocalisableString("Key 音 (#WAV)", "Key (#WAV)");
+
+        public static readonly LocalisableString EDITOR_NOTE_TOOLS_GROUP =
+            new DivaLocalizationManager.DivaLocalisableString("音符工具", "note tools");
+
+        public static readonly LocalisableString EDITOR_RESTORE_WAV_KEY =
+            new DivaLocalizationManager.DivaLocalisableString("还原 Key 音", "Restore keys");
+
+        public static readonly LocalisableString EDITOR_RESTORE_WAV_KEY_TOOLTIP = new DivaLocalizationManager.DivaLocalisableString(
+            "丢掉编辑器改过的 #WAV 槽位，让音符回到源谱面的 Key 音。有选中就只处理选中项，否则处理整张谱面。",
+            "Drops the editor's #WAV overrides so notes fall back to the source chart's keys. Applies to the selection, or to the whole chart when nothing is selected.");
+
         public static readonly LocalisableString EDITOR_EXPORT_DIVA =
             new DivaLocalizationManager.DivaLocalisableString("导出 .diva", "Export .diva");
 

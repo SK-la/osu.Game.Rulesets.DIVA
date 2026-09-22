@@ -98,7 +98,8 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                         Position = position,
                         ValidAction = action,
                         Samples = [DivaHitSampleInfo.Normal],
-                        ApproachPieceOriginPosition = approach
+                        ApproachPieceOriginPosition = approach,
+                        WavKey = note.Key
                     });
                 }
                 else
@@ -109,7 +110,8 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                         Position = position,
                         ValidAction = action,
                         Samples = [DivaHitSampleInfo.Normal],
-                        ApproachPieceOriginPosition = approach
+                        ApproachPieceOriginPosition = approach,
+                        WavKey = note.Key
                     });
                 }
             }

@@ -25,6 +25,10 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
             @"-ax(-?\d+(?:\.\d+)?)-ay(-?\d+(?:\.\d+)?)$",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
+        private static readonly Regex key_suffix = new Regex(
+            @"-k(\d+)$",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
         public static DivaAction FromUnitType(int typeOrKey)
         {
             int unit = typeOrKey % DivaChartConstants.NOTE_TYPE_COUNT;
@@ -125,7 +129,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
             return ComputeApproachOrigin(notePos, note.TailX, note.TailY, bpm);
         }
 
-        public static string EncodeSampleFileName(DivaAction action, bool isHold, double durationMs = 0, Vector2? approachOrigin = null)
+        public static string EncodeSampleFileName(DivaAction action, bool isHold, double durationMs = 0, Vector2? approachOrigin = null, int? wavKey = null)
         {
             int id = (int)action;
             string core;
@@ -137,6 +141,10 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
                 int duration = Math.Max(0, (int)Math.Round(durationMs));
                 core = HOLD_PREFIX + id.ToString(CultureInfo.InvariantCulture) + "-" + duration.ToString(CultureInfo.InvariantCulture);
             }
+
+            // The key goes before the approach suffix: the approach regex is anchored to the end of the name.
+            if (wavKey is { } key)
+                core = string.Create(CultureInfo.InvariantCulture, $"{core}-k{key}");
 
             if (approachOrigin is not { } origin)
                 return core;
@@ -150,12 +158,14 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
             out DivaAction action,
             out bool isHold,
             out double durationMs,
-            out Vector2? approachOrigin)
+            out Vector2? approachOrigin,
+            out int? wavKey)
         {
             action = DivaAction.Circle;
             isHold = false;
             durationMs = 0;
             approachOrigin = null;
+            wavKey = null;
 
             foreach (HitSampleInfo sample in original.Samples)
             {
@@ -165,7 +175,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
                     if (string.IsNullOrEmpty(leaf))
                         continue;
 
-                    if (tryParseSampleLeaf(leaf, out action, out isHold, out durationMs, out approachOrigin))
+                    if (tryParseSampleLeaf(leaf, out action, out isHold, out durationMs, out approachOrigin, out wavKey))
                         return true;
                 }
             }
@@ -173,21 +183,27 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
             return false;
         }
 
-        /// <summary>Back-compat overload without approach.</summary>
+        /// <summary>Back-compat overload without the approach and key.</summary>
         public static bool TryParseFromHitObject(HitObject original, out DivaAction action, out bool isHold, out double durationMs)
-            => TryParseFromHitObject(original, out action, out isHold, out durationMs, out _);
+            => TryParseFromHitObject(original, out action, out isHold, out durationMs, out _, out _);
+
+        /// <summary>Overload for callers that only care about the approach vector.</summary>
+        public static bool TryParseFromHitObject(HitObject original, out DivaAction action, out bool isHold, out double durationMs, out Vector2? approachOrigin)
+            => TryParseFromHitObject(original, out action, out isHold, out durationMs, out approachOrigin, out _);
 
         private static bool tryParseSampleLeaf(
             string leaf,
             out DivaAction action,
             out bool isHold,
             out double durationMs,
-            out Vector2? approachOrigin)
+            out Vector2? approachOrigin,
+            out int? wavKey)
         {
             action = DivaAction.Circle;
             isHold = false;
             durationMs = 0;
             approachOrigin = null;
+            wavKey = null;
 
             string payload = leaf;
             Match approachMatch = approach_suffix.Match(leaf);
@@ -198,6 +214,14 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
             {
                 approachOrigin = new Vector2(ax, ay);
                 payload = leaf[..approachMatch.Index];
+            }
+
+            Match keyMatch = key_suffix.Match(payload);
+
+            if (keyMatch.Success && int.TryParse(keyMatch.Groups[1].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int parsedKey))
+            {
+                wavKey = parsedKey;
+                payload = payload[..keyMatch.Index];
             }
 
             if (payload.StartsWith(HOLD_PREFIX, StringComparison.OrdinalIgnoreCase))

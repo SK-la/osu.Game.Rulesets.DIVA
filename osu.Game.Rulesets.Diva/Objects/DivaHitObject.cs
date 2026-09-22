@@ -34,6 +34,15 @@ namespace osu.Game.Rulesets.Diva.Objects
         public Vector2 ApproachPieceOriginPosition;
 
         /// <summary>
+        ///     ProjectDIVA <c>_key</c>: the note's <c>#WAV</c> table slot, i.e. which sound the game plays.
+        ///     <see langword="null"/> keeps whatever the source chart had for this frame and button.
+        /// </summary>
+        /// <remarks>
+        ///     Display / audio metadata only — which button to press comes from <see cref="ValidAction"/>.
+        /// </remarks>
+        public int? WavKey;
+
+        /// <summary>
         ///     TODO(editor): note-local multi-node flight path (osu!std slider control points).
         ///     Empty today, in which case the path comes from <see cref="ApproachPieceOriginPosition"/>
         ///     sampled with the configured flight curve. Not yet used by rendering, SR or export.

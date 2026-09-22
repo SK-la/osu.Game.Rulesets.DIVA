@@ -438,6 +438,83 @@ namespace osu.Game.Rulesets.Diva.Tests
             Assert.That(DivaChartBuilder.FromBeatmap(beatmap).PeriodCount, Is.EqualTo(3));
         }
 
+        [Test]
+        public void Chart_builder_prefers_note_wav_key_over_source()
+        {
+            var beatmap = new DivaBeatmap { BeatmapInfo = { BPM = 120 } };
+            beatmap.ControlPointInfo.Add(0, new TimingControlPoint { BeatLength = 500 });
+            beatmap.HitObjects.Add(new DivaHitObject
+            {
+                StartTime = 0,
+                Position = DivaActionEncoding.ToPlayfieldPosition(10, 12),
+                ValidAction = DivaAction.Circle,
+                WavKey = 9
+            });
+
+            int type = DivaActionEncoding.ToUnitIndex(DivaAction.Circle);
+            var source = new DivaChart { Notes = [new DivaChartNote { FrameIndex = 0, Type = type, Key = 5 }] };
+
+            Assert.That(DivaChartBuilder.FromBeatmap(beatmap, source).Notes.Single().Key, Is.EqualTo(9));
+        }
+
+        [Test]
+        public void Resolve_wav_key_falls_back_to_source_slot()
+        {
+            var beatmap = new DivaBeatmap { BeatmapInfo = { BPM = 120 } };
+            beatmap.ControlPointInfo.Add(0, new TimingControlPoint { BeatLength = 500 });
+
+            var note = new DivaHitObject
+            {
+                StartTime = 0,
+                Position = DivaActionEncoding.ToPlayfieldPosition(10, 12),
+                ValidAction = DivaAction.Circle
+            };
+            beatmap.HitObjects.Add(note);
+
+            int type = DivaActionEncoding.ToUnitIndex(DivaAction.Circle);
+            var source = new DivaChart { Notes = [new DivaChartNote { FrameIndex = 0, Type = type, Key = 5 }] };
+
+            Assert.That(DivaChartBuilder.ResolveWavKey(beatmap, note, source), Is.EqualTo(5));
+            Assert.That(DivaChartBuilder.ResolveWavKey(beatmap, note, new DivaChart()), Is.Zero);
+
+            note.WavKey = 2;
+            Assert.That(DivaChartBuilder.ResolveWavKey(beatmap, note, source), Is.EqualTo(2));
+        }
+
+        [Test]
+        public void Encoder_round_trips_wav_key_through_converter()
+        {
+            var source = new DivaBeatmap
+            {
+                BeatmapInfo =
+                {
+                    Ruleset = new DivaRuleset().RulesetInfo,
+                    DifficultyName = "★5 Normal",
+                    Metadata = { Title = "Key Song", Artist = "Artist", Tags = DivaActionEncoding.NATIVE_TAG }
+                }
+            };
+            source.ControlPointInfo.Add(0, new TimingControlPoint { BeatLength = 500 });
+            source.HitObjects.Add(new DivaHitObject
+            {
+                StartTime = 1000,
+                Position = DivaActionEncoding.ToPlayfieldPosition(8, 8),
+                ValidAction = DivaAction.Circle,
+                WavKey = 7
+            });
+
+            string encoded = DivaBeatmapEncoder.ExportToString(source, null);
+            Assert.That(encoded, Does.Contain("diva-action-"));
+            Assert.That(encoded, Does.Contain("-k7"));
+
+            using var reader = new LineBufferedReader(new MemoryStream(System.Text.Encoding.UTF8.GetBytes(encoded)));
+            var decoded = osu.Game.Beatmaps.Formats.Decoder.GetDecoder<Beatmap>(reader).Decode(reader);
+            decoded.BeatmapInfo.Ruleset = new DivaRuleset().RulesetInfo;
+
+            var converted = (DivaBeatmap)new DivaBeatmapConverter(decoded, new DivaRuleset()).Convert();
+
+            Assert.That(converted.HitObjects.Single().WavKey, Is.EqualTo(7));
+        }
+
         private static DivaChart minimalChart(int periodCount, IReadOnlyList<DivaChartNote> notes) => new DivaChart
         {
             Metadata = new DivaChartMetadata

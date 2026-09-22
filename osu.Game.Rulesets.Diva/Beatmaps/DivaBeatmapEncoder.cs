@@ -110,7 +110,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             {
                 bool isHold = hitObject is DivaHoldHitObject;
                 double duration = isHold ? ((DivaHoldHitObject)hitObject).Duration : 0;
-                string sample = DivaActionEncoding.EncodeSampleFileName(hitObject.ValidAction, isHold, duration, hitObject.ApproachPieceOriginPosition);
+                string sample = DivaActionEncoding.EncodeSampleFileName(hitObject.ValidAction, isHold, duration, hitObject.ApproachPieceOriginPosition, hitObject.WavKey);
                 int x = (int)Math.Round(hitObject.Position.X);
                 int y = (int)Math.Round(hitObject.Position.Y);
                 int time = (int)Math.Round(hitObject.StartTime);
