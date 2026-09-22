@@ -42,6 +42,20 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
         public int MinPeriodCount { get; set; } = 1;
 
         /// <summary>
+        ///     Writes the two fields lazer has a home for back where the decoder reads them, so that level and
+        ///     stars survive a save / reload instead of only living in the in-session header.
+        /// </summary>
+        /// <remarks>
+        ///     Overall difficulty is clamped to the 0–10 gameplay range while the header keeps the true star
+        ///     value: ProjectDIVA charts may print more than ten stars, which the difficulty name carries.
+        /// </remarks>
+        public static void MirrorToBeatmapInfo(BeatmapInfo info, DivaChartHeader header)
+        {
+            info.DifficultyName = DivaChartConstants.FormatDifficultyName(header.Level, header.Hard);
+            info.Difficulty.OverallDifficulty = Math.Clamp(header.Hard, 1, 10);
+        }
+
+        /// <summary>
         ///     Seeds a header from what the decoder left on the beatmap info: the difficulty name carries
         ///     level and stars, the tags carry the style, the background event carries the preview picture.
         /// </summary>

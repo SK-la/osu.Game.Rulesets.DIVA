@@ -344,6 +344,22 @@ namespace osu.Game.Rulesets.Diva.Tests
         }
 
         [Test]
+        public void Mirroring_writes_level_and_stars_into_beatmap_info()
+        {
+            var info = new BeatmapInfo { DifficultyName = "★1 Easy" };
+
+            DivaChartHeader.MirrorToBeatmapInfo(info, new DivaChartHeader { Level = 4, Hard = 12 });
+
+            // The difficulty name keeps the true star count; gameplay difficulty stays inside its 0-10 range.
+            Assert.That(info.DifficultyName, Is.EqualTo("★12 Extra"));
+            Assert.That(info.Difficulty.OverallDifficulty, Is.EqualTo(10));
+
+            DivaChartHeader restored = DivaChartHeader.FromBeatmapInfo(info);
+            Assert.That(restored.Level, Is.EqualTo(4));
+            Assert.That(restored.Hard, Is.EqualTo(12));
+        }
+
+        [Test]
         public void Chart_builder_extends_periods_to_cover_events_past_the_last_note()
         {
             var beatmap = new DivaBeatmap { BeatmapInfo = { BPM = 120 } };
