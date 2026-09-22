@@ -2,6 +2,7 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -26,6 +27,8 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
         {
             var sb = new StringBuilder();
             DivaChartMetadata meta = chart.Metadata;
+
+            validate(chart);
 
             sb.Append(meta.EditorVersion).Append(newline);
             sb.Append(meta.Title).Append(newline);
@@ -138,6 +141,22 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
         private static string formatInt(int value) => value.ToString(CultureInfo.InvariantCulture);
 
         private static string formatDouble(double value) => value.ToString("R", CultureInfo.InvariantCulture);
+
+        /// <summary>
+        ///     Rejects charts that would be malformed on the reading side. Both limits come from the frame
+        ///     arrays shared by the game and the PC editor: 1000 periods, and 8 note slots per frame.
+        /// </summary>
+        private static void validate(DivaChart chart)
+        {
+            if (chart.PeriodCount > DivaChartConstants.MAX_PERIOD_COUNT)
+                throw new InvalidDataException($"Chart has {chart.PeriodCount} periods, but ProjectDIVA supports at most {DivaChartConstants.MAX_PERIOD_COUNT}.");
+
+            foreach (IGrouping<int, DivaChartNote> frame in chart.Notes.GroupBy(note => note.FrameIndex))
+            {
+                if (frame.Count() > DivaChartConstants.MAX_NOTES_PER_FRAME)
+                    throw new InvalidDataException($"Frame {frame.Key} has {frame.Count()} notes, but a frame record holds at most {DivaChartConstants.MAX_NOTES_PER_FRAME}.");
+            }
+        }
 
         /// <summary>
         ///     Inverts the parser's frame → ms duration conversion (ProjectDIVA stores hold length in chart frames).

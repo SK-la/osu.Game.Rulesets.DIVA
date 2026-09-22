@@ -253,6 +253,25 @@ namespace osu.Game.Rulesets.Diva.Tests
             Assert.That(DivaChartFileWriter.ExportToString(chart), Does.Contain("0 8 8 8 0 0 0 48\r\n"));
         }
 
+        [Test]
+        public void Writer_rejects_more_notes_than_a_frame_holds()
+        {
+            var notes = new List<DivaChartNote>();
+
+            for (int i = 0; i <= DivaChartConstants.MAX_NOTES_PER_FRAME; i++)
+                notes.Add(new DivaChartNote { FrameIndex = 0, Type = 0 });
+
+            Assert.Throws<InvalidDataException>(() => DivaChartFileWriter.ExportToString(minimalChart(1, notes)));
+        }
+
+        [Test]
+        public void Writer_rejects_period_count_beyond_editor_limit()
+        {
+            var chart = minimalChart(DivaChartConstants.MAX_PERIOD_COUNT + 1, []);
+
+            Assert.Throws<InvalidDataException>(() => DivaChartFileWriter.ExportToString(chart));
+        }
+
         private static DivaChart minimalChart(int periodCount, IReadOnlyList<DivaChartNote> notes) => new DivaChart
         {
             Metadata = new DivaChartMetadata

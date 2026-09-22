@@ -190,6 +190,18 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
         public const int NOTE_TYPE_COUNT = 8;
         public const int NOTE_PER_PERIOD = 192;
         public const int TIME_PER_PERIOD = 4;
+
+        /// <summary>
+        ///     Note slots in one frame record, i.e. ProjectDIVA's <c>NOTENum</c>. Writing more overruns into
+        ///     the frame's BGM array in both the game and the PC editor.
+        /// </summary>
+        public const int MAX_NOTES_PER_FRAME = NOTE_TYPE_COUNT;
+
+        /// <summary>
+        ///     Period (measure) capacity of the PC editor's frame array; its measure-count field rejects
+        ///     values outside 1..1000.
+        /// </summary>
+        public const int MAX_PERIOD_COUNT = 1000;
         public const int ORIGIN_X = 25;
         public const int ORIGIN_Y = 52;
         public const int DELTA_X = 12;
