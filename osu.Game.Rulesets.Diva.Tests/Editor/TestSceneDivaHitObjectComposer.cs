@@ -22,6 +22,7 @@ using osu.Game.Rulesets.Diva.Edit.Blueprints.Components;
 using osu.Game.Rulesets.Diva.Localization;
 using osu.Game.Rulesets.Diva.Objects;
 using osu.Game.Rulesets.Edit;
+using osu.Game.Graphics.UserInterfaceV2;
 using osu.Game.Screens.Edit;
 using osu.Game.Screens.Edit.Components.RadioButtons;
 using osu.Game.Screens.Edit.Components.TernaryButtons;
@@ -249,6 +250,43 @@ namespace osu.Game.Rulesets.Diva.Tests.Editor
             AddAssert("vector is the dragged direction at the BPM flight distance", () =>
                 Vector2.Distance(approachNote.ApproachPieceOriginPosition, expected) < 0.05f);
         }
+
+        [Test]
+        public void Note_tools_clear_taps_covered_by_a_hold()
+        {
+            DivaHoldHitObject? hold = null;
+            DivaHitObject? covered = null;
+
+            AddStep("add a hold and a tap inside it", () =>
+            {
+                hold = new DivaHoldHitObject
+                {
+                    StartTime = 0,
+                    Duration = 500,
+                    Position = DivaActionEncoding.ToPlayfieldPosition(2, 12),
+                    ValidAction = DivaAction.Circle
+                };
+
+                covered = new DivaHitObject
+                {
+                    StartTime = 250,
+                    Position = DivaActionEncoding.ToPlayfieldPosition(3, 12),
+                    ValidAction = DivaAction.Circle
+                };
+
+                editorBeatmap.Add(hold);
+                editorBeatmap.Add(covered);
+            });
+
+            AddStep("press the cleanup button", () => noteToolButton(DivaStrings.EDITOR_CLEAR_OVERLAPPING_TAPS.ToString()).TriggerClick());
+
+            AddAssert("only the hold is left", () => editorBeatmap.HitObjects, () => Is.EqualTo(new[] { hold }));
+        }
+
+        private RoundedButton noteToolButton(string text)
+            => composer.ChildrenOfType<DivaNoteToolsToolbox>().Single()
+                       .ChildrenOfType<RoundedButton>()
+                       .Single(button => button.Text.ToString() == text);
 
         /// <summary>Screen-space distance from the far handle to the point gameplay spawns the flying piece at.</summary>
         private float farHandleDistance()

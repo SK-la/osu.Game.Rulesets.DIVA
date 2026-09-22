@@ -6,6 +6,7 @@ using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Game.Graphics.UserInterfaceV2;
+using osu.Game.Rulesets.Diva.Beatmaps;
 using osu.Game.Rulesets.Diva.Localization;
 using osu.Game.Rulesets.Diva.Objects;
 using osu.Game.Rulesets.Edit;
@@ -46,6 +47,14 @@ namespace osu.Game.Rulesets.Diva.Edit
                         Text = DivaStrings.EDITOR_RESTORE_WAV_KEY,
                         TooltipText = DivaStrings.EDITOR_RESTORE_WAV_KEY_TOOLTIP,
                         Action = restoreWavKeys
+                    },
+                    new RoundedButton
+                    {
+                        RelativeSizeAxes = Axes.X,
+                        Height = 28,
+                        Text = DivaStrings.EDITOR_CLEAR_OVERLAPPING_TAPS,
+                        TooltipText = DivaStrings.EDITOR_CLEAR_OVERLAPPING_TAPS_TOOLTIP,
+                        Action = clearOverlappingTaps
                     }
                 ]
             };
@@ -73,6 +82,29 @@ namespace osu.Game.Rulesets.Diva.Edit
                 hitObject.WavKey = null;
                 editorBeatmap.Update(hitObject);
             }
+
+            editorBeatmap.EndChange();
+        }
+
+        /// <summary>
+        ///     Drops the taps a hold already covers, which is the one conflict direction that can be resolved
+        ///     without a decision from the user: the hold keeps its span, overlapping holds are left alone.
+        /// </summary>
+        private void clearOverlappingTaps()
+        {
+            var covered = DivaChartBuilder.FindActionOverlaps(editorBeatmap)
+                                           .Select(pair => pair.Covered)
+                                           .Where(h => h is not DivaHoldHitObject)
+                                           .Distinct()
+                                           .ToArray();
+
+            if (covered.Length == 0)
+                return;
+
+            editorBeatmap.BeginChange();
+
+            foreach (DivaHitObject hitObject in covered)
+                editorBeatmap.Remove(hitObject);
 
             editorBeatmap.EndChange();
         }

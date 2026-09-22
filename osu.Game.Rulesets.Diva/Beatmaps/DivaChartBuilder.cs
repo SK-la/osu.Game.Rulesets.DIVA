@@ -192,6 +192,47 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
         }
 
         /// <summary>
+        ///     Same-button notes whose spans over the chart's frames overlap, earlier note first. ProjectDIVA
+        ///     keeps a hold as one record plus a frame length, so its button is busy for the whole span and a
+        ///     note starting inside it cannot be pressed on its own — the reference editor refuses such a
+        ///     placement unless the conflicting keys are cleared.
+        /// </summary>
+        /// <remarks>
+        ///     Only holds can cover a later note: a tap occupies its own frame alone, which is also why the
+        ///     reference editor lets two taps of one button share a frame.
+        /// </remarks>
+        public static IEnumerable<(DivaHitObject Covering, DivaHitObject Covered)> FindActionOverlaps(IBeatmap beatmap)
+        {
+            foreach (var button in beatmap.HitObjects.OfType<DivaHitObject>().GroupBy(h => h.ValidAction))
+            {
+                DivaHitObject? covering = null;
+                int coveringStart = 0;
+                int coveringEnd = 0;
+
+                foreach (DivaHitObject note in button.OrderBy(h => h.StartTime))
+                {
+                    int start = TimeToFrame(beatmap, note.StartTime);
+
+                    if (covering != null && start < coveringEnd)
+                        yield return (covering, note);
+
+                    int end = start + (note is DivaHoldHitObject hold
+                        ? FrameLengthAt(beatmap, note.StartTime, hold.Duration)
+                        : 0);
+
+                    // Keep the note that stays busy the longest, so a note inside several holds is reported
+                    // against the one that actually reaches furthest into it.
+                    if (covering == null || end > coveringEnd)
+                    {
+                        covering = note;
+                        coveringStart = start;
+                        coveringEnd = end;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         ///     Frame length an export would write for a hold of <paramref name="durationMs"/>.
         /// </summary>
         public static int FrameLengthAt(IBeatmap beatmap, double timeMs, double durationMs)

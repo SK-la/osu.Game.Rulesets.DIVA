@@ -18,6 +18,7 @@ namespace osu.Game.Rulesets.Diva.Edit
         {
             // Compose
             new CheckDivaFrameCapacity(),
+            new CheckDivaActionOverlap(),
         };
 
         public IEnumerable<Issue> Run(BeatmapVerifierContext context)

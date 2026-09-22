@@ -331,6 +331,14 @@ namespace osu.Game.Rulesets.Diva.Localization
         public static readonly LocalisableString EDITOR_RESTORE_WAV_KEY =
             new DivaLocalizationManager.DivaLocalisableString("还原 Key 音", "Restore keys");
 
+        public static readonly LocalisableString EDITOR_CLEAR_OVERLAPPING_TAPS =
+            new DivaLocalizationManager.DivaLocalisableString("清除长条内的单键", "Clear taps inside holds");
+
+        public static readonly LocalisableString EDITOR_CLEAR_OVERLAPPING_TAPS_TOOLTIP =
+            new DivaLocalizationManager.DivaLocalisableString(
+                "删除同一按键上落在长条区间内的单键（ProjectDIVA 视为冲突放置）。长条与长条重叠需手动处理。",
+                "Deletes taps that start inside a hold of the same button, which ProjectDIVA treats as a placement conflict. Overlapping holds are left for manual fixing.");
+
         public static readonly LocalisableString EDITOR_RESTORE_WAV_KEY_TOOLTIP = new DivaLocalizationManager.DivaLocalisableString(
             "丢掉编辑器改过的 #WAV 槽位，让音符回到源谱面的 Key 音。有选中就只处理选中项，否则处理整张谱面。",
             "Drops the editor's #WAV overrides so notes fall back to the source chart's keys. Applies to the selection, or to the whole chart when nothing is selected.");
