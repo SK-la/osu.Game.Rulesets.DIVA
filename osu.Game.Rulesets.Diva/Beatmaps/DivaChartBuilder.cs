@@ -52,6 +52,19 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                 });
             }
 
+            // The #WAV slot chosen for each note in the PC editor. It is display/audio metadata only —
+            // action resolution uses Type — but must survive a round trip, so notes are matched on the
+            // (frame, type) pair that identifies them in the file.
+            Dictionary<(int Frame, int Type), int>? sourceKeys = null;
+
+            if (source != null)
+            {
+                sourceKeys = new Dictionary<(int, int), int>();
+
+                foreach (DivaChartNote sourceNote in source.Notes)
+                    sourceKeys[(sourceNote.FrameIndex, sourceNote.Type)] = sourceNote.Key;
+            }
+
             var notes = new List<DivaChartNote>();
             foreach (var hitObject in beatmap.HitObjects.OfType<DivaHitObject>().OrderBy(h => h.StartTime))
             {
@@ -62,16 +75,18 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
                 if (isHold)
                     type += DivaChartConstants.NOTE_TYPE_COUNT;
 
+                int frame = timeToFrame(hitObject.StartTime, timingPoints, headerBpm);
+
                 notes.Add(new DivaChartNote
                 {
-                    FrameIndex = timeToFrame(hitObject.StartTime, timingPoints, headerBpm),
+                    FrameIndex = frame,
                     StartTimeMs = hitObject.StartTime,
                     Type = type,
                     X = grid.X,
                     Y = grid.Y,
                     TailX = tailX,
                     TailY = tailY,
-                    Key = type % DivaChartConstants.NOTE_TYPE_COUNT,
+                    Key = sourceKeys != null && sourceKeys.TryGetValue((frame, type), out int sourceKey) ? sourceKey : 0,
                     DurationMs = isHold ? ((DivaHoldHitObject)hitObject).Duration : 0
                 });
             }
@@ -97,7 +112,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             {
                 Metadata = new DivaChartMetadata
                 {
-                    EditorVersion = source?.Metadata.EditorVersion is { Length: > 0 } version ? version : "1.0.4.8",
+                    EditorVersion = source?.Metadata.EditorVersion is { Length: > 0 } version ? version : DivaChartConstants.EDITOR_VERSION,
                     Title = metadata.TitleUnicode.Length > 0 ? metadata.TitleUnicode : metadata.Title,
                     Creator = metadata.Author.Username,
                     Artist = source?.Metadata.Artist ?? metadata.Artist,

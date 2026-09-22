@@ -200,6 +200,79 @@ namespace osu.Game.Rulesets.Diva.Tests
         }
 
         [Test]
+        public void Chart_builder_preserves_wav_key_from_source()
+        {
+            var beatmap = new DivaBeatmap { BeatmapInfo = { BPM = 120 } };
+            beatmap.ControlPointInfo.Add(0, new TimingControlPoint { BeatLength = 500 });
+            beatmap.HitObjects.Add(new DivaHitObject
+            {
+                StartTime = 0,
+                Position = DivaActionEncoding.ToPlayfieldPosition(10, 12),
+                ValidAction = DivaAction.Circle
+            });
+
+            int type = DivaActionEncoding.ToUnitIndex(DivaAction.Circle);
+
+            var source = new DivaChart
+            {
+                Notes = [new DivaChartNote { FrameIndex = 0, Type = type, Key = 5 }]
+            };
+
+            DivaChart chart = DivaChartBuilder.FromBeatmap(beatmap, source);
+            Assert.That(chart.Notes.Single().Key, Is.EqualTo(5));
+
+            using var reader = new StringReader(DivaChartFileWriter.ExportToString(chart));
+            DivaChart parsed = DivaChartFileParser.Parse(reader, "built.diva", @"C:\songs\built");
+
+            Assert.That(parsed.Notes.Single().Key, Is.EqualTo(5));
+        }
+
+        [Test]
+        public void Chart_builder_leaves_wav_key_unset_without_source()
+        {
+            var beatmap = new DivaBeatmap { BeatmapInfo = { BPM = 120 } };
+            beatmap.ControlPointInfo.Add(0, new TimingControlPoint { BeatLength = 500 });
+            beatmap.HitObjects.Add(new DivaHitObject
+            {
+                StartTime = 0,
+                Position = DivaActionEncoding.ToPlayfieldPosition(10, 12),
+                ValidAction = DivaAction.Cross
+            });
+
+            DivaChart chart = DivaChartBuilder.FromBeatmap(beatmap);
+
+            Assert.That(chart.Notes.Single().Key, Is.Zero);
+        }
+
+        [Test]
+        public void Writer_quantises_hold_length_to_whole_frames()
+        {
+            var chart = minimalChart(1, [new DivaChartNote { FrameIndex = 0, Type = DivaChartConstants.NOTE_TYPE_COUNT, X = 8, Y = 8, DurationMs = 505 }]);
+
+            // 505 ms at 120 BPM is 48.48 frames; ProjectDIVA reads an int, so the field must be "48".
+            Assert.That(DivaChartFileWriter.ExportToString(chart), Does.Contain("0 8 8 8 0 0 0 48\r\n"));
+        }
+
+        private static DivaChart minimalChart(int periodCount, IReadOnlyList<DivaChartNote> notes) => new DivaChart
+        {
+            Metadata = new DivaChartMetadata
+            {
+                EditorVersion = DivaChartConstants.EDITOR_VERSION,
+                Title = "Chart Song",
+                Creator = "Mapper",
+                Artist = "Artist",
+                Style = "Style",
+                OverviewPicture = "bg.png",
+                Level = 3,
+                Hard = 5,
+                Bpm = 120
+            },
+            PeriodCount = periodCount,
+            FrameCount = periodCount * DivaChartConstants.NOTE_PER_PERIOD,
+            Notes = notes
+        };
+
+        [Test]
         public void Ruleset_exposes_encoder_for_editor_save()
         {
             var encoder = new DivaRuleset().CreateBeatmapEncoder(new DivaBeatmap(), null, null);

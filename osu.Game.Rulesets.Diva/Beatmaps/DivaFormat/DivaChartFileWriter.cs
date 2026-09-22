@@ -70,7 +70,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
                   .Append(formatInt(note.Key));
 
                 if (note.Type >= DivaChartConstants.NOTE_TYPE_COUNT)
-                    sb.Append(' ').Append(formatDouble(toFrameDuration(note, chart)));
+                    sb.Append(' ').Append(formatInt(toFrameLength(note, chart)));
 
                 sb.Append(newline);
             }
@@ -142,12 +142,13 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
         /// <summary>
         ///     Inverts the parser's frame → ms duration conversion (ProjectDIVA stores hold length in chart frames).
         /// </summary>
-        private static double toFrameDuration(DivaChartNote note, DivaChart chart)
+        private static int toFrameLength(DivaChartNote note, DivaChart chart)
         {
             if (note.DurationMs <= 0)
                 return 0;
 
-            return Math.Round(note.DurationMs / DivaChartConstants.MsPerFrame(activeBpmAt(chart, note.FrameIndex)), 6);
+            double frames = note.DurationMs / DivaChartConstants.MsPerFrame(activeBpmAt(chart, note.FrameIndex));
+            return Math.Max(1, (int)Math.Round(frames, MidpointRounding.AwayFromZero));
         }
 
         /// <summary>Last timing point at or before <paramref name="frameIndex"/>, else the header BPM.</summary>

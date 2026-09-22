@@ -44,9 +44,11 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
                 if (pos == -1)
                     break;
 
+                // The legacy BPM rounding (fraction >0.8 up, <0.2 down) is deliberately not applied: the
+                // game only runs it when EditorVer compares <= "1.0.4.7", and the PC editor writes CRLF,
+                // so the game sees "1.0.4.7\r" and never takes that branch. Rounding here would silently
+                // change BPM values the game plays back unrounded.
                 double bpm = readDoubleToken(reader);
-                if (string.CompareOrdinal(editorVer, "1.0.4.7") <= 0)
-                    bpm = snapLegacyBpm(bpm);
 
                 if (pos >= 0 && pos < frameBpms.Length)
                     frameBpms[pos] = bpm;
@@ -377,17 +379,6 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
             }
 
             return active;
-        }
-
-        private static double snapLegacyBpm(double bpm)
-        {
-            double digit = bpm - Math.Floor(bpm);
-            if (digit > 0.8)
-                return Math.Ceiling(bpm);
-            if (digit < 0.2)
-                return Math.Floor(bpm);
-
-            return bpm;
         }
 
         private static string readLineRequired(TextReader reader)

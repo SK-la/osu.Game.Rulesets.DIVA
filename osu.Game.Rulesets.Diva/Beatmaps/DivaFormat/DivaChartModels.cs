@@ -181,6 +181,12 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
 
     public static class DivaChartConstants
     {
+        /// <summary>
+        ///     <c>EditorVer</c> written by the PC editor for charts it authors from scratch. Charts read from
+        ///     disk keep their own version, which gates the ChanceTime line and the legacy BPM rounding.
+        /// </summary>
+        public const string EDITOR_VERSION = "1.0.4.7";
+
         public const int NOTE_TYPE_COUNT = 8;
         public const int NOTE_PER_PERIOD = 192;
         public const int TIME_PER_PERIOD = 4;
