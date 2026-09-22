@@ -250,11 +250,8 @@ namespace osu.Game.Rulesets.Diva.Edit
                 dir = new Vector2(1, 0);
 
             double bpm = EditorBeatmap.ControlPointInfo.TimingPointAt(time).BPM;
-            if (bpm <= 0)
-                bpm = DivaChartConstants.BASE_BPM;
 
-            float distance = (float)(DivaChartConstants.DISTANCE * DivaChartConstants.BASE_BPM / bpm);
-            return dir.Normalized() * distance;
+            return dir.Normalized() * DivaActionEncoding.ApproachDistance(bpm);
         }
 
         public void ApplyPlacementDefaults(DivaHitObject hitObject)

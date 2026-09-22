@@ -227,10 +227,37 @@ namespace osu.Game.Rulesets.Diva.Tests.Editor
             AddStep("keep handle", () => approachHandle = handle!);
         }
 
+        [Test]
+        public void Dragging_the_handle_sets_the_direction_without_snapping_or_lengthening()
+        {
+            addApproachNote(400, 0);
+
+            // The drag target is deliberately off the note grid and further away than the note flies.
+            var dragDelta = new Vector2(310, 400);
+            Vector2 expected = DivaActionEncoding.NormaliseApproachOrigin(dragDelta, 120);
+
+            AddStep("drag the handle there", () =>
+            {
+                Vector2 grab = approachNote.Position + DivaActionEncoding.NormaliseApproachOrigin(new Vector2(400, 0), 120);
+
+                InputManager.MoveMouseTo(composer.Playfield.ToScreenSpace(grab));
+                InputManager.PressButton(MouseButton.Left);
+                InputManager.MoveMouseTo(composer.Playfield.ToScreenSpace(approachNote.Position + dragDelta));
+                InputManager.ReleaseButton(MouseButton.Left);
+            });
+
+            AddAssert("vector is the dragged direction at the BPM flight distance", () =>
+                Vector2.Distance(approachNote.ApproachPieceOriginPosition, expected) < 0.05f);
+        }
+
         /// <summary>Screen-space distance from the far handle to the point gameplay spawns the flying piece at.</summary>
         private float farHandleDistance()
         {
-            Vector2 flightStart = composer.Playfield.ToScreenSpace(approachNote.Position + approachNote.ApproachPieceOriginPosition);
+            // The handle draws the vector the note actually flies along: the game (and the export) keep only
+            // the stored direction and re-derive the length from the BPM.
+            double bpm = editorBeatmap.ControlPointInfo.TimingPointAt(approachNote.StartTime).BPM;
+            Vector2 flight = DivaActionEncoding.NormaliseApproachOrigin(approachNote.ApproachPieceOriginPosition, bpm);
+            Vector2 flightStart = composer.Playfield.ToScreenSpace(approachNote.Position + flight);
             return Vector2.Distance(approachHandle.ChildrenOfType<Circle>().Single().ScreenSpaceDrawQuad.Centre, flightStart);
         }
 

@@ -1,6 +1,7 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -513,6 +514,48 @@ namespace osu.Game.Rulesets.Diva.Tests
             var converted = (DivaBeatmap)new DivaBeatmapConverter(decoded, new DivaRuleset()).Convert();
 
             Assert.That(converted.HitObjects.Single().WavKey, Is.EqualTo(7));
+        }
+
+        [Test]
+        public void Approach_origin_is_normalised_to_the_bpm_scaled_distance()
+        {
+            Vector2 normalised = DivaActionEncoding.NormaliseApproachOrigin(new Vector2(30, 40), 150);
+
+            Assert.That(normalised.Length, Is.EqualTo(DivaActionEncoding.ApproachDistance(150)).Within(1e-3f));
+            Assert.That(normalised.X / normalised.Y, Is.EqualTo(30f / 40f).Within(1e-3f));
+
+            // 150 BPM is 120/150 of the base flight distance.
+            Assert.That(DivaActionEncoding.ApproachDistance(150), Is.EqualTo(DivaChartConstants.DISTANCE * 0.8f).Within(1e-3f));
+        }
+
+        [Test]
+        public void Approach_origin_without_a_direction_flies_rightwards()
+        {
+            Assert.That(DivaActionEncoding.NormaliseApproachOrigin(Vector2.Zero, 120), Is.EqualTo(new Vector2(DivaChartConstants.DISTANCE, 0)));
+            Assert.That(DivaActionEncoding.ApproachDistance(0), Is.EqualTo(DivaChartConstants.DISTANCE));
+        }
+
+        [Test]
+        public void Chart_builder_writes_the_normalised_flight_vector_as_the_tail()
+        {
+            var beatmap = new DivaBeatmap { BeatmapInfo = { BPM = 120 } };
+            beatmap.ControlPointInfo.Add(0, new TimingControlPoint { BeatLength = 500 });
+
+            Vector2 position = DivaActionEncoding.ToPlayfieldPosition(10, 12);
+            beatmap.HitObjects.Add(new DivaHitObject
+            {
+                StartTime = 0,
+                Position = position,
+                ValidAction = DivaAction.Circle,
+                // A drag that ended off the grid and further away than the note actually flies.
+                ApproachPieceOriginPosition = new Vector2(300, 400)
+            });
+
+            DivaChartNote note = DivaChartBuilder.FromBeatmap(beatmap).Notes.Single();
+
+            float distance = DivaActionEncoding.ApproachDistance(120);
+            Assert.That(note.TailX, Is.EqualTo((int)Math.Round(position.X + distance * 0.6f)));
+            Assert.That(note.TailY, Is.EqualTo((int)Math.Round(position.Y + distance * 0.8f)));
         }
 
         private static DivaChart minimalChart(int periodCount, IReadOnlyList<DivaChartNote> notes) => new DivaChart

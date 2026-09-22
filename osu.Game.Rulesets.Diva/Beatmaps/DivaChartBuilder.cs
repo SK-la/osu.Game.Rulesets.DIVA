@@ -59,7 +59,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             foreach (var hitObject in beatmap.HitObjects.OfType<DivaHitObject>().OrderBy(h => h.StartTime))
             {
                 Vector2 grid = DivaActionEncoding.ToGridPosition(hitObject.Position);
-                (int tailX, int tailY) = approachToTail(hitObject.Position, hitObject.ApproachPieceOriginPosition);
+                (int tailX, int tailY) = approachToTail(hitObject.Position, hitObject.ApproachPieceOriginPosition, bpmAt(hitObject.StartTime, timingPoints, headerBpm));
                 bool isHold = hitObject is DivaHoldHitObject;
                 int type = DivaActionEncoding.ToUnitIndex(hitObject.ValidAction);
                 if (isHold)
@@ -242,13 +242,29 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             return Math.Max(0, frame);
         }
 
-        private static (int TailX, int TailY) approachToTail(Vector2 notePos, Vector2 approach)
+        private static (int TailX, int TailY) approachToTail(Vector2 notePos, Vector2 approach, double bpm)
         {
-            if (approach.LengthSquared < 0.0001f)
-                return ((int)Math.Round(notePos.X + DivaChartConstants.DISTANCE), (int)Math.Round(notePos.Y));
-
-            Vector2 far = notePos + approach;
+            // ProjectDIVA only keeps the direction of (tail - note) and re-derives the length from the BPM, so
+            // the exported tail is normalised too: that keeps an export→reload→export cycle byte-identical.
+            Vector2 far = notePos + DivaActionEncoding.NormaliseApproachOrigin(approach, bpm);
             return ((int)Math.Round(far.X), (int)Math.Round(far.Y));
+        }
+
+        /// <summary>BPM in play at a time, i.e. the last timing point at or before it.</summary>
+        private static double bpmAt(double timeMs, TimingControlPoint[] timingPoints, double headerBpm)
+        {
+            double bpm = headerBpm > 0 ? headerBpm : DivaChartConstants.BASE_BPM;
+
+            foreach (TimingControlPoint point in timingPoints)
+            {
+                if (point.Time > timeMs)
+                    break;
+
+                if (point.BPM > 0)
+                    bpm = point.BPM;
+            }
+
+            return bpm;
         }
 
         private static (int Start, int End, double StartMs, double EndMs) resolveChanceTime(

@@ -106,22 +106,36 @@ namespace osu.Game.Rulesets.Diva.Beatmaps.DivaFormat
         public static Vector2 ToOsuPosition(float gridX, float gridY) => ToPlayfieldPosition(gridX, gridY);
 
         /// <summary>
-        ///     Relative approach start (note-local), matching ProjectDIVA
-        ///     <c>note + (rhythm-note).unit() * (DISTANCE * 120 / bpm)</c>.
+        ///     ProjectDIVA <c>nowDistance</c>: how far a note flies, scaled by the BPM in play
+        ///     (<c>DISTANCE * 120 / bpm</c>).
         /// </summary>
-        public static Vector2 ComputeApproachOrigin(Vector2 notePos, int tailX, int tailY, double bpm)
+        public static float ApproachDistance(double bpm)
         {
             if (bpm <= 0)
                 bpm = DivaChartConstants.BASE_BPM;
 
-            float distance = (float)(DivaChartConstants.DISTANCE * DivaChartConstants.BASE_BPM / bpm);
-            Vector2 dir = new Vector2(tailX, tailY) - notePos;
-
-            if (dir.LengthSquared < 0.0001f)
-                return new Vector2(distance, 0);
-
-            return dir.Normalized() * distance;
+            return (float)(DivaChartConstants.DISTANCE * DivaChartConstants.BASE_BPM / bpm);
         }
+
+        /// <summary>
+        ///     The flight vector a note actually uses: ProjectDIVA keeps only the direction of
+        ///     <c>(_tailx, _taily) - note</c> and derives the length from the BPM, so anything that stores a
+        ///     freely dragged vector has to be normalised to it to match what the game shows.
+        /// </summary>
+        public static Vector2 NormaliseApproachOrigin(Vector2 approach, double bpm)
+        {
+            if (approach.LengthSquared < 0.0001f)
+                return new Vector2(ApproachDistance(bpm), 0);
+
+            return approach.Normalized() * ApproachDistance(bpm);
+        }
+
+        /// <summary>
+        ///     Relative approach start (note-local), matching ProjectDIVA
+        ///     <c>note + (rhythm-note).unit() * (DISTANCE * 120 / bpm)</c>.
+        /// </summary>
+        public static Vector2 ComputeApproachOrigin(Vector2 notePos, int tailX, int tailY, double bpm)
+            => NormaliseApproachOrigin(new Vector2(tailX, tailY) - notePos, bpm);
 
         public static Vector2 ComputeApproachOrigin(DivaChartNote note, double bpm)
         {

@@ -10,6 +10,7 @@ using osu.Framework.Graphics.Lines;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Input.Events;
 using osu.Game.Graphics;
+using osu.Game.Rulesets.Diva.Beatmaps.DivaFormat;
 using osu.Game.Rulesets.Diva.Configuration;
 using osu.Game.Rulesets.Diva.Objects;
 using osu.Game.Rulesets.Diva.Objects.Drawables.Pieces;
@@ -43,9 +44,6 @@ namespace osu.Game.Rulesets.Diva.Edit.Blueprints.Components
 
         [Resolved]
         private EditorBeatmap editorBeatmap { get; set; } = null!;
-
-        [Resolved]
-        private DivaHitObjectComposer? composer { get; set; }
 
         public DivaApproachHandle(DivaHitObject hitObject)
         {
@@ -81,7 +79,10 @@ namespace osu.Game.Rulesets.Diva.Edit.Blueprints.Components
         {
             base.Update();
 
-            Vector2 far = hitObject.ApproachPieceOriginPosition;
+            // Draw the vector the note will actually fly along rather than the stored one: the game keeps only
+            // the stored direction and re-derives the length from the BPM at the note.
+            double bpm = editorBeatmap.ControlPointInfo.TimingPointAt(hitObject.StartTime).BPM;
+            Vector2 far = DivaActionEncoding.NormaliseApproachOrigin(hitObject.ApproachPieceOriginPosition, bpm);
             float amplitude = (float)(flightAmplitude.Value / 100.0);
 
             handle.Position = far;
@@ -111,13 +112,13 @@ namespace osu.Game.Rulesets.Diva.Edit.Blueprints.Components
         {
             Vector2 local = ToLocalSpace(e.ScreenSpaceMousePosition);
 
-            if (composer != null)
-            {
-                Vector2 farPlayfield = composer.SnapPlayfieldPosition(hitObject.Position + local);
-                hitObject.ApproachPieceOriginPosition = farPlayfield - hitObject.Position;
-            }
-            else
-                hitObject.ApproachPieceOriginPosition = local;
+            // Free positioning, no grid snap: ProjectDIVA stores raw pixels here and the game only reads the
+            // direction, so snapping would only quantise the angle without making the result more faithful.
+            if (local.LengthSquared < 0.25f)
+                return;
+
+            double bpm = editorBeatmap.ControlPointInfo.TimingPointAt(hitObject.StartTime).BPM;
+            hitObject.ApproachPieceOriginPosition = DivaActionEncoding.NormaliseApproachOrigin(local, bpm);
 
             editorBeatmap.Update(hitObject);
         }

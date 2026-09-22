@@ -137,13 +137,16 @@ namespace osu.Game.Rulesets.Diva.Edit
 
             gridX.Precision = precision;
             gridY.Precision = precision;
-            approachX.Precision = precision;
-            approachY.Precision = precision;
 
             gridXSlider.KeyboardStep = step;
             gridYSlider.KeyboardStep = step;
-            approachXSlider.KeyboardStep = step;
-            approachYSlider.KeyboardStep = step;
+
+            // The flight vector is a direction, not a grid position: the game derives its length from the BPM,
+            // so rounding it to whole pixels on the note grid would only lose angle resolution.
+            approachX.Precision = unlocked_precision;
+            approachY.Precision = unlocked_precision;
+            approachXSlider.KeyboardStep = 0.01f;
+            approachYSlider.KeyboardStep = 0.01f;
         }
 
         private void syncFromSelection(HitObject[] objects)
@@ -159,8 +162,14 @@ namespace osu.Game.Rulesets.Diva.Edit
             Vector2 grid = DivaActionEncoding.ToGridPosition(diva.Position);
             gridX.Value = snapInspectorValue(grid.X);
             gridY.Value = snapInspectorValue(grid.Y);
-            approachX.Value = snapInspectorValue(diva.ApproachPieceOriginPosition.X);
-            approachY.Value = snapInspectorValue(diva.ApproachPieceOriginPosition.Y);
+
+            // Show the vector the note flies along, i.e. after the game's direction-only normalisation.
+            Vector2 approach = DivaActionEncoding.NormaliseApproachOrigin(
+                diva.ApproachPieceOriginPosition,
+                EditorBeatmap.ControlPointInfo.TimingPointAt(diva.StartTime).BPM);
+
+            approachX.Value = roundToPrecision(approach.X);
+            approachY.Value = roundToPrecision(approach.Y);
 
             if (diva is DivaHoldHitObject hold)
             {
@@ -179,7 +188,9 @@ namespace osu.Game.Rulesets.Diva.Edit
         }
 
         private float snapInspectorValue(float value)
-            => composer.GridSnapEnabled ? MathF.Round(value) : MathF.Round(value / unlocked_precision) * unlocked_precision;
+            => composer.GridSnapEnabled ? MathF.Round(value) : roundToPrecision(value);
+
+        private static float roundToPrecision(float value) => MathF.Round(value / unlocked_precision) * unlocked_precision;
 
         private void applyGrid()
         {
@@ -215,7 +226,10 @@ namespace osu.Game.Rulesets.Diva.Edit
             if (selected.Length != 1)
                 return;
 
-            var origin = new Vector2(snapInspectorValue(approachX.Value), snapInspectorValue(approachY.Value));
+            var origin = DivaActionEncoding.NormaliseApproachOrigin(
+                new Vector2(roundToPrecision(approachX.Value), roundToPrecision(approachY.Value)),
+                EditorBeatmap.ControlPointInfo.TimingPointAt(selected[0].StartTime).BPM);
+
             if (selected[0].ApproachPieceOriginPosition == origin)
                 return;
 
