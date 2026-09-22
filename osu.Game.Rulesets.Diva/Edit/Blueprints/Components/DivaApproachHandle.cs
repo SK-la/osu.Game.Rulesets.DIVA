@@ -20,9 +20,16 @@ using osuTK.Input;
 namespace osu.Game.Rulesets.Diva.Edit.Blueprints.Components
 {
     /// <summary>
-    ///     Independent approach-origin handle. Kept AutoSize so it does not swallow playfield drags.
-    ///     Path follows the same <see cref="DivaFlightPath"/> curve as gameplay.
+    ///     Independent approach-origin handle, drawn in the note's own local space (the blueprint keeps this
+    ///     component at the note position, so local coordinates equal ProjectDIVA's note-relative
+    ///     <c>nowDistance</c>). Path follows the same <see cref="DivaFlightPath"/> curve as gameplay.
     /// </summary>
+    /// <remarks>
+    ///     Must not be auto-sized: an <see cref="AutoSizeAxes"/> box only grows towards positive coordinates and
+    ///     every child is then offset by half of it, which slides the whole trajectory (and the far handle) away
+    ///     from the note — most visibly for notes whose flight starts off to the bottom right, where the measured
+    ///     box is as large as the flight distance itself.
+    /// </remarks>
     public partial class DivaApproachHandle : CompositeDrawable
     {
         public const float HANDLE_SIZE = 16;
@@ -44,8 +51,7 @@ namespace osu.Game.Rulesets.Diva.Edit.Blueprints.Components
         {
             this.hitObject = hitObject;
 
-            AutoSizeAxes = Axes.Both;
-            Origin = Anchor.Centre;
+            Origin = Anchor.TopLeft;
 
             InternalChildren =
             [
