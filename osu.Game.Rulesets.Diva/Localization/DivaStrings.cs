@@ -275,6 +275,13 @@ namespace osu.Game.Rulesets.Diva.Localization
         public static readonly LocalisableString EDITOR_GRID_SNAP =
             new DivaLocalizationManager.DivaLocalisableString("格子吸附", "Grid Snap");
 
+        public static readonly LocalisableString EDITOR_HOLD_PLACEMENT =
+            new DivaLocalizationManager.DivaLocalisableString("放置长条", "Place holds");
+
+        public static readonly LocalisableString EDITOR_HOLD_PLACEMENT_TOOLTIP = new DivaLocalizationManager.DivaLocalisableString(
+            "开启后放置长条，关闭后放置单键；按 X 在两者间切换（键位/方向仍由按键按钮决定）。",
+            "On places holds, off places taps; press X to switch between the two (the note button is still picked by the button toggles).");
+
         public static readonly LocalisableString EDITOR_REPLACE_ON_SAME_TIME =
             new DivaLocalizationManager.DivaLocalisableString("同拍替换", "Replace same time");
 

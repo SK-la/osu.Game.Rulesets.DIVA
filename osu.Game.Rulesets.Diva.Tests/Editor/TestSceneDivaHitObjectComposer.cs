@@ -19,10 +19,12 @@ using osu.Game.Rulesets.Diva.Beatmaps;
 using osu.Game.Rulesets.Diva.Beatmaps.DivaFormat;
 using osu.Game.Rulesets.Diva.Edit;
 using osu.Game.Rulesets.Diva.Edit.Blueprints.Components;
+using osu.Game.Rulesets.Diva.Edit.Tools;
 using osu.Game.Rulesets.Diva.Localization;
 using osu.Game.Rulesets.Diva.Objects;
 using osu.Game.Rulesets.Edit;
 using osu.Game.Graphics.UserInterfaceV2;
+using osu.Game.Graphics.UserInterface;
 using osu.Game.Screens.Edit;
 using osu.Game.Screens.Edit.Components.RadioButtons;
 using osu.Game.Screens.Edit.Components.TernaryButtons;
@@ -374,6 +376,29 @@ namespace osu.Game.Rulesets.Diva.Tests.Editor
                 && isBound(DivaAction.EditorButtonRight, InputKey.D));
 
             AddAssert("5 toggles the family", () => isBound(DivaAction.EditorToggleButtonFamily, InputKey.Number5));
+            AddAssert("X toggles tap/hold placement", () => isBound(DivaAction.EditorToggleHoldTool, InputKey.X));
+        }
+
+        [Test]
+        public void Hold_placement_toggle_follows_and_drives_the_toolbar()
+        {
+            AddStep("select tap tool", () => selectTool(DivaStrings.EDITOR_TAP_TOOL.ToString()));
+            AddAssert("toggle reads tap", () => holdPlacementButton().Current.Value, () => Is.EqualTo(TernaryState.False));
+
+            AddStep("press the hold toggle", () => holdPlacementButton().TriggerClick());
+            AddUntilStep("hold tool active", () => composer.BlueprintContainer.CurrentTool, () => Is.TypeOf<DivaHoldCompositionTool>());
+            AddAssert("toolbar follows the toggle", () => holdPlacementButton().Current.Value, () => Is.EqualTo(TernaryState.True));
+            AddAssert("hold radio highlighted", () => toolButton(DivaStrings.EDITOR_HOLD_TOOL.ToString()).Selected.Value, () => Is.True);
+            AddAssert("tap radio cleared", () => toolButton(DivaStrings.EDITOR_TAP_TOOL.ToString()).Selected.Value, () => Is.False);
+
+            AddAssert("note button untouched", () => composer.CurrentAction, () => Is.EqualTo(DivaAction.Circle));
+
+            AddStep("press the toggle again", () => holdPlacementButton().TriggerClick());
+            AddUntilStep("tap tool active", () => composer.BlueprintContainer.CurrentTool, () => Is.TypeOf<DivaTapCompositionTool>());
+            AddAssert("toggle reads tap again", () => holdPlacementButton().Current.Value, () => Is.EqualTo(TernaryState.False));
+
+            AddStep("click the hold radio directly", () => selectTool(DivaStrings.EDITOR_HOLD_TOOL.ToString()));
+            AddUntilStep("toggle mirrors the radio", () => holdPlacementButton().Current.Value, () => Is.EqualTo(TernaryState.True));
         }
 
         [Test]
@@ -449,6 +474,12 @@ namespace osu.Game.Rulesets.Diva.Tests.Editor
 
         private void selectTool(string name)
             => composer.ChildrenOfType<EditorRadioButton>().First(b => b.Text.ToString() == name).TriggerClick();
+
+        private HitObjectCompositionToolButton toolButton(string name)
+            => composer.ChildrenOfType<HitObjectCompositionToolButton>().Single(b => b.Text.ToString() == name);
+
+        private DrawableTernaryButton<DivaAction> holdPlacementButton()
+            => composer.ChildrenOfType<DrawableTernaryButton<DivaAction>>().Single(b => b.Action == DivaAction.EditorToggleHoldTool);
 
         private static bool isIntegerCell(float value) => MathF.Abs(value - MathF.Round(value)) < 1e-3f;
 

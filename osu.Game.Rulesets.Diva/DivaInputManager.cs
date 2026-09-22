@@ -64,6 +64,9 @@ namespace osu.Game.Rulesets.Diva
         [Description("Hold")]
         EditorHoldTool,
 
+        [Description("Tap ⇄ Hold")]
+        EditorToggleHoldTool,
+
         [Description("Grid Snap")]
         EditorToggleGridSnap,
 

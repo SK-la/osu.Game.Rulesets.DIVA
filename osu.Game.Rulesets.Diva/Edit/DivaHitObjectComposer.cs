@@ -8,6 +8,7 @@ using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Sprites;
+using osu.Framework.Testing;
 using osu.Game.Beatmaps;
 using osu.Game.Graphics;
 using osu.Game.Graphics.UserInterface;
@@ -50,6 +51,13 @@ namespace osu.Game.Rulesets.Diva.Edit
 
         private readonly Bindable<TernaryState> gridSnapToggle = new Bindable<TernaryState>(TernaryState.True);
         private readonly Bindable<TernaryState> replaceOnSameTimeToggle = new Bindable<TernaryState>(TernaryState.False);
+
+        /// <summary>
+        ///     Mirrors the placement tool as a ternary state so a single button (and the <c>X</c> hotkey) can flip
+        ///     between taps and holds, the way the PC editor's Ctrl+X does, without touching the note buttons.
+        /// </summary>
+        private readonly Bindable<TernaryState> holdPlacementToggle = new Bindable<TernaryState>(TernaryState.False);
+
         private readonly Dictionary<DivaAction, Bindable<TernaryState>> actionStates = new Dictionary<DivaAction, Bindable<TernaryState>>();
 
         private RectangularPositionSnapGrid? positionSnapGrid;
@@ -83,13 +91,19 @@ namespace osu.Game.Rulesets.Diva.Edit
         /// <summary>True while <see cref="UpdateTernaryStates"/> writes the note buttons in bulk.</summary>
         private bool syncingActionStates;
 
+        /// <summary>True while the placement tool drives <see cref="holdPlacementToggle"/> instead of the reverse.</summary>
+        private bool syncingHoldPlacementToggle;
+
         public override Bindable<TernaryState>? SelectionNewComboState => null;
 
         protected override IReadOnlyList<CompositionTool<DivaAction>> CompositionTools =>
         [
-            new DivaTapCompositionTool(),
-            new DivaHoldCompositionTool()
+            tapTool,
+            holdTool
         ];
+
+        private readonly DivaTapCompositionTool tapTool = new DivaTapCompositionTool();
+        private readonly DivaHoldCompositionTool holdTool = new DivaHoldCompositionTool();
 
         protected override DrawableRuleset<DivaHitObject> CreateDrawableRuleset(Ruleset ruleset, IBeatmap beatmap, IReadOnlyList<Mod> mods)
             => new DrawableDivaEditorRuleset((DivaRuleset)ruleset, beatmap, mods);
@@ -118,6 +132,16 @@ namespace osu.Game.Rulesets.Diva.Edit
                 CreateIcon = () => new SpriteIcon { Icon = FontAwesome.Solid.Clone },
                 Action = DivaAction.EditorToggleReplaceOnSameTime,
                 Hotkey = HotkeyForAction(DivaAction.EditorToggleReplaceOnSameTime)
+            };
+
+            yield return new DrawableTernaryButton<DivaAction>
+            {
+                Current = holdPlacementToggle,
+                Description = DivaStrings.EDITOR_HOLD_PLACEMENT,
+                TooltipText = DivaStrings.EDITOR_HOLD_PLACEMENT_TOOLTIP,
+                CreateIcon = () => new SpriteIcon { Icon = OsuIcon.EditorHoldNote },
+                Action = DivaAction.EditorToggleHoldTool,
+                Hotkey = HotkeyForAction(DivaAction.EditorToggleHoldTool)
             };
 
             yield return new DivaNoteToggleGrid(this);
@@ -156,6 +180,17 @@ namespace osu.Game.Rulesets.Diva.Edit
                 positionSnapGrid?.Alpha = state.NewValue == TernaryState.True ? 1 : 0;
             }, true);
 
+            holdPlacementToggle.BindValueChanged(state =>
+            {
+                if (syncingHoldPlacementToggle)
+                    return;
+
+                if (state.NewValue == TernaryState.True)
+                    selectPlacementTool(holdTool);
+                else if (state.NewValue == TernaryState.False)
+                    selectPlacementTool(tapTool);
+            });
+
             foreach (var (action, bindable) in actionStates)
             {
                 var captured = action;
@@ -184,6 +219,36 @@ namespace osu.Game.Rulesets.Diva.Edit
                     applyActionToSelection(captured);
                 };
             }
+        }
+
+        protected override void Update()
+        {
+            base.Update();
+
+            // The toolbar's own tap/hold buttons (and the select tool) can change the placement tool behind the
+            // ternary button's back, so mirror the tool back onto the button instead of caching a stale state.
+            TernaryState placement = ReferenceEquals(BlueprintContainer.CurrentTool, holdTool) ? TernaryState.True
+                : ReferenceEquals(BlueprintContainer.CurrentTool, tapTool) ? TernaryState.False
+                : TernaryState.Indeterminate;
+
+            if (placement == holdPlacementToggle.Value)
+                return;
+
+            syncingHoldPlacementToggle = true;
+            holdPlacementToggle.Value = placement;
+            syncingHoldPlacementToggle = false;
+        }
+
+        /// <summary>Switches the placement tool through its toolbar button, keeping the radio selection in sync.</summary>
+        private void selectPlacementTool(CompositionTool tool)
+        {
+            if (ReferenceEquals(BlueprintContainer.CurrentTool, tool))
+                return;
+
+            // The base composer keeps its tool buttons in a private collection, so reach them through the toolbox
+            // tree: pressing the real button is what keeps the highlighted tool and the placement in agreement,
+            // and what clears the selection the way a click does.
+            LeftToolbox.ChildrenOfType<HitObjectCompositionToolButton>().FirstOrDefault(b => ReferenceEquals(b.Tool, tool))?.Select();
         }
 
         protected override void UpdateTernaryStates()
