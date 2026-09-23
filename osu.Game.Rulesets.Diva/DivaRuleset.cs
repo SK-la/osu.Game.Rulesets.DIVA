@@ -32,6 +32,7 @@ using osu.Game.Rulesets.Mods;
 using osu.Game.Rulesets.Osu.Mods;
 using osu.Game.Rulesets.Scoring;
 using osu.Game.Rulesets.UI;
+using osu.Game.Screens.Edit.Setup;
 #if DIVA_EZ2LAZER
 using osu.Game.Skinning;
 using osu.Game.Storyboards;
@@ -65,6 +66,22 @@ namespace osu.Game.Rulesets.Diva
         public override HitObjectComposer CreateHitObjectComposer() => new DivaHitObjectComposer(this);
 
         public override IBeatmapVerifier CreateBeatmapVerifier() => new DivaBeatmapVerifier();
+
+        /// <summary>
+        ///     The chart's own properties (difficulty slot, stars, minimum length, music style, preview picture)
+        ///     live in the setup screen: they are set once per chart, next to the background / audio / video
+        ///     pickers that already live there, not while arranging notes.
+        /// </summary>
+        public override IEnumerable<Drawable> CreateEditorSetupSections()
+        {
+            foreach (Drawable section in base.CreateEditorSetupSections())
+            {
+                yield return section;
+
+                if (section is DifficultySection)
+                    yield return new DivaSetupSection();
+            }
+        }
 
 #if DIVA_EZ2LAZER
         public override IBeatmapEncoder CreateBeatmapEncoder(IBeatmap beatmap, ISkin? skin, Storyboard? storyboard)

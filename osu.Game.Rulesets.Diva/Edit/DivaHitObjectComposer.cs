@@ -186,7 +186,6 @@ namespace osu.Game.Rulesets.Diva.Edit
 
             LayerBelowRuleset.Add(positionSnapGrid);
             RightToolbox.Add(new DivaEditorViewToolbox(PlayfieldZoom));
-            RightToolbox.Add(new DivaChartPropertiesToolbox());
             RightToolbox.Add(new DivaChartEventsToolbox());
             RightToolbox.Add(new DivaNoteToolsToolbox());
             RightToolbox.Add(new DivaBatchToolsToolbox());

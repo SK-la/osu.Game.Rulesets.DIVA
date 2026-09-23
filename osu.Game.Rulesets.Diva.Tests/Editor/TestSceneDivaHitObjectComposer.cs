@@ -4,10 +4,8 @@
 using System;
 using System.Linq;
 using NUnit.Framework;
-using osu.Framework.Allocation;
 using osu.Framework.Extensions;
 using osu.Framework.Graphics;
-using osu.Framework.Graphics.Cursor;
 using osu.Framework.Graphics.Lines;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.Sprites;
@@ -562,37 +560,13 @@ namespace osu.Game.Rulesets.Diva.Tests.Editor
         }
 
         [Test]
-        public void Chart_properties_edit_style_and_overview_picture()
+        public void Chart_properties_live_in_the_setup_screen()
         {
-            AddStep("type a style and a preview picture name", () =>
-            {
-                chartPropertyTextBox(DivaStrings.EDITOR_CHART_STYLE.ToString()).Current.Value = "Rin";
-                chartPropertyTextBox(DivaStrings.EDITOR_CHART_OVERVIEW_PICTURE.ToString()).Current.Value = "pv_alt.png";
-            });
+            AddAssert("the setup screen shows the DIVA section", () =>
+                new DivaRuleset().CreateEditorSetupSections().OfType<DivaSetupSection>().Count(), () => Is.EqualTo(1));
 
-            AddAssert("the header carries both", () =>
-            {
-                DivaChartHeader? header = DivaBeatmap.HeaderOf(editorBeatmap);
-                return header is { Style: "Rin", OverviewPicture: "pv_alt.png" };
-            });
-
-            AddStep("clear them again", () =>
-            {
-                chartPropertyTextBox(DivaStrings.EDITOR_CHART_STYLE.ToString()).Current.Value = string.Empty;
-                chartPropertyTextBox(DivaStrings.EDITOR_CHART_OVERVIEW_PICTURE.ToString()).Current.Value = string.Empty;
-            });
-
-            AddAssert("empty means the export keeps resolving them", () =>
-            {
-                DivaChartHeader? header = DivaBeatmap.HeaderOf(editorBeatmap);
-                return header is { Style: "", OverviewPicture: "" };
-            });
+            AddAssert("it is not a compose toolbox", () => composer.ChildrenOfType<DivaSetupSection>().Count(), () => Is.EqualTo(0));
         }
-
-        private FormTextBox chartPropertyTextBox(string caption)
-            => composer.ChildrenOfType<DivaChartPropertiesToolbox>().Single()
-                       .ChildrenOfType<FormTextBox>()
-                       .Single(box => box.Caption.ToString() == caption);
 
         private DivaHitObject noteAt(double time) => new DivaHitObject
         {
@@ -780,35 +754,5 @@ namespace osu.Game.Rulesets.Diva.Tests.Editor
             => composer.ChildrenOfType<DrawableTernaryButton<DivaAction>>().Single(b => b.Action == DivaAction.EditorToggleHoldTool);
 
         private static bool isIntegerCell(float value) => MathF.Abs(value - MathF.Round(value)) < 1e-3f;
-
-        private partial class EditorBeatmapContainer : PopoverContainer
-        {
-            private readonly IWorkingBeatmap working;
-
-            public EditorBeatmap EditorBeatmap { get; private set; } = null!;
-
-            public EditorBeatmapContainer(IWorkingBeatmap working)
-            {
-                this.working = working;
-                RelativeSizeAxes = Axes.Both;
-            }
-
-            protected override IReadOnlyDependencyContainer CreateChildDependencies(IReadOnlyDependencyContainer parent)
-            {
-                var dependencies = new DependencyContainer(base.CreateChildDependencies(parent));
-
-                EditorBeatmap = new EditorBeatmap(working.GetPlayableBeatmap(new DivaRuleset().RulesetInfo));
-                dependencies.CacheAs(EditorBeatmap);
-                dependencies.CacheAs<IBeatSnapProvider>(EditorBeatmap);
-
-                return dependencies;
-            }
-
-            protected override void LoadComplete()
-            {
-                base.LoadComplete();
-                Add(EditorBeatmap);
-            }
-        }
     }
 }
