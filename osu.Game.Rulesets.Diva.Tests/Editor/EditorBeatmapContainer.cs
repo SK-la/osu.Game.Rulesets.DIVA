@@ -5,7 +5,6 @@ using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Cursor;
 using osu.Game.Beatmaps;
-using osu.Game.Rulesets.Diva;
 using osu.Game.Rulesets.Edit;
 using osu.Game.Screens.Edit;
 

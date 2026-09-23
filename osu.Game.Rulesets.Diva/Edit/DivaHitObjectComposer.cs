@@ -362,6 +362,9 @@ namespace osu.Game.Rulesets.Diva.Edit
         {
             hitObject.ValidAction = CurrentAction;
             hitObject.ApproachPieceOriginPosition = ComputeDefaultApproach(hitObject.Position, hitObject.StartTime);
+
+            if (DivaBeatmap.HeaderOf(EditorBeatmap)?.DefaultWavKey is { } key)
+                hitObject.WavKey = key;
         }
 
         /// <summary>Whether <paramref name="screenSpacePosition"/> lands on an existing note.</summary>

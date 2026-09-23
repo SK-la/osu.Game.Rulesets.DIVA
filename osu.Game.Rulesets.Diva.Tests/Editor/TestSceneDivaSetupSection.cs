@@ -5,12 +5,13 @@ using System.Linq;
 using NUnit.Framework;
 using osu.Framework.Localisation;
 using osu.Framework.Testing;
-using osu.Game.Beatmaps;
 using osu.Game.Beatmaps.ControlPoints;
 using osu.Game.Graphics.UserInterfaceV2;
 using osu.Game.Rulesets.Diva.Beatmaps;
 using osu.Game.Rulesets.Diva.Edit;
 using osu.Game.Rulesets.Diva.Localization;
+using osu.Game.Rulesets.Diva.Objects;
+using osu.Game.Rulesets.Objects;
 using osu.Game.Screens.Edit;
 using osu.Game.Tests.Visual;
 
@@ -95,6 +96,56 @@ namespace osu.Game.Rulesets.Diva.Tests.Editor
         {
             AddStep("ask for 40 measures", () => slider(DivaStrings.EDITOR_CHART_MIN_PERIODS).Current.Value = 40);
             AddAssert("the header carries it", () => DivaBeatmap.HeaderOf(editorBeatmap)?.MinPeriodCount, () => Is.EqualTo(40));
+        }
+
+        [Test]
+        public void Hit_sound_reaches_the_header_and_the_selection()
+        {
+            DivaHitObject? note = null;
+            DivaHoldHitObject? hold = null;
+
+            AddStep("put two notes in, selected", () =>
+            {
+                note = new DivaHitObject { StartTime = 0, ValidAction = DivaAction.Circle };
+                hold = new DivaHoldHitObject { StartTime = 500, Duration = 500, ValidAction = DivaAction.Square };
+
+                editorBeatmap.Add(note);
+                editorBeatmap.Add(hold);
+                editorBeatmap.SelectedHitObjects.AddRange(new HitObject[] { note, hold });
+            });
+
+            AddStep("pick key 7", () => slider(DivaStrings.EDITOR_CHART_WAV_KEY).Current.Value = 7);
+
+            AddAssert("the header carries the chart's hit sound", () => DivaBeatmap.HeaderOf(editorBeatmap)?.DefaultWavKey, () => Is.EqualTo(7));
+            AddAssert("the tap was stamped", () => note!.WavKey, () => Is.EqualTo(7));
+            AddAssert("the hold was stamped", () => hold!.WavKey, () => Is.EqualTo(7));
+        }
+
+        [Test]
+        public void Overview_picture_follows_the_background_until_it_is_overridden()
+        {
+            AddStep("choose a background in the resources section", () =>
+            {
+                Beatmap.Value.BeatmapInfo.Metadata.BackgroundFile = "pv_new.png";
+                section.SyncOverviewPictureFromBackground();
+            });
+
+            AddAssert("the box shows the background", () => textBox(DivaStrings.EDITOR_CHART_OVERVIEW_PICTURE).Current.Value, () => Is.EqualTo("pv_new.png"));
+            AddAssert("but the header stays empty, so the export keeps resolving the background", () =>
+                DivaBeatmap.HeaderOf(editorBeatmap)?.OverviewPicture, () => Is.EqualTo(string.Empty));
+
+            AddStep("type an explicit picture", () => textBox(DivaStrings.EDITOR_CHART_OVERVIEW_PICTURE).Current.Value = "pv_alt.png");
+
+            AddAssert("the header carries the override", () => DivaBeatmap.HeaderOf(editorBeatmap)?.OverviewPicture, () => Is.EqualTo("pv_alt.png"));
+
+            AddStep("change the background again", () =>
+            {
+                Beatmap.Value.BeatmapInfo.Metadata.BackgroundFile = "pv_third.png";
+                section.SyncOverviewPictureFromBackground();
+            });
+
+            AddAssert("the override survives", () => textBox(DivaStrings.EDITOR_CHART_OVERVIEW_PICTURE).Current.Value, () => Is.EqualTo("pv_alt.png"));
+            AddAssert("and the header still carries it", () => DivaBeatmap.HeaderOf(editorBeatmap)?.OverviewPicture, () => Is.EqualTo("pv_alt.png"));
         }
 
         private FormSliderBar<int> slider(LocalisableString caption)

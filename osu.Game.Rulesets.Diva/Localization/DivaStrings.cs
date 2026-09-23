@@ -471,8 +471,19 @@ namespace osu.Game.Rulesets.Diva.Localization
         public static readonly LocalisableString EDITOR_CHART_OVERVIEW_PICTURE =
             new DivaLocalizationManager.DivaLocalisableString("预览图文件名", "Overview picture");
 
+        public static readonly LocalisableString EDITOR_CHART_WAV_KEY =
+            new DivaLocalizationManager.DivaLocalisableString("打击音效 (#WAV)", "Hit sound (#WAV)");
+
         public static readonly LocalisableString EDITOR_CHART_INHERITED =
             new DivaLocalizationManager.DivaLocalisableString("留空 = 自动", "blank = automatic");
+
+        public static readonly LocalisableString EDITOR_CHART_OVERVIEW_PICTURE_TOOLTIP = new DivaLocalizationManager.DivaLocalisableString(
+            "留空即沿用设置里选的背景图（换背景就换预览图），填了才覆盖成这个文件名。",
+            "Left blank the picture follows the background chosen in the settings screen (change the background, change the preview); a value here overrides it with that exact filename.");
+
+        public static readonly LocalisableString EDITOR_CHART_WAV_KEY_TOOLTIP = new DivaLocalizationManager.DivaLocalisableString(
+            "从现在起摆放的音符用这个 Key 音；把它改到别的值时会同时套用到选中音符。",
+            "Notes placed from now on carry this key sound; choosing another value also applies it to the current selection.");
 
         public static readonly LocalisableString EDITOR_CHART_MIN_PERIODS_TOOLTIP = new DivaLocalizationManager.DivaLocalisableString(
             "导出 .diva 时的最小小节数（1–1000）。尾奏只有 BGS/ChanceTime 而没有音符时，导出会被截断到最后一个音符所在的小节，用它把谱面拉长。",

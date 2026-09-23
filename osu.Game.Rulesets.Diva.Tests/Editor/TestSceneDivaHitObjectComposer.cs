@@ -5,13 +5,11 @@ using System;
 using System.Linq;
 using NUnit.Framework;
 using osu.Framework.Extensions;
-using osu.Framework.Graphics;
 using osu.Framework.Graphics.Lines;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Input.Bindings;
 using osu.Framework.Testing;
-using osu.Game.Beatmaps;
 using osu.Game.Beatmaps.ControlPoints;
 using osu.Game.Rulesets.Diva.Beatmaps;
 using osu.Game.Rulesets.Diva.Beatmaps.DivaFormat;
@@ -77,6 +75,7 @@ namespace osu.Game.Rulesets.Diva.Tests.Editor
         {
             AddStep("seek to 1000", () => EditorClock.Seek(1000));
             AddStep("select tap tool", () => selectTool(DivaStrings.EDITOR_TAP_TOOL.ToString()));
+            AddStep("chart uses hit sound 7", () => DivaBeatmap.GetOrCreateHeader(editorBeatmap).DefaultWavKey = 7);
             AddStep("move to playfield centre", () => InputManager.MoveMouseTo(composer.Playfield.ScreenSpaceDrawQuad.Centre));
             AddStep("place", () => InputManager.Click(MouseButton.Left));
 
@@ -85,6 +84,7 @@ namespace osu.Game.Rulesets.Diva.Tests.Editor
             AddAssert("not hold", () => editorBeatmap.HitObjects.Single(), () => Is.Not.TypeOf<DivaHoldHitObject>());
             AddAssert("time snapped to beat", () => editorBeatmap.HitObjects.Single().StartTime, () => Is.EqualTo(1000));
             AddAssert("action is current", () => ((DivaHitObject)editorBeatmap.HitObjects.Single()).ValidAction, () => Is.EqualTo(DivaAction.Circle));
+            AddAssert("carries the chart's hit sound", () => ((DivaHitObject)editorBeatmap.HitObjects.Single()).WavKey, () => Is.EqualTo(7));
             AddAssert("grid is integer", () =>
             {
                 Vector2 grid = DivaActionEncoding.ToGridPosition(((DivaHitObject)editorBeatmap.HitObjects.Single()).Position);

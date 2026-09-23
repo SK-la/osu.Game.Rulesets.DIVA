@@ -33,6 +33,16 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
         public string OverviewPicture { get; set; } = string.Empty;
 
         /// <summary>
+        ///     The <c>#WAV</c> slot new notes are stamped with, or <c>null</c> while the chart has not picked one —
+        ///     notes then keep inheriting the source chart's slot for their frame and button.
+        /// </summary>
+        /// <remarks>
+        ///     An int rather than a string, and nullable rather than defaulting to 0, because 0 is a real
+        ///     key-sound slot: "no choice" and "key 0" have to stay distinguishable.
+        /// </remarks>
+        public int? DefaultWavKey { get; set; }
+
+        /// <summary>
         ///     Lower bound for the exported <see cref="DivaChart.PeriodCount"/>. Trailing measures past the last
         ///     note hold nothing but BGS / Resource / ChanceTime data, and the reading side clamps everything to
         ///     the frame array, so the builder raises the count to whatever the contents need and to this
