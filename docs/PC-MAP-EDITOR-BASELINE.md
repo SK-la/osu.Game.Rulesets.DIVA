@@ -409,11 +409,13 @@ PV 区点击 `[ed:68806-69223]`：
 
 | 项 | PC 事实 | Ez 落点 |
 |---|---|---|
-| 难度槽 / 星级可编辑 | 难度分类 `EASY/NORMAL/HARD/EXTRA/FUCK` + 两个星级输入框 `ui:L714`；`HardType[_level-1]`，新谱面否则永远落 EASY 槽 | `DivaChartHeader`（`Level`/`Hard`）存于游戏谱面，builder 优先取它再回退源谱面；`DivaChartPropertiesToolbox` 提供两个滑条，`MirrorToBeatmapInfo` 把难度名与 OD 写回 beatmap info 以便存取往返 |
-| 小节数下限可编辑 | `textBox7` + 「更改」，1–1000 `ui:L713` | 同上工具箱的「小节数下限」；builder 取 `max(内容推导值, 该值)`，只抬高不缩短（尾奏 / ChanceTime / BGS 不再被截断）。导出仍受 `MAX_PERIOD_COUNT` 校验 |
-| 风格 / 预览图可编辑 | header line 5 `_musicStyle`、line 6 预览图文件名（发布文件里是文件名，游戏不读） | 「谱面属性」工具箱加两个文本输入，写进 `DivaChartHeader.Style` / `OverviewPicture`，builder 优先取它；留空 = 继续按原规则推断（风格取 tags、预览图取源谱面再取封面文件名） |
+| 难度槽 / 星级可编辑 | 难度分类 `EASY/NORMAL/HARD/EXTRA/FUCK` + 两个星级输入框 `ui:L714`；`HardType[_level-1]`，新谱面否则永远落 EASY 槽 | `DivaChartHeader`（`Level`/`Hard`）存于游戏谱面，builder 优先取它再回退源谱面；`DivaSetupSection`（设置分区，Difficulty 之后）提供两个滑条，`MirrorToBeatmapInfo` 把难度名与 OD 写回 beatmap info 以便存取往返 |
+| 小节数下限可编辑 | `textBox7` + 「更改」，1–1000 `ui:L713` | 同属 `DivaSetupSection` 的「小节数下限」；builder 取 `max(内容推导值, 该值)`，只抬高不缩短（尾奏 / ChanceTime / BGS 不再被截断）。导出仍受 `MAX_PERIOD_COUNT` 校验 |
+| 风格 / 预览图可编辑 | header line 5 `_musicStyle`、line 6 预览图文件名（发布文件里是文件名，游戏不读） | `DivaSetupSection` 的两个文本输入，写进 `DivaChartHeader.Style` / `OverviewPicture`，builder 优先取它；留空 = 继续按原规则推断（风格取 tags、预览图取源谱面再取封面文件名） |
+| 预览图与设置里的图片选用来路一致 | header line 6 只是文件名，PC 编辑器让用户填 | 预览图默认**跟随设置分区里选的背景图**（`SetupScreen.BackgroundChanged` 触发刷新，显示的是背景文件名，header 保持为空 → 导出时才解析，换背景即换预览图）；只有显式填了文件名才覆盖 |
 | 单帧 >8 音符在编辑期报错 | 8 槽结构、不钳制 `ui:L69011`；超出会覆盖该帧 `BGM[]`（§10-4） | `CheckDivaFrameCapacity` 进 `DivaBeatmapVerifier`，在 Verify 面板提示，不再等到导出才抛 |
-| `#WAV`（Key 音）可见可改 | 放置时写入当前选中下标 `ui:L69109` | `DivaHitObject.WavKey` 存盘往返（经 sample 文件名 `-k<n>` 走 `.osu` 通道）；检查器可改，`DivaNoteToolsToolbox`「还原 Key 音」按源谱面 `(帧, type)` 还原 |
+| `#WAV`（Key 音）可见可改 | 放置时写入当前选中下标 `ui:L69109` | `DivaHitObject.WavKey` 存盘往返（经 sample 文件名 `-k<n>` 走 `.osu` 通道）；`DivaSetupSection` 的「打击音效 (#WAV)」选定谱面级 Key 音（新音符带它 + 同时套用到选中音符），检查器可改单个音符，`DivaNoteToolsToolbox`「还原 Key 音」按源谱面 `(帧, type)` 还原 |
+| LN 浮标可用（选中即可拖） | PV 区点音符即选中，随后改精灵坐标 / 长度 | 按着音符按钮时，落在**已有音符**上的左键改由选择处理（`DivaPlacementBlueprint`），不再被放置层吞掉，因此「点长条 → 出浮标 → 拖飞行/长度」与 PC 一致；飞行线按音符原点绘制（不再镜像到反方向），长度浮标沿飞行弦投影并按谱面帧量化 |
 | 飞行点自由定位、长度按 BPM 恒定 | 精灵坐标为任意像素 `ui:L69150`；游戏只取方向，长度 `nowDistance = 60000/BPM` | `DivaActionEncoding.NormaliseApproachOrigin` 把存储向量规整成「方向 × 当前 BPM 距离」，手柄与检查器都按规整后的向量显示；拖拽只改方向、不吸附网格、不再得到零向量 |
 | 长条长度按帧可见可改 | 长度以 1/192 小节数值输入 `ui:L6.3` | 检查器同时给「时长 ms / 帧长」两个入口，换算走导出同一套 `DivaChartBuilder.FrameLengthAt`，显示值就是导出值 |
 | 同按键 tap 落在长条区间内的冲突 | 冲突时弹「强制放置（会清除冲突按键）」`ui:L68925` | `DivaChartBuilder.FindActionOverlaps` + `CheckDivaActionOverlap`（Warning）+「清除长条内单键」工具；放置不做硬拦截（见 §13.3） |
