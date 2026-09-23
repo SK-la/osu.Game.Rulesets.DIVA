@@ -16,6 +16,7 @@ using osu.Game.Beatmaps.ControlPoints;
 using osu.Game.Rulesets.Diva.Beatmaps;
 using osu.Game.Rulesets.Diva.Beatmaps.DivaFormat;
 using osu.Game.Rulesets.Diva.Edit;
+using osu.Game.Rulesets.Diva.Edit.Blueprints;
 using osu.Game.Rulesets.Diva.Edit.Blueprints.Components;
 using osu.Game.Rulesets.Diva.Edit.Tools;
 using osu.Game.Rulesets.Diva.Localization;
@@ -166,6 +167,8 @@ namespace osu.Game.Rulesets.Diva.Tests.Editor
 
             AddAssert("far handle sits on the flight start", farHandleDistance, () => Is.LessThan(1.5f));
             AddAssert("path origin sits on the note", pathOriginDistance, () => Is.LessThan(1.5f));
+            AddAssert("the trajectory is drawn along the flight, not mirrored off its far side",
+                drawnPathCentreDistance, () => Is.LessThan(12f));
         }
 
         [TestCase(-1d)]
@@ -270,11 +273,15 @@ namespace osu.Game.Rulesets.Diva.Tests.Editor
             AddAssert("hold took the dragged direction, at the BPM flight distance", () =>
                 Vector2.Distance(approachNote.ApproachPieceOriginPosition, expected) < 0.05f);
 
-            AddStep("drag the length handle two cells out", () =>
-                dragInSteps(approachNote.Position + new Vector2(DivaChartConstants.DELTA_X, 0),
-                    approachNote.Position + new Vector2(DivaChartConstants.DELTA_X * 2, 0)));
+            // The tail rides the flight chord: how far the cursor projects onto it is the fraction of the approach
+            // window the hold lasts for, quantised to the chart frames an export writes.
+            AddStep("drag the length handle to half the flight",
+                () => dragInSteps(tailLocal(), approachNote.Position + currentFlight() * 0.5f));
 
-            AddAssert("length grew to two beats", () => ((DivaHoldHitObject)approachNote).Duration, () => Is.EqualTo(1000).Within(1));
+            AddAssert("length is half the approach window", () =>
+                ((DivaHoldHitObject)approachNote).Duration, () => Is.EqualTo(DivaChartConstants.StandingPreemptMs(120) * 0.5).Within(frameMs));
+
+            AddAssert("the handle landed on the flight at the new length", tailHandleDistance, () => Is.LessThan(1.5f));
         }
 
         [Test]
@@ -284,16 +291,17 @@ namespace osu.Game.Rulesets.Diva.Tests.Editor
 
             // One move instead of a smooth trail: the drag threshold is crossed far from the press point, which is
             // what a fast drag at a low polling rate looks like. The handle still has to claim the drag.
-            AddStep("press on the length handle and jump two cells out", () =>
+            AddStep("press on the length handle and jump to three quarters of the flight", () =>
             {
-                InputManager.MoveMouseTo(composer.Playfield.ToScreenSpace(approachNote.Position + new Vector2(DivaChartConstants.DELTA_X, 0)));
+                InputManager.MoveMouseTo(durationHandle().ScreenSpaceDrawQuad.Centre);
                 InputManager.PressButton(MouseButton.Left);
-                InputManager.MoveMouseTo(composer.Playfield.ToScreenSpace(approachNote.Position + new Vector2(DivaChartConstants.DELTA_X * 3, 0)));
+                InputManager.MoveMouseTo(composer.Playfield.ToScreenSpace(approachNote.Position + currentFlight() * 0.75f));
                 InputManager.ReleaseButton(MouseButton.Left);
             });
 
-            AddAssert("length grew instead of the note moving", () =>
-                ((DivaHoldHitObject)approachNote).Duration, () => Is.EqualTo(1500).Within(1));
+            AddAssert("length grew to three quarters of the window instead of the note moving", () =>
+                ((DivaHoldHitObject)approachNote).Duration, () => Is.EqualTo(DivaChartConstants.StandingPreemptMs(120) * 0.75).Within(frameMs));
+
             AddAssert("the note stayed put", () => approachNote.Position, () => Is.EqualTo(DivaActionEncoding.ToPlayfieldPosition(5, 5)));
         }
 
@@ -607,11 +615,49 @@ namespace osu.Game.Rulesets.Diva.Tests.Editor
             return Vector2.Distance(approachHandle.ChildrenOfType<Circle>().Single().ScreenSpaceDrawQuad.Centre, flightStart);
         }
 
+        /// <summary>Distance from the tail handle to where the strip's far end is drawn for the current length.</summary>
+        private float tailHandleDistance()
+            => Vector2.Distance(durationHandle().ScreenSpaceDrawQuad.Centre, composer.Playfield.ToScreenSpace(tailLocal()));
+
+        /// <summary>Playfield-local position of the strip's far end for the current length.</summary>
+        private Vector2 tailLocal()
+        {
+            var hold = (DivaHoldHitObject)approachNote;
+            return hold.Position + DivaFlightPath.Sample(DivaNoteFlightCurve.DivaNative, currentFlight(),
+                (float)(hold.Duration / DivaChartConstants.StandingPreemptMs(120)), 1f);
+        }
+
+        private Circle durationHandle()
+            => this.ChildrenOfType<DivaHoldSelectionBlueprint>().Single()
+                       .ChildrenOfType<Circle>()
+                       .Single(circle => circle.Size.X < DivaApproachHandle.HANDLE_SIZE);
+
+        /// <summary>Duration of one chart frame at the note, the unit a dragged length is quantised to.</summary>
+        private double frameMs => DivaChartBuilder.MsPerFrameAt(editorBeatmap, approachNote.StartTime);
+
+        /// <summary>The vector the note flies along, i.e. the stored direction at the BPM flight distance.</summary>
+        private Vector2 currentFlight()
+            => DivaActionEncoding.NormaliseApproachOrigin(approachNote.ApproachPieceOriginPosition, 120);
+
         /// <summary>Screen-space distance from the drawn path's note end to the note itself.</summary>
         private float pathOriginDistance()
         {
             var path = approachHandle.ChildrenOfType<SmoothPath>().Single();
             return Vector2.Distance(approachHandle.ToScreenSpace(path.Vertices[0]), composer.Playfield.ToScreenSpace(approachNote.Position));
+        }
+
+        /// <summary>
+        ///     Screen-space distance from the centre of the drawn trajectory to the midpoint of the flight.
+        ///     A path lays its vertices out from its own box corner, so an origin that does not cancel that
+        ///     corner slides the whole line off the flight — for a flight towards the top left that reads as a
+        ///     trajectory drawn mirrored onto the note's bottom right, rotating there as the handle is moved.
+        /// </summary>
+        private float drawnPathCentreDistance()
+        {
+            var path = approachHandle.ChildrenOfType<SmoothPath>().Single();
+            Vector2 flight = DivaActionEncoding.NormaliseApproachOrigin(approachNote.ApproachPieceOriginPosition, 120);
+            Vector2 midpoint = composer.Playfield.ToScreenSpace(approachNote.Position + flight * 0.5f);
+            return Vector2.Distance(path.ScreenSpaceDrawQuad.Centre, midpoint);
         }
 
         [Test]

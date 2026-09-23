@@ -39,6 +39,7 @@ namespace osu.Game.Rulesets.Diva.Edit.Blueprints.Components
         private readonly DivaHitObject hitObject;
         private readonly Circle handle;
         private readonly Path path;
+
         private readonly Bindable<DivaNoteFlightCurve> flightCurve = new Bindable<DivaNoteFlightCurve>(DivaNoteFlightCurve.DivaNative);
         private readonly BindableDouble flightAmplitude = new BindableDouble(100);
 
@@ -94,6 +95,12 @@ namespace osu.Game.Rulesets.Diva.Edit.Blueprints.Components
                 float percent = i / (float)curve_samples;
                 path.AddVertex(DivaFlightPath.Sample(flightCurve.Value, far, percent, amplitude));
             }
+
+            // A path draws its vertices from its own bounding box's top-left corner, so the line only lands where
+            // the vertices say once the box origin is pushed back onto the note. Without this the whole trajectory
+            // is translated by however far it reaches into negative coordinates — a flight that starts off to the
+            // top left is drawn mirrored to the bottom right, i.e. on the far side of the note from its own handle.
+            path.OriginPosition = path.PositionInBoundingBox(Vector2.Zero);
         }
 
         protected override bool OnMouseDown(MouseDownEvent e)
