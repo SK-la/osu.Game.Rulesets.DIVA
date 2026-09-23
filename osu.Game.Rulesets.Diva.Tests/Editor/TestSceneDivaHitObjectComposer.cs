@@ -401,9 +401,42 @@ namespace osu.Game.Rulesets.Diva.Tests.Editor
         }
 
         [Test]
-        public void Selecting_a_note_does_not_rewrite_its_action()
+        public void Clicking_a_note_while_a_note_button_is_pressed()
         {
-            AddStep("add a square note", () => editorBeatmap.Add(new DivaHitObject
+            addApproachNote(400, 0, hold: true);
+
+            AddStep("keep the tap tool active", () => selectTool(DivaStrings.EDITOR_TAP_TOOL.ToString()));
+            AddStep("deselect", () => editorBeatmap.SelectedHitObjects.Clear());
+
+            AddStep("click the hold", () =>
+            {
+                InputManager.MoveMouseTo(composer.Playfield.ToScreenSpace(approachNote.Position));
+                InputManager.Click(MouseButton.Left);
+            });
+
+            AddAssert("hold is selected", () => editorBeatmap.SelectedHitObjects, () => Is.EqualTo(new[] { approachNote }));
+            AddAssert("nothing was placed on top", () => editorBeatmap.HitObjects, () => Has.Count.EqualTo(1));
+
+            // The rest of the reference editor's flow, in the same mode: the note got its floats from the click,
+            // so they have to be draggable without switching to the select tool first.
+            Vector2 expected = DivaActionEncoding.NormaliseApproachOrigin(new Vector2(0, -300), 120);
+
+            AddStep("drag the flight float up", () => dragInSteps(currentFar(), approachNote.Position + new Vector2(0, -300)));
+
+            AddAssert("flight followed the float", () =>
+                Vector2.Distance(approachNote.ApproachPieceOriginPosition, expected) < 0.05f);
+
+            AddStep("drag the length float to half the flight",
+                () => dragInSteps(tailLocal(), approachNote.Position + currentFlight() * 0.5f));
+
+            AddAssert("length followed the float", () =>
+                ((DivaHoldHitObject)approachNote).Duration, () => Is.EqualTo(DivaChartConstants.StandingPreemptMs(120) * 0.5).Within(frameMs));
+            AddAssert("no stray note was placed by either drag", () => editorBeatmap.HitObjects, () => Has.Count.EqualTo(1));
+        }
+
+        [Test]
+        public void Selecting_a_note_does_not_rewrite_its_action()
+        {            AddStep("add a square note", () => editorBeatmap.Add(new DivaHitObject
             {
                 StartTime = 500,
                 Position = DivaActionEncoding.ToPlayfieldPosition(4, 12),

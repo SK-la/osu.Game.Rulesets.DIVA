@@ -20,6 +20,7 @@ using osu.Game.Rulesets.Diva.Objects;
 using osu.Game.Rulesets.Edit;
 using osu.Game.Rulesets.Edit.Tools;
 using osu.Game.Rulesets.Mods;
+using osu.Game.Rulesets.Objects;
 using osu.Game.Rulesets.UI;
 using osu.Game.Screens.Edit.Components.TernaryButtons;
 using osu.Game.Screens.Edit.Compose.Components;
@@ -361,6 +362,22 @@ namespace osu.Game.Rulesets.Diva.Edit
         {
             hitObject.ValidAction = CurrentAction;
             hitObject.ApproachPieceOriginPosition = ComputeDefaultApproach(hitObject.Position, hitObject.StartTime);
+        }
+
+        /// <summary>Whether <paramref name="screenSpacePosition"/> lands on an existing note.</summary>
+        /// <remarks>
+        ///     Read by the placement blueprints to tell a press that means "edit this note" from one that means
+        ///     "write a note here"; the placement overlay sits above the blueprints and would otherwise take both.
+        /// </remarks>
+        public bool IsNoteAt(Vector2 screenSpacePosition)
+        {
+            foreach (SelectionBlueprint<HitObject> blueprint in BlueprintContainer.SelectionBlueprints.AliveChildren)
+            {
+                if (blueprint.ReceivePositionalInputAt(screenSpacePosition))
+                    return true;
+            }
+
+            return false;
         }
 
         private void applyActionToSelection(DivaAction action)

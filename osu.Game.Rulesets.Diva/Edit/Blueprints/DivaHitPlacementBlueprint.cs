@@ -14,14 +14,11 @@ using osuTK.Input;
 
 namespace osu.Game.Rulesets.Diva.Edit.Blueprints
 {
-    public partial class DivaHitPlacementBlueprint : HitObjectPlacementBlueprint
+    public partial class DivaHitPlacementBlueprint : DivaPlacementBlueprint
     {
         public new DivaHitObject HitObject => (DivaHitObject)base.HitObject;
 
         private readonly DivaNotePiece piece;
-
-        [Resolved]
-        private DivaHitObjectComposer? composer { get; set; }
 
         [Resolved]
         private TextureStore textures { get; set; } = null!;
@@ -47,9 +44,9 @@ namespace osu.Game.Rulesets.Diva.Edit.Blueprints
         }
 
         public override bool ReplacesExistingObject(HitObject existing)
-            => composer?.ReplaceOnSameTime == true && base.ReplacesExistingObject(existing);
+            => Composer?.ReplaceOnSameTime == true && base.ReplacesExistingObject(existing);
 
-        protected override bool OnMouseDown(MouseDownEvent e)
+        private protected override bool HandlePlacementMouseDown(MouseDownEvent e)
         {
             if (e.Button != MouseButton.Left)
                 return false;
@@ -60,14 +57,14 @@ namespace osu.Game.Rulesets.Diva.Edit.Blueprints
 
         public override SnapResult UpdateTimeAndPosition(Vector2 screenSpacePosition, double fallbackTime)
         {
-            var result = composer?.FindSnappedPositionAndTime(screenSpacePosition) ?? new SnapResult(screenSpacePosition, fallbackTime);
+            var result = Composer?.FindSnappedPositionAndTime(screenSpacePosition) ?? new SnapResult(screenSpacePosition, fallbackTime);
 
             base.UpdateTimeAndPosition(result.ScreenSpacePosition, result.Time ?? fallbackTime);
 
-            if (composer != null)
+            if (Composer != null)
             {
-                HitObject.Position = composer.Playfield.ToLocalSpace(result.ScreenSpacePosition);
-                composer.ApplyPlacementDefaults(HitObject);
+                HitObject.Position = Composer.Playfield.ToLocalSpace(result.ScreenSpacePosition);
+                Composer.ApplyPlacementDefaults(HitObject);
             }
             else
                 HitObject.Position = ToLocalSpace(result.ScreenSpacePosition);
