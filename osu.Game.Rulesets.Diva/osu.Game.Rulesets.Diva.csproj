@@ -18,6 +18,7 @@
     <EmbeddedResource Include="Resources\**" />
   </ItemGroup>
   <ItemGroup Label="Package References">
+    <PackageReference Include="NUnit" VersionOverride="5.0.0" />
     <PackageReference Include="ppy.osu.Game.Rulesets.Osu" />
     <!-- Ez2Lazer：ez2lazer.Game 提供 osu.Game / osu.Framework -->
     <PackageReference Include="ez2lazer.Game" Condition="'$(DivaLazerBuild)' != 'true'" />
