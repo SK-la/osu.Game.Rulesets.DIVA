@@ -22,7 +22,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
         /// <summary>Notes whose start frame lies in <c>[fromFrame, toFrame]</c>, in either order.</summary>
         public static List<DivaHitObject> NotesInFrameRange(IBeatmap beatmap, int fromFrame, int toFrame)
         {
-            (int from, int to) = Normalise(fromFrame, toFrame);
+            (int from, int to) = normalise(fromFrame, toFrame);
 
             var result = new List<DivaHitObject>();
 
@@ -59,7 +59,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             if (targetStartFrame < 0 || targetStartFrame > DivaChartConstants.MAX_FRAME_INDEX)
                 return null;
 
-            (int from, int to) = Normalise(fromFrame, toFrame);
+            (int from, int to) = normalise(fromFrame, toFrame);
             int delta = targetStartFrame - from;
 
             var notes = new List<DivaHitObject>();
@@ -128,7 +128,7 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             return true;
         }
 
-        private static (int From, int To) Normalise(int fromFrame, int toFrame)
+        private static (int From, int To) normalise(int fromFrame, int toFrame)
             => fromFrame <= toFrame ? (fromFrame, toFrame) : (toFrame, fromFrame);
     }
 

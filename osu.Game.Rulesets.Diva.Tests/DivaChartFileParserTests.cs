@@ -641,7 +641,7 @@ namespace osu.Game.Rulesets.Diva.Tests
         [Test]
         public void Parses_fractional_note_coordinates()
         {
-            using var reader = new StringReader(RoundtripChart.Replace("0 0 10 12 0 0 0", "0 0 10.5 12.25 0 0 0"));
+            using var reader = new StringReader(roundtrip_chart.Replace("0 0 10 12 0 0 0", "0 0 10.5 12.25 0 0 0"));
             DivaChart parsed = DivaChartFileParser.Parse(reader, "decimal.diva", @"C:\songs\decimal");
 
             Assert.That(parsed.Notes[0].X, Is.EqualTo(10.5f).Within(1e-4f));
@@ -717,7 +717,7 @@ namespace osu.Game.Rulesets.Diva.Tests
 
             try
             {
-                File.WriteAllText(source, RoundtripChart, new UTF8Encoding(false));
+                File.WriteAllText(source, roundtrip_chart, new UTF8Encoding(false));
                 DivaChart parsed = DivaChartFileParser.Parse(source);
 
                 DivaTextChartFormat.Instance.Encode(destination, parsed);
@@ -732,7 +732,7 @@ namespace osu.Game.Rulesets.Diva.Tests
         }
 
         /// <summary>Chart with a normal note, a hold, timing/BGS/resource events and Chance Time.</summary>
-        private const string RoundtripChart = """
+        private const string roundtrip_chart = """
                                               1.0.4.8
                                               Roundtrip Song
                                               Mapper
@@ -764,7 +764,7 @@ namespace osu.Game.Rulesets.Diva.Tests
 
         private static DivaChart parseRoundtripChart(string? noteLine = null)
         {
-            string chart = noteLine == null ? RoundtripChart : RoundtripChart.Replace("0 0 10 12 0 0 0", noteLine);
+            string chart = noteLine == null ? roundtrip_chart : roundtrip_chart.Replace("0 0 10 12 0 0 0", noteLine);
 
             using var reader = new StringReader(chart);
             return DivaChartFileParser.Parse(reader, "roundtrip.diva", @"C:\songs\roundtrip");
