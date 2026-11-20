@@ -1,5 +1,5 @@
 # 发布 tag 格式：yyyy.mdd.0（与 osu! lazer 一致，例如 2026.524.0）
-# 同一 Release 上传两份 net10 DLL：Ez2Lazer（ez2lazer.Game）与官方 lazer（ppy.osu.Game）。
+# 同一 Release 上传两份 net11 DLL：Ez2Lazer（ez2lazer.Game）与官方 lazer（ppy.osu.Game）。
 # 资产名带变体后缀便于区分；DLL 文件名不影响加载，客户端只看程序集名与前缀。
 name: Release DIVA ruleset
 
@@ -26,7 +26,7 @@ jobs:
 
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: '11.0.x'
 
       - name: Resolve release version
         id: version
@@ -50,7 +50,7 @@ jobs:
           -p:RulesetVerifyBuild=true
           &&
           pwsh .github/scripts/Verify-RulesetAssembly.ps1
-          -AssemblyPath osu.Game.Rulesets.Diva/bin/Release/net10.0/osu.Game.Rulesets.Diva.dll
+          -AssemblyPath osu.Game.Rulesets.Diva/bin/Release/net11.0/osu.Game.Rulesets.Diva.dll
 
       - name: Verify ruleset assembly loads (official lazer)
         run: >
@@ -59,7 +59,7 @@ jobs:
           -p:RulesetVerifyBuild=true
           &&
           pwsh .github/scripts/Verify-RulesetAssembly.ps1
-          -AssemblyPath osu.Game.Rulesets.Diva/bin/ReleaseLazer/net10.0/osu.Game.Rulesets.Diva.dll
+          -AssemblyPath osu.Game.Rulesets.Diva/bin/ReleaseLazer/net11.0/osu.Game.Rulesets.Diva.dll
 
       - name: Publish ruleset
         shell: pwsh
@@ -73,11 +73,11 @@ jobs:
           foreach ($variant in $variants) {
             dotnet publish osu.Game.Rulesets.Diva/osu.Game.Rulesets.Diva.csproj `
               -c $variant.Configuration `
-              -f net10.0 `
+              -f net11.0 `
               -p:OfficialRelease=true `
               -p:ReleaseVersion=$ver
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-            Copy-Item "osu.Game.Rulesets.Diva/bin/$($variant.Configuration)/net10.0/publish/osu.Game.Rulesets.Diva.dll" `
+            Copy-Item "osu.Game.Rulesets.Diva/bin/$($variant.Configuration)/net11.0/publish/osu.Game.Rulesets.Diva.dll" `
               "artifacts/$($variant.Asset)" -Force
           }
 
