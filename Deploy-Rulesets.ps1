@@ -18,14 +18,14 @@ $project = Join-Path $repoRoot 'osu.Game.Rulesets.Diva\osu.Game.Rulesets.Diva.cs
 $targets = @(
     @{
         Configuration  = 'Release'
-        Framework      = 'net10.0'
+        Framework      = 'net11.0'
         DestinationDir = 'F:\MUG OSU\EZ2OSU-lazer\rulesets'
         ClientRoot     = 'F:\MUG OSU\EZ2OSU-lazer'
         Label          = 'Ez2Lazer'
     },
     @{
         Configuration  = 'ReleaseLazer'
-        Framework      = 'net10.0'
+        Framework      = 'net11.0'
         DestinationDir = 'F:\MUG OSU\osu-lazer\rulesets'
         ClientRoot     = 'F:\MUG OSU\osu-lazer'
         Label          = 'osu!lazer'
