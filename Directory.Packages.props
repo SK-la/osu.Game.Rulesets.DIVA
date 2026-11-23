@@ -1,7 +1,7 @@
 <!--
   中央包版本（CPM）。Dependabot 每日检查，三组 PR：
   - ppy-osu：ppy.osu.Game / Rulesets.Osu（可单包或双包同 PR），CI 通过即合
-  - ez2lazer-game：ez2lazer.Game（net10 / Ez2Lazer），CI 通过即合
+  - ez2lazer-game：ez2lazer.Game（net11 / Ez2Lazer），CI 通过即合
   - other-nuget：其余包同 PR，CI 通过即合
 -->
 <Project>
@@ -9,7 +9,7 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="ez2lazer.Game" Version="2026.1002.0-ez2lazer" />
+    <PackageVersion Include="ez2lazer.Game" Version="2026.1122.0" />
     <PackageVersion Include="ppy.osu.Game" Version="2026.1026.0" />
     <PackageVersion Include="ppy.osu.Game.Rulesets.Osu" Version="2026.1026.0" />
     <PackageVersion Include="ppy.osu.Framework.SourceGeneration" Version="2025.1121.1" />

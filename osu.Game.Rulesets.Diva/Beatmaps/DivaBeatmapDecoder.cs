@@ -27,7 +27,11 @@ namespace osu.Game.Rulesets.Diva.Beatmaps
             DivaStoryboardDecoder.Register();
         }
 
+#if DIVA_EZ2LAZER
+        public override Beatmap CreateTemplateObject() => new DivaDecodedBeatmap();
+#else
         protected override Beatmap CreateTemplateObject() => new DivaDecodedBeatmap();
+#endif
 
         protected override void ParseStreamInto(LineBufferedReader stream, bool isPrimaryStream, Beatmap beatmap)
         {

@@ -3,6 +3,7 @@
 
 using NUnit.Framework;
 using osu.Game.Rulesets.Diva.Objects;
+using osu.Game.Rulesets.Objects;
 using osuTK;
 
 namespace osu.Game.Rulesets.Diva.Tests
@@ -14,6 +15,33 @@ namespace osu.Game.Rulesets.Diva.Tests
     [TestFixture]
     public class DivaHitObjectConversionTests
     {
+        [TestCase(false)]
+        [TestCase(true)]
+        public void Clone_through_base_type_preserves_diva_state(bool isHold)
+        {
+            DivaHitObject source = isHold ? new DivaHoldHitObject { Duration = 750 } : new DivaHitObject();
+            source.StartTime = 800;
+            source.Position = new Vector2(49, 64);
+            source.ValidAction = DivaAction.Left;
+            source.ApproachPieceOriginPosition = new Vector2(500, 0);
+            source.WavKey = 7;
+
+            var clone = (DivaHitObject)((HitObject)source).Clone();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(clone, Is.Not.SameAs(source));
+                Assert.That(clone.GetType(), Is.EqualTo(source.GetType()));
+                Assert.That(clone.StartTime, Is.EqualTo(source.StartTime));
+                Assert.That(clone.Position, Is.EqualTo(source.Position));
+                Assert.That(clone.ValidAction, Is.EqualTo(source.ValidAction));
+                Assert.That(clone.ApproachPieceOriginPosition, Is.EqualTo(source.ApproachPieceOriginPosition));
+                Assert.That(clone.WavKey, Is.EqualTo(source.WavKey));
+                if (isHold)
+                    Assert.That(((DivaHoldHitObject)clone).Duration, Is.EqualTo(750));
+            });
+        }
+
         [Test]
         public void Tap_becomes_a_hold_with_every_other_field_intact()
         {

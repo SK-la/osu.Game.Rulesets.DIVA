@@ -68,7 +68,11 @@ namespace osu.Game.Rulesets.Diva.Objects
         }
 
         /// <summary>An independent copy of this note, as a tap.</summary>
+#if DIVA_EZ2LAZER
+        public override DivaHitObject Clone()
+#else
         public virtual DivaHitObject Clone()
+#endif
         {
             var clone = new DivaHitObject();
             CopyStateTo(clone);
